@@ -105,6 +105,26 @@ textarea{resize:vertical;min-height:56px}
 .sim-btns{display:flex;gap:10px;margin-top:16px}
 .info-banner{background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:10px;padding:12px 16px;font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5}
 .info-banner strong{color:var(--blue)}
+/* HOW-TO */
+.howto-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;margin-bottom:10px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s}
+.howto-bar:hover{background:rgba(37,99,235,.03);border-color:rgba(37,99,235,.22)}
+.howto-icon{width:22px;height:22px;border-radius:50%;background:rgba(37,99,235,.12);color:var(--blue);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif}
+.howto-bar-title{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.howto-bar-sub{font-size:11px;color:var(--muted)}
+.howto-chevron{color:var(--muted2);transition:transform .2s;flex-shrink:0}
+.howto-panel{display:none;background:rgba(37,99,235,.025);border:1px solid rgba(37,99,235,.13);border-radius:10px;padding:20px 22px;margin-bottom:18px}
+.howto-panel.open{display:block;animation:lcFadeIn .2s ease}
+.howto-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.howto-step{display:flex;gap:11px;align-items:flex-start;background:white;border:1px solid var(--border);border-radius:9px;padding:12px 13px}
+.howto-num{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.howto-step-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
+.howto-step-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.howto-opts{border-top:1px solid rgba(37,99,235,.1);padding-top:14px}
+.howto-opts-hdr{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.howto-opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.howto-opt{display:flex;gap:9px;align-items:flex-start;background:white;border:1px solid var(--border);border-radius:7px;padding:9px 11px}
+.howto-opt-key{font-size:10px;font-weight:700;color:var(--blue);white-space:nowrap;padding-top:1px;min-width:0;flex-shrink:0}
+.howto-opt-val{font-size:11px;color:var(--muted);line-height:1.5}
 /* LEARNING */
 .learn-tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
 .ltab{padding:7px 16px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;transition:background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease;font-family:'Inter',sans-serif}
@@ -1476,7 +1496,53 @@ textarea{resize:vertical;min-height:56px}
 <!-- SIMULATOR -->
 <section class="section" id="simulator">
   <div class="section-title">Trade Simulator</div>
-  <div class="info-banner">Set up a trade scenario, review the risk:reward metrics, then log it to your journal as a win, loss, or open position.</div>
+
+  <div class="howto-bar" onclick="toggleHowto('simHowto',this)">
+    <div class="howto-icon">?</div>
+    <span class="howto-bar-title">How to use the Trade Simulator</span>
+    <span class="howto-bar-sub">Plan trades, calculate risk and log results to your journal</span>
+    <svg class="howto-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="howto-panel" id="simHowto">
+    <div class="howto-steps">
+      <div class="howto-step">
+        <div class="howto-num">1</div>
+        <div><div class="howto-step-title">Enter market &amp; direction</div><div class="howto-step-desc">Type the instrument (e.g. EUR/USD, BTC/USD, QQQ) and choose <strong>LONG</strong> if you expect the price to rise, or <strong>SHORT</strong> if you expect it to fall.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">2</div>
+        <div><div class="howto-step-title">Select the market type</div><div class="howto-step-desc">Pick <strong>Forex</strong> for standard pairs (EUR/USD, GBP/USD), <strong>Forex JPY</strong> for yen pairs (USD/JPY), or <strong>Index / Commodity</strong> for indices, gold, ETFs and crypto.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">3</div>
+        <div><div class="howto-step-title">Set entry, stop loss &amp; take profit</div><div class="howto-step-desc">Enter your planned levels. The metrics panel updates instantly — showing R:R ratio, pip distance and exact dollar risk and reward.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">4</div>
+        <div><div class="howto-step-title">Configure account &amp; risk %</div><div class="howto-step-desc">Enter your account balance and the percentage you're prepared to risk. <strong>1–2% per trade</strong> is the professional standard. The simulator calculates your position size automatically.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">5</div>
+        <div><div class="howto-step-title">Add reasoning (optional)</div><div class="howto-step-desc">Document your <strong>entry reason</strong> (pattern, level, confluence) and <strong>exit reason</strong> after closing. This builds a reviewable trade log that helps identify what works.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">6</div>
+        <div><div class="howto-step-title">Log to your journal</div><div class="howto-step-desc">Click <strong>Win (TP Hit)</strong> or <strong>Loss (SL Hit)</strong> to record a closed trade, or <strong>Log as Open</strong> to track a live position with real-time P&amp;L monitoring.</div></div>
+      </div>
+    </div>
+    <div class="howto-opts">
+      <div class="howto-opts-hdr">Metrics explained</div>
+      <div class="howto-opt-grid">
+        <div class="howto-opt"><span class="howto-opt-key">R:R Ratio</span><span class="howto-opt-val">How much you stand to gain vs. lose. 1:2 means risking $1 to make $2. Aim for at least 1:1.5 on every trade.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Risk ($)</span><span class="howto-opt-val">Exact dollar amount lost if stop loss is hit. Calculated as account balance × risk %.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Reward ($)</span><span class="howto-opt-val">Exact dollar amount gained if take profit is hit. Reward ÷ Risk = R:R ratio.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Min Win Rate</span><span class="howto-opt-val">The minimum win rate to break even at your R:R. At 1:3 you only need 25% winners to be profitable long-term.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Market Type</span><span class="howto-opt-val">Forex standard ÷ 0.0001 per pip · JPY pairs ÷ 0.01 per pip · Index/Commodity uses raw points (1 pt = 1 unit).</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Open Trade</span><span class="howto-opt-val">Logs the trade as active. The journal will show live P&amp;L updates if a price feed is connected. Close it later via the journal.</span></div>
+      </div>
+    </div>
+  </div>
+
   <div class="sim-grid">
     <div class="sim-card">
       <h3>Trade Setup</h3>
@@ -1549,6 +1615,54 @@ textarea{resize:vertical;min-height:56px}
     <button class="fgb-btn" onclick="document.getElementById('pricingOverlay').classList.add('open')">Upgrade Now</button>
   </div>
   <div class="section-title">Auto Signals — Daily Market Analysis</div>
+
+  <div class="howto-bar" onclick="toggleHowto('sigHowto',this)">
+    <div class="howto-icon">?</div>
+    <span class="howto-bar-title">How to use Auto Signals</span>
+    <span class="howto-bar-sub">Connect a data source, scan markets and act on high-confidence setups</span>
+    <svg class="howto-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="howto-panel" id="sigHowto">
+    <div class="howto-steps">
+      <div class="howto-step">
+        <div class="howto-num">1</div>
+        <div><div class="howto-step-title">Connect a data source</div><div class="howto-step-desc">Select <strong>Twelve Data</strong> or <strong>Alpha Vantage</strong>, paste your free API key and click Connect. Or choose <strong>Demo</strong> to explore simulated signals with no key required.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">2</div>
+        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing trading signals (1–5 day holds). Use <strong>4H</strong> for shorter intraday setups that resolve within hours to 2 days.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">3</div>
+        <div><div class="howto-step-title">Run the market scan</div><div class="howto-step-desc">Click <strong>Scan Markets</strong>. Sharpe analyses all monitored instruments using EMA trend alignment, RSI momentum, ATR-based SL/TP and price action pattern recognition.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">4</div>
+        <div><div class="howto-step-title">Review signal cards</div><div class="howto-step-desc">Each card shows the instrument, direction (LONG/SHORT), <strong>confidence %</strong>, entry zone, stop loss, take profit, R:R ratio and the specific pattern that triggered the signal.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">5</div>
+        <div><div class="howto-step-title">Enable auto-log</div><div class="howto-step-desc">Tick <strong>Auto-log signals ≥ X%</strong> to automatically save qualifying signals to your Trade Journal. Set the threshold to 75%+ to avoid low-quality noise.</div></div>
+      </div>
+      <div class="howto-step">
+        <div class="howto-num">6</div>
+        <div><div class="howto-step-title">Auto-execute via OANDA</div><div class="howto-step-desc">Connect your OANDA API token and account ID to place orders automatically when signals fire. Start on a <strong>practice account</strong> before switching to live trading.</div></div>
+      </div>
+    </div>
+    <div class="howto-opts">
+      <div class="howto-opts-hdr">Options &amp; settings reference</div>
+      <div class="howto-opt-grid">
+        <div class="howto-opt"><span class="howto-opt-key">Twelve Data</span><span class="howto-opt-val">Best market coverage. 800 free API requests/day — sufficient for full daily scans across all instruments.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Alpha Vantage</span><span class="howto-opt-val">25 free requests/day. Works well for smaller watchlists. Upgrade their plan for full scans.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Demo Mode</span><span class="howto-opt-val">Generates realistic simulated signals — no API key needed. Ideal for exploring the feature before connecting live data.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 65–74%</span><span class="howto-opt-val">Possible setup with partial factor alignment. Treat as a watchlist candidate — wait for additional confirmation before acting.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid signal. Most key factors aligned (trend, momentum, pattern). Standard actionable threshold for most traders.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 85–93%</span><span class="howto-opt-val">High-conviction setup. All major factors confirm. Rare — treat as a priority signal when it appears.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Auto-log</span><span class="howto-opt-val">Signals at or above the set threshold are saved to your Trade Journal automatically after each scan. You can review and close them there.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">OANDA Setup</span><span class="howto-opt-val">Enter your Personal Access Token and Account ID from OANDA. Set risk per trade (% of balance). Tick Practice Account until you're confident in the signals.</span></div>
+      </div>
+    </div>
+  </div>
 
   <!-- API Settings -->
   <div class="sig-api-bar">
@@ -2114,6 +2228,12 @@ function persist(){
 }
 
 // ── NAV ────────────────────────────────────────────────────────
+function toggleHowto(id,bar){
+  const panel=document.getElementById(id);
+  const open=panel.classList.toggle('open');
+  const chev=bar.querySelector('.howto-chevron');
+  if(chev) chev.style.transform=open?'rotate(180deg)':'';
+}
 function toggleMonth(hdr){
   hdr.closest('.tr-month-card').classList.toggle('open');
 }
