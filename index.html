@@ -2417,7 +2417,7 @@ function initNews(){
 const SUPA_URL  = 'https://qlvbgkipkxtwaqwpcmuj.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdmJna2lwa3h0d2Fxd3BjbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTY3MjcsImV4cCI6MjA5NDU5MjcyN30.iATkgXOfVYDJp1meE2igoJ33mVD3tJiNww4hyR4hRDs';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
-  auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true }
+  auth: { detectSessionInUrl: true, persistSession: true, storageKey: 'sharpe_auth' }
 });
 
 let sbUser = null;   // current auth user
@@ -2494,9 +2494,14 @@ async function submitAuth(){
     if(res.error) throw res.error;
     if(authTabMode === 'signup' && !res.data?.session){
       errEl.style.color = 'var(--green)';
-      errEl.textContent = 'Check your email to confirm your account, then sign in.';
-    } else {
+      errEl.textContent = 'Account created! Signing you in…';
+    }
+    if(res.data?.session){
+      sbUser = res.data.session.user;
       closeAuthModal();
+      await loadProfile();
+      await loadTradesFromDb();
+      renderDashboard();
     }
   } catch(e){
     errEl.style.color = 'var(--red)';
@@ -2584,15 +2589,25 @@ async function deleteTradeFromDb(id){
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  sbUser = session?.user || null;
-  if(sbUser){
-    await loadProfile();
-    await loadTradesFromDb();
-    renderDashboard();
-    showToast('Welcome back!', 'info');
-  } else {
-    sbPlan = 'free';
-    updateAuthUI();
+  try {
+    const user = session?.user || null;
+    if(user && (!sbUser || sbUser.id !== user.id)){
+      sbUser = user;
+      await loadProfile();
+      await loadTradesFromDb();
+      renderDashboard();
+    } else if(!user && sbUser){
+      sbUser = null; sbPlan = 'free';
+      updateAuthUI();
+    }
+  } catch(e){ console.error('authStateChange', e); }
+});
+
+// Restore session on page load
+sb.auth.getSession().then(({ data }) => {
+  if(data?.session?.user){
+    sbUser = data.session.user;
+    loadProfile().then(()=>{ loadTradesFromDb(); renderDashboard(); });
   }
 });
 
