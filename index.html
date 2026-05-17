@@ -34,7 +34,7 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 /* MAIN */
 .main{padding:28px;max-width:1440px;margin:0 auto}
 .section{display:none}.section.active{display:block}
-#landing{width:100vw;margin-left:calc(-50vw + 50%);margin-bottom:-28px;overflow-x:hidden}
+#landing{width:100vw;margin-left:calc(-50vw + 50%);margin-bottom:-28px;overflow-x:hidden;background:linear-gradient(170deg,#eef2ff 0%,#dbeafe 18%,#e0f2fe 38%,#eff6ff 58%,#ecfdf5 78%,#eef2ff 100%)}
 .section-title{font-size:22px;font-weight:800;margin-bottom:22px;letter-spacing:-.3px}
 /* STAT CARDS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px}
@@ -352,9 +352,9 @@ textarea{resize:vertical;min-height:56px}
 .lp-nav-item.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 
 /* HERO */
-.lp-hero{background:linear-gradient(135deg,#eef2ff 0%,#dbeafe 30%,#e0f2fe 60%,#ecfdf5 100%);min-height:92vh;display:flex;align-items:center;padding:80px 24px 60px;position:relative;overflow:hidden}
-.lp-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232563eb' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
-.lp-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(to bottom,transparent,var(--bg));pointer-events:none}
+.lp-hero{background:transparent;min-height:92vh;display:flex;align-items:center;padding:80px 24px 60px;position:relative;overflow:hidden}
+.lp-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232563eb' fill-opacity='0.025'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.lp-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(to bottom,transparent,rgba(255,255,255,.3));pointer-events:none}
 .lp-hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;width:100%;position:relative;z-index:1}
 @media(max-width:900px){.lp-hero-inner{grid-template-columns:1fr;gap:40px}.lp-hero{min-height:auto;padding:60px 20px}}
 .lp-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:24px;letter-spacing:.3px;font-family:'Inter',sans-serif}
@@ -395,14 +395,14 @@ textarea{resize:vertical;min-height:56px}
 .lp-mock-badge{position:absolute;top:-12px;right:16px;background:linear-gradient(135deg,#2563eb,#0891b2);color:#fff;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;box-shadow:0 4px 16px rgba(37,99,235,.4);letter-spacing:.3px}
 
 /* STATS BAR */
-.lp-statsbar{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:28px 24px;display:flex;justify-content:center;gap:56px;flex-wrap:wrap;box-shadow:0 1px 8px rgba(37,99,235,.04)}
+.lp-statsbar{background:rgba(255,255,255,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:28px 24px;display:flex;justify-content:center;gap:56px;flex-wrap:wrap;}
 .lp-stat{text-align:center}
 .lp-stat-val{font-size:32px;font-weight:900;background:linear-gradient(135deg,#2563eb,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
 .lp-stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
 
 /* SECTIONS */
 .lp-sec{padding:90px 24px;max-width:1200px;margin:0 auto}
-.lp-sec-dark{background:linear-gradient(180deg,#f0f5ff,#e8eeff,#f0f5ff);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.lp-sec-dark{background:rgba(255,255,255,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .lp-sec-dark .lp-sec{padding:90px 24px}
 .lp-sec-hdr{text-align:center;margin-bottom:60px}
 .lp-sec-hdr h2{font-size:clamp(28px,4vw,42px);font-weight:900;margin-bottom:16px;letter-spacing:-1px;line-height:1.1;color:var(--text)}
@@ -489,7 +489,7 @@ textarea{resize:vertical;min-height:56px}
 .pp-faq-a{font-size:13px;color:var(--muted);line-height:1.7}
 
 /* FINAL CTA */
-.lp-final-cta{text-align:center;padding:100px 24px;background:linear-gradient(160deg,#dbeafe,#eff6ff,#ecfdf5)}
+.lp-final-cta{text-align:center;padding:100px 24px;background:rgba(255,255,255,.25);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .lp-final-cta h2{font-size:clamp(28px,4vw,48px);font-weight:900;margin-bottom:16px;letter-spacing:-1.5px;line-height:1.05;color:var(--text)}
 .lp-final-cta p{font-size:17px;color:var(--muted);margin-bottom:36px}
 
@@ -636,7 +636,7 @@ textarea{resize:vertical;min-height:56px}
   </div>
 
   <!-- FEATURES -->
-  <div style="background:#fff">
+  <div style="background:rgba(255,255,255,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
     <div class="lp-sec">
       <div class="lp-sec-hdr">
         <div class="lp-tag">Features</div>
@@ -716,7 +716,7 @@ textarea{resize:vertical;min-height:56px}
   </div>
 
   <!-- EXAMPLE TRADE IDEAS -->
-  <div style="background:#fff">
+  <div style="background:rgba(255,255,255,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">
     <div class="lp-sec">
       <div class="lp-sec-hdr">
         <div class="lp-tag">Trade Ideas Preview</div>
