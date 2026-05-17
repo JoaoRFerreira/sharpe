@@ -2519,12 +2519,8 @@ async function submitAuth(){
       errEl.textContent = 'Account created! Signing you in…';
     }
     if(res.data?.session){
-      sbUser = res.data.session.user;
       closeAuthModal();
-      updateAuthUI();
-      try { await loadProfile(); } catch(pe){ console.warn('loadProfile', pe); }
-      try { await loadTradesFromDb(); } catch(te){ console.warn('loadTrades', te); }
-      renderDashboard();
+      // onAuthStateChange handles the rest
     }
   } catch(e){
     errEl.style.color = 'var(--red)';
@@ -2615,29 +2611,24 @@ async function deleteTradeFromDb(id){
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
 sb.auth.onAuthStateChange(async (event, session) => {
-  try {
-    const user = session?.user || null;
-    if(user && (!sbUser || sbUser.id !== user.id)){
-      sbUser = user;
-      await loadProfile();
-      await loadTradesFromDb();
-      renderDashboard();
-    } else if(!user && sbUser){
-      sbUser = null; sbPlan = 'free';
-      updateAuthUI();
-    }
-  } catch(e){ console.error('authStateChange', e); }
+  console.log('[auth] event:', event, 'user:', session?.user?.id);
+  const user = session?.user || null;
+  if(user){
+    sbUser = user;
+    updateAuthUI(); // update UI immediately, before any async
+    try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
+    try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
+    renderDashboard();
+  } else {
+    sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
+    updateAuthUI();
+    showAdminNav();
+  }
 });
 
 // Restore session on page load
-sb.auth.getSession().then(({ data }) => {
-  if(data?.session?.user){
-    sbUser = data.session.user;
-    updateAuthUI();
-    loadProfile().catch(e=>console.warn('loadProfile',e)).finally(()=>{
-      loadTradesFromDb().catch(e=>console.warn('loadTrades',e)).finally(()=>renderDashboard());
-    });
-  }
+sb.auth.getSession().then(({ data, error }) => {
+  console.log('[getSession] user:', data?.session?.user?.id, 'error:', error);
 });
 
 // ── TRADE IDEAS ────────────────────────────────────────────────
