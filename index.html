@@ -2521,8 +2521,9 @@ async function submitAuth(){
     if(res.data?.session){
       sbUser = res.data.session.user;
       closeAuthModal();
-      await loadProfile();
-      await loadTradesFromDb();
+      updateAuthUI();
+      try { await loadProfile(); } catch(pe){ console.warn('loadProfile', pe); }
+      try { await loadTradesFromDb(); } catch(te){ console.warn('loadTrades', te); }
       renderDashboard();
     }
   } catch(e){
@@ -2631,7 +2632,10 @@ sb.auth.onAuthStateChange(async (event, session) => {
 sb.auth.getSession().then(({ data }) => {
   if(data?.session?.user){
     sbUser = data.session.user;
-    loadProfile().then(()=>{ loadTradesFromDb(); renderDashboard(); });
+    updateAuthUI();
+    loadProfile().catch(e=>console.warn('loadProfile',e)).finally(()=>{
+      loadTradesFromDb().catch(e=>console.warn('loadTrades',e)).finally(()=>renderDashboard());
+    });
   }
 });
 
