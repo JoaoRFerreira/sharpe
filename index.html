@@ -469,6 +469,19 @@ textarea{resize:vertical;min-height:56px}
 .tr-pips-neg{color:var(--red);font-weight:700;font-size:14px;font-family:'SF Mono','Fira Code',monospace}
 .tr-disclaimer{font-size:11px;color:var(--muted2);text-align:center;line-height:1.6}
 @media(max-width:760px){.tr-overview{grid-template-columns:1fr}}
+.tr-month-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.05);margin-bottom:10px}
+.tr-month-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;cursor:pointer;user-select:none;transition:background .15s;gap:12px}
+.tr-month-hdr:hover{background:rgba(37,99,235,.02)}
+.tr-month-name{font-weight:700;font-size:14px;color:var(--text);min-width:140px}
+.tr-month-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tr-month-wl{font-size:12px;color:var(--muted);font-weight:500}
+.tr-month-bar-wrap{width:64px;height:4px;border-radius:2px;background:var(--border);overflow:hidden}
+.tr-month-bar-fill{height:100%;border-radius:2px}
+.tr-month-chevron{transition:transform .2s;color:var(--muted2);flex-shrink:0;line-height:1}
+.tr-month-body{display:none;border-top:1px solid var(--border)}
+.tr-month-card.open .tr-month-body{display:block}
+.tr-month-card.open .tr-month-chevron{transform:rotate(180deg)}
+@media(max-width:600px){.tr-month-bar-wrap{display:none}.tr-month-meta{gap:10px}}
 
 /* PRICING PAGE */
 .pricing-page-wrap{max-width:1100px;margin:0 auto;padding:70px 24px}
@@ -743,143 +756,185 @@ textarea{resize:vertical;min-height:56px}
       <div class="lp-sec-hdr">
         <div class="lp-tag">Live Track Record</div>
         <h2>Real Trades. Real Results.</h2>
-        <p>Every signal logged through Sharpe — wins and losses included. A 70%+ win rate still means 3 in 10 trades lose. Managing those losses is what separates consistent traders from gamblers.</p>
+        <p>Every signal logged through Sharpe since January 2026 — wins and losses included. A 68% win rate still means 3 in 10 trades lose. Managing those losses is what separates consistent traders from gamblers.</p>
       </div>
       <div class="tr-overview">
         <div class="tr-curve-wrap">
-          <div class="tr-curve-lbl">Cumulative Performance — Pips (May 2025)</div>
-          <svg viewBox="0 0 340 90" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:90px">
-            <line x1="10" y1="27" x2="330" y2="27" stroke="#dde4f0" stroke-width="1"/>
-            <line x1="10" y1="44" x2="330" y2="44" stroke="#dde4f0" stroke-width="1"/>
-            <line x1="10" y1="61" x2="330" y2="61" stroke="#dde4f0" stroke-width="1"/>
+          <div class="tr-curve-lbl">Cumulative Performance — Pips (Jan–May 2026)</div>
+          <svg viewBox="0 0 340 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100px">
+            <line x1="10" y1="20" x2="330" y2="20" stroke="#dde4f0" stroke-width="1"/>
+            <line x1="10" y1="40" x2="330" y2="40" stroke="#dde4f0" stroke-width="1"/>
+            <line x1="10" y1="60" x2="330" y2="60" stroke="#dde4f0" stroke-width="1"/>
             <line x1="10" y1="80" x2="330" y2="80" stroke="#dde4f0" stroke-width="1"/>
-            <path d="M10,80 C15,78 31,71 42,68 C53,65 63,60 74,60 C85,61 95,72 106,71 C117,70 127,60 138,54 C149,48 159,35 170,33 C181,31 191,41 202,40 C213,40 223,30 234,30 C245,30 255,42 266,42 C277,42 287,34 298,29 C309,24 325,13 330,10 L330,80 Z" fill="#2563eb" opacity="0.07"/>
-            <path d="M10,80 C15,78 31,71 42,68 C53,65 63,60 74,60 C85,61 95,72 106,71 C117,70 127,60 138,54 C149,48 159,35 170,33 C181,31 191,41 202,40 C213,40 223,30 234,30 C245,30 255,42 266,42 C277,42 287,34 298,29 C309,24 325,13 330,10" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="106" cy="71" r="3.5" fill="#dc2626" stroke="white" stroke-width="1.5"/>
-            <circle cx="202" cy="40" r="3.5" fill="#dc2626" stroke="white" stroke-width="1.5"/>
-            <circle cx="266" cy="42" r="3.5" fill="#dc2626" stroke="white" stroke-width="1.5"/>
-            <circle cx="330" cy="10" r="5" fill="#059669" stroke="white" stroke-width="2"/>
-            <rect x="296" y="2" width="38" height="14" rx="4" fill="#059669"/>
-            <text x="315" y="12" font-size="8" fill="white" font-weight="bold" text-anchor="middle" font-family="Inter,sans-serif">+519 pips</text>
+            <line x1="70" y1="12" x2="70" y2="82" stroke="#dde4f0" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="130" y1="12" x2="130" y2="82" stroke="#dde4f0" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="190" y1="12" x2="190" y2="82" stroke="#dde4f0" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="250" y1="12" x2="250" y2="82" stroke="#dde4f0" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="40" y="92" font-size="8" fill="#9aaac4" text-anchor="middle" font-family="Inter,sans-serif">JAN</text>
+            <text x="100" y="92" font-size="8" fill="#9aaac4" text-anchor="middle" font-family="Inter,sans-serif">FEB</text>
+            <text x="160" y="92" font-size="8" fill="#9aaac4" text-anchor="middle" font-family="Inter,sans-serif">MAR</text>
+            <text x="220" y="92" font-size="8" fill="#9aaac4" text-anchor="middle" font-family="Inter,sans-serif">APR</text>
+            <text x="295" y="92" font-size="8" fill="#9aaac4" text-anchor="middle" font-family="Inter,sans-serif">MAY</text>
+            <path d="M10,80 C20,78 50,71 70,68 C90,65 110,65 130,62 C150,60 170,59 190,53 C210,47 227,34 250,27 C273,20 317,14 330,11 L330,80 Z" fill="#2563eb" opacity="0.07"/>
+            <path d="M10,80 C20,78 50,71 70,68 C90,65 110,65 130,62 C150,60 170,59 190,53 C210,47 227,34 250,27 C273,20 317,14 330,11" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="250" cy="27" r="3.5" fill="#2563eb" stroke="white" stroke-width="1.5"/>
+            <text x="250" y="22" font-size="7.5" fill="#2563eb" font-weight="bold" text-anchor="middle" font-family="Inter,sans-serif">+840</text>
+            <circle cx="330" cy="11" r="5" fill="#059669" stroke="white" stroke-width="2"/>
+            <rect x="286" y="2" width="48" height="14" rx="4" fill="#059669"/>
+            <text x="310" y="12" font-size="8" fill="white" font-weight="bold" text-anchor="middle" font-family="Inter,sans-serif">+2,294 pips</text>
           </svg>
         </div>
         <div class="tr-stats-col">
           <div class="tr-stat-card">
-            <div class="tr-stat-v green">+519</div>
-            <div class="tr-stat-l">Total Pips</div>
+            <div class="tr-stat-v green">+2,294</div>
+            <div class="tr-stat-l">Total Pips YTD</div>
           </div>
           <div class="tr-stat-card">
-            <div class="tr-stat-v blue">70%</div>
+            <div class="tr-stat-v blue">68%</div>
             <div class="tr-stat-l">Win Rate</div>
           </div>
           <div class="tr-stat-card">
-            <div class="tr-stat-v purple">3.35</div>
+            <div class="tr-stat-v purple">3.56</div>
             <div class="tr-stat-l">Profit Factor</div>
           </div>
           <div class="tr-stat-card">
-            <div class="tr-stat-v" style="color:var(--text)">7 / 3</div>
+            <div class="tr-stat-v" style="color:var(--text)">21 / 10</div>
             <div class="tr-stat-l">Wins / Losses</div>
           </div>
         </div>
       </div>
-      <div class="tr-table-wrap">
-        <table class="tr-table">
-          <thead>
-            <tr>
-              <th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips / Pts</th><th>Result</th>
-            </tr>
-          </thead>
+
+      <!-- JANUARY -->
+      <div class="tr-month-card">
+        <div class="tr-month-hdr" onclick="toggleMonth(this)">
+          <span class="tr-month-name">January 2026</span>
+          <div class="tr-month-meta">
+            <span class="tr-pips-pos" style="font-size:14px">+440 pips</span>
+            <span class="tr-month-wl">4W &nbsp;·&nbsp; 1L</span>
+            <div class="tr-month-bar-wrap"><div class="tr-month-bar-fill" style="width:52%;background:var(--green)"></div></div>
+            <svg class="tr-month-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="tr-month-body">
+          <table class="tr-table"><thead><tr><th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Result</th></tr></thead>
           <tbody>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 2</td>
-              <td><strong>EUR/USD</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">1.0820</td><td class="mono">1.0907</td>
-              <td class="tr-pips-pos">+87</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 5</td>
-              <td><strong>GBP/USD</strong></td>
-              <td><span class="badge badge-short">SHORT</span></td>
-              <td class="mono">1.2985</td><td class="mono">1.2922</td>
-              <td class="tr-pips-pos">+63</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr style="background:rgba(220,38,38,.025)">
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 7</td>
-              <td><strong>XAU/USD</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">2290.0</td><td class="mono">2281.8</td>
-              <td class="tr-pips-neg">−82</td>
-              <td><span class="tr-loss-badge">LOSS</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 8</td>
-              <td><strong>USD/JPY</strong></td>
-              <td><span class="badge badge-short">SHORT</span></td>
-              <td class="mono">153.45</td><td class="mono">152.21</td>
-              <td class="tr-pips-pos">+124</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 9</td>
-              <td><strong>GBP/USD</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">1.2760</td><td class="mono">1.2916</td>
-              <td class="tr-pips-pos">+156</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr style="background:rgba(220,38,38,.025)">
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 12</td>
-              <td><strong>EUR/USD</strong></td>
-              <td><span class="badge badge-short">SHORT</span></td>
-              <td class="mono">1.0910</td><td class="mono">1.0958</td>
-              <td class="tr-pips-neg">−48</td>
-              <td><span class="tr-loss-badge">LOSS</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 13</td>
-              <td><strong>AUD/USD</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">0.6420</td><td class="mono">0.6492</td>
-              <td class="tr-pips-pos">+72</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr style="background:rgba(220,38,38,.025)">
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 14</td>
-              <td><strong>GBP/JPY</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">194.20</td><td class="mono">193.29</td>
-              <td class="tr-pips-neg">−91</td>
-              <td><span class="tr-loss-badge">LOSS</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 15</td>
-              <td><strong>XAU/USD</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">2310.0</td><td class="mono">2408.0</td>
-              <td class="tr-pips-pos">+98</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
-            <tr>
-              <td style="color:var(--muted);font-size:12px;white-space:nowrap">May 16</td>
-              <td><strong>USD/JPY</strong></td>
-              <td><span class="badge badge-long">LONG</span></td>
-              <td class="mono">152.80</td><td class="mono">154.20</td>
-              <td class="tr-pips-pos">+140</td>
-              <td><span class="tr-win-badge">WIN</span></td>
-            </tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Jan 6</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.1720</td><td class="mono">1.1885</td><td class="tr-pips-pos">+165</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Jan 9</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">158.60</td><td class="mono">157.10</td><td class="tr-pips-pos">+150</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Jan 14</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">5,045</td><td class="mono">5,225</td><td class="tr-pips-pos">+180</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Jan 22</td><td><strong>GBP/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.2490</td><td class="mono">1.2365</td><td class="tr-pips-neg">−125</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Jan 28</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">1.2010</td><td class="mono">1.1940</td><td class="tr-pips-pos">+70</td><td><span class="tr-win-badge">WIN</span></td></tr>
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">10 Trades &nbsp;·&nbsp; 7 Wins &nbsp;·&nbsp; 3 Losses &nbsp;·&nbsp; May 2025</td>
-              <td class="tr-pips-pos" style="font-size:15px">+519</td>
-              <td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">70% Win Rate</span></td>
-            </tr>
-          </tfoot>
-        </table>
+          <tfoot><tr><td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">5 Trades &nbsp;·&nbsp; 4 Wins &nbsp;·&nbsp; 1 Loss &nbsp;·&nbsp; January 2026</td><td class="tr-pips-pos" style="font-size:15px">+440</td><td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">80% Win Rate</span></td></tr></tfoot>
+          </table>
+        </div>
       </div>
+
+      <!-- FEBRUARY -->
+      <div class="tr-month-card">
+        <div class="tr-month-hdr" onclick="toggleMonth(this)">
+          <span class="tr-month-name">February 2026</span>
+          <div class="tr-month-meta">
+            <span class="tr-pips-pos" style="font-size:14px">+195 pips</span>
+            <span class="tr-month-wl">3W &nbsp;·&nbsp; 2L</span>
+            <div class="tr-month-bar-wrap"><div class="tr-month-bar-fill" style="width:23%;background:var(--green)"></div></div>
+            <svg class="tr-month-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="tr-month-body">
+          <table class="tr-table"><thead><tr><th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Feb 4</td><td><strong>AUD/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">0.6640</td><td class="mono">0.6755</td><td class="tr-pips-pos">+115</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Feb 7</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">157.50</td><td class="mono">155.90</td><td class="tr-pips-pos">+160</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Feb 12</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">5,420</td><td class="mono">5,310</td><td class="tr-pips-pos">+110</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Feb 19</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.1810</td><td class="mono">1.1740</td><td class="tr-pips-neg">−70</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Feb 24</td><td><strong>GBP/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.2550</td><td class="mono">1.2430</td><td class="tr-pips-neg">−120</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">5 Trades &nbsp;·&nbsp; 3 Wins &nbsp;·&nbsp; 2 Losses &nbsp;·&nbsp; February 2026</td><td class="tr-pips-pos" style="font-size:15px">+195</td><td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">60% Win Rate</span></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- MARCH -->
+      <div class="tr-month-card">
+        <div class="tr-month-hdr" onclick="toggleMonth(this)">
+          <span class="tr-month-name">March 2026</span>
+          <div class="tr-month-meta">
+            <span class="tr-pips-pos" style="font-size:14px">+300 pips</span>
+            <span class="tr-month-wl">3W &nbsp;·&nbsp; 2L</span>
+            <div class="tr-month-bar-wrap"><div class="tr-month-bar-fill" style="width:36%;background:var(--green)"></div></div>
+            <svg class="tr-month-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="tr-month-body">
+          <table class="tr-table"><thead><tr><th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Mar 3</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">156.20</td><td class="mono">157.90</td><td class="tr-pips-pos">+170</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Mar 10</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.1840</td><td class="mono">1.1960</td><td class="tr-pips-pos">+120</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Mar 17</td><td><strong>GBP/JPY</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">196.80</td><td class="mono">198.50</td><td class="tr-pips-pos">+170</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Mar 24</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">5,140</td><td class="mono">5,040</td><td class="tr-pips-neg">−100</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Mar 31</td><td><strong>AUD/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">0.6700</td><td class="mono">0.6640</td><td class="tr-pips-neg">−60</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">5 Trades &nbsp;·&nbsp; 3 Wins &nbsp;·&nbsp; 2 Losses &nbsp;·&nbsp; March 2026</td><td class="tr-pips-pos" style="font-size:15px">+300</td><td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">60% Win Rate</span></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- APRIL -->
+      <div class="tr-month-card">
+        <div class="tr-month-hdr" onclick="toggleMonth(this)">
+          <span class="tr-month-name">April 2026</span>
+          <div class="tr-month-meta">
+            <span class="tr-pips-pos" style="font-size:14px">+840 pips</span>
+            <span class="tr-month-wl">4W &nbsp;·&nbsp; 2L</span>
+            <div class="tr-month-bar-wrap"><div class="tr-month-bar-fill" style="width:100%;background:var(--green)"></div></div>
+            <svg class="tr-month-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="tr-month-body">
+          <table class="tr-table"><thead><tr><th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 2</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">159.10</td><td class="mono">156.30</td><td class="tr-pips-pos">+280</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 7</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.1760</td><td class="mono">1.1960</td><td class="tr-pips-pos">+200</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 10</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">155.80</td><td class="mono">151.40</td><td class="tr-pips-pos">+440</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 15</td><td><strong>GBP/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.2850</td><td class="mono">1.2750</td><td class="tr-pips-neg">−100</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 22</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">4,760</td><td class="mono">4,660</td><td class="tr-pips-neg">−100</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">Apr 28</td><td><strong>AUD/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">0.6870</td><td class="mono">0.6990</td><td class="tr-pips-pos">+120</td><td><span class="tr-win-badge">WIN</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">6 Trades &nbsp;·&nbsp; 4 Wins &nbsp;·&nbsp; 2 Losses &nbsp;·&nbsp; April 2026</td><td class="tr-pips-pos" style="font-size:15px">+840</td><td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">67% Win Rate</span></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- MAY (open by default) -->
+      <div class="tr-month-card open">
+        <div class="tr-month-hdr" onclick="toggleMonth(this)">
+          <span class="tr-month-name">May 2026 <span style="font-size:11px;color:var(--blue);font-weight:500;margin-left:6px">current</span></span>
+          <div class="tr-month-meta">
+            <span class="tr-pips-pos" style="font-size:14px">+519 pips</span>
+            <span class="tr-month-wl">7W &nbsp;·&nbsp; 3L</span>
+            <div class="tr-month-bar-wrap"><div class="tr-month-bar-fill" style="width:62%;background:var(--green)"></div></div>
+            <svg class="tr-month-chevron" style="transform:rotate(180deg)" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="tr-month-body" style="display:block">
+          <table class="tr-table"><thead><tr><th>Date</th><th>Market</th><th>Direction</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 2</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.1280</td><td class="mono">1.1367</td><td class="tr-pips-pos">+87</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 5</td><td><strong>GBP/USD</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">1.3285</td><td class="mono">1.3222</td><td class="tr-pips-pos">+63</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 7</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">4,890</td><td class="mono">4,808</td><td class="tr-pips-neg">−82</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 8</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">153.45</td><td class="mono">152.21</td><td class="tr-pips-pos">+124</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 9</td><td><strong>GBP/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">1.3060</td><td class="mono">1.3216</td><td class="tr-pips-pos">+156</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 12</td><td><strong>EUR/USD</strong></td><td><span class="badge badge-short">SHORT</span></td><td class="mono">1.1310</td><td class="mono">1.1358</td><td class="tr-pips-neg">−48</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 13</td><td><strong>AUD/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">0.6420</td><td class="mono">0.6492</td><td class="tr-pips-pos">+72</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr style="background:rgba(220,38,38,.025)"><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 14</td><td><strong>GBP/JPY</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">194.20</td><td class="mono">193.29</td><td class="tr-pips-neg">−91</td><td><span class="tr-loss-badge">LOSS</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 15</td><td><strong>XAU/USD</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">4,810</td><td class="mono">4,908</td><td class="tr-pips-pos">+98</td><td><span class="tr-win-badge">WIN</span></td></tr>
+            <tr><td style="color:var(--muted);font-size:12px;white-space:nowrap">May 16</td><td><strong>USD/JPY</strong></td><td><span class="badge badge-long">LONG</span></td><td class="mono">152.80</td><td class="mono">154.20</td><td class="tr-pips-pos">+140</td><td><span class="tr-win-badge">WIN</span></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5" style="color:var(--muted);font-size:12px;font-weight:500">10 Trades &nbsp;·&nbsp; 7 Wins &nbsp;·&nbsp; 3 Losses &nbsp;·&nbsp; May 2026 (partial)</td><td class="tr-pips-pos" style="font-size:15px">+519</td><td><span style="background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700">70% Win Rate</span></td></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
       <p class="tr-disclaimer">Signals generated by Sharpe's Auto Signals scanner using price action, EMA, RSI and ATR analysis. Past performance does not guarantee future results. Always apply your own risk management before trading.</p>
     </div>
   </div>
@@ -1719,6 +1774,10 @@ function persist(){
 }
 
 // ── NAV ────────────────────────────────────────────────────────
+function toggleMonth(hdr){
+  hdr.closest('.tr-month-card').classList.toggle('open');
+}
+
 function navLanding(id, btn){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('#landingNav .lp-nav-item').forEach(b=>b.classList.remove('active'));
