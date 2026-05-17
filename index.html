@@ -520,6 +520,16 @@ textarea{resize:vertical;min-height:56px}
 .footer-disclaimer{font-size:11px;color:var(--muted2);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 @media(max-width:860px){.footer-top{grid-template-columns:1fr 1fr}.footer-brand{grid-column:1/-1}}
 @media(max-width:520px){.footer-top{grid-template-columns:1fr}.footer-bottom{flex-direction:column;align-items:flex-start}}
+/* LEGAL PAGES */
+.legal-page{max-width:760px;margin:0 auto;padding:40px 0 80px}
+.legal-back{margin-bottom:28px}
+.legal-title{font-size:32px;font-weight:800;letter-spacing:-.5px;color:var(--text);margin-bottom:8px}
+.legal-date{font-size:13px;color:var(--muted);margin-bottom:36px}
+.legal-body{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;box-shadow:0 2px 8px rgba(37,99,235,.05)}
+.legal-body h2{font-size:15px;font-weight:700;color:var(--text);margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.legal-body h2:first-child{margin-top:0}
+.legal-body p{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:0}
+.legal-body code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12px;font-family:'SF Mono','Fira Code',monospace}
 </style>
 </head>
 <body>
@@ -569,7 +579,7 @@ textarea{resize:vertical;min-height:56px}
         </div>
       </div>
       <div class="lp-mock-wrap">
-        <div class="lp-mock-badge">LIVE DEMO</div>
+        <div class="lp-mock-badge">LIVE PREVIEW</div>
         <div class="lp-mock">
           <div class="lp-mock-hdr">
             <div class="lp-mock-dot r"></div><div class="lp-mock-dot y"></div><div class="lp-mock-dot g"></div>
@@ -839,7 +849,7 @@ textarea{resize:vertical;min-height:56px}
 
   <!-- Live Open Positions -->
   <div class="lpos-section-hdr">
-    <span>Open Simulated Positions</span>
+    <span>Open Positions</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
   </div>
@@ -886,7 +896,7 @@ textarea{resize:vertical;min-height:56px}
 <!-- SIMULATOR -->
 <section class="section" id="simulator">
   <div class="section-title">Trade Simulator</div>
-  <div class="info-banner"><strong>Paper Trading Mode</strong> — Set up a trade, review the risk:reward metrics, then log it to your journal as a win, loss, or open position.</div>
+  <div class="info-banner">Set up a trade scenario, review the risk:reward metrics, then log it to your journal as a win, loss, or open position.</div>
   <div class="sim-grid">
     <div class="sim-card">
       <h3>Trade Setup</h3>
@@ -1205,6 +1215,159 @@ textarea{resize:vertical;min-height:56px}
         <div class="pp-faq-q">Is my data secure?</div>
         <div class="pp-faq-a">All data is stored securely in Supabase with row-level security. Your trades and personal data are private and never shared with third parties.</div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- TERMS OF SERVICE -->
+<section class="section" id="terms">
+  <div class="legal-page">
+    <div class="legal-back"><button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="navLanding('landing',null)">← Back to Home</button></div>
+    <h1 class="legal-title">Terms of Service</h1>
+    <p class="legal-date">Last updated: 1 January 2025</p>
+    <div class="legal-body">
+      <h2>1. Agreement to Terms</h2>
+      <p>By accessing or using Sharpe ("the Platform"), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this Platform.</p>
+
+      <h2>2. Description of Service</h2>
+      <p>Sharpe is an analytical and educational platform for traders. It provides tools for trade journaling, portfolio analytics, market signals, market news, and educational content. The Platform is provided for informational and educational purposes only and does not constitute financial advice.</p>
+
+      <h2>3. User Accounts</h2>
+      <p>You must provide accurate and complete information when creating an account. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. You must notify us immediately of any unauthorised use of your account.</p>
+
+      <h2>4. Acceptable Use</h2>
+      <p>You agree not to: (a) use the Platform for any unlawful purpose; (b) attempt to gain unauthorised access to any part of the Platform; (c) transmit any harmful, offensive, or disruptive content; (d) reproduce, duplicate, or resell any part of the Platform without our express written permission; (e) use automated tools to scrape or extract data from the Platform.</p>
+
+      <h2>5. Subscription Plans and Billing</h2>
+      <p>Sharpe offers both free and paid subscription tiers. Paid subscriptions are billed monthly or annually as selected. You may cancel your subscription at any time; cancellation takes effect at the end of the current billing period. We reserve the right to modify pricing with 30 days' notice to existing subscribers.</p>
+
+      <h2>6. Intellectual Property</h2>
+      <p>All content, features, and functionality of the Platform — including but not limited to text, graphics, logos, and software — are owned by Sharpe Analytics Ltd and are protected by applicable intellectual property laws. You may not use our intellectual property without our prior written consent.</p>
+
+      <h2>7. Disclaimer of Warranties</h2>
+      <p>The Platform is provided on an "as is" and "as available" basis without any warranties of any kind, either express or implied. We do not warrant that the Platform will be uninterrupted, error-free, or free of viruses or other harmful components. Market data and signals are provided for informational purposes only and may not be accurate or complete.</p>
+
+      <h2>8. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by law, Sharpe Analytics Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation loss of profits, data, or goodwill, arising out of your use of or inability to use the Platform.</p>
+
+      <h2>9. Governing Law</h2>
+      <p>These Terms shall be governed by and construed in accordance with the laws of England and Wales, without regard to its conflict of law provisions. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+
+      <h2>10. Changes to Terms</h2>
+      <p>We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting. Your continued use of the Platform after any changes constitutes your acceptance of the new Terms. We will notify registered users of material changes by email.</p>
+
+      <h2>11. Contact</h2>
+      <p>For questions about these Terms, please contact us at <strong>legal@sharpe.io</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY POLICY -->
+<section class="section" id="privacy">
+  <div class="legal-page">
+    <div class="legal-back"><button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="navLanding('landing',null)">← Back to Home</button></div>
+    <h1 class="legal-title">Privacy Policy</h1>
+    <p class="legal-date">Last updated: 1 January 2025</p>
+    <div class="legal-body">
+      <h2>1. Introduction</h2>
+      <p>Sharpe Analytics Ltd ("we", "us", "our") is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and share information about you when you use the Sharpe platform.</p>
+
+      <h2>2. Data We Collect</h2>
+      <p><strong>Account data:</strong> Email address, encrypted password, subscription plan, and account preferences.<br>
+      <strong>Usage data:</strong> Pages visited, features used, and interaction logs — used to improve the Platform.<br>
+      <strong>Trade data:</strong> Any trades you log are stored securely in your account and are not shared with third parties.<br>
+      <strong>Payment data:</strong> Processed by Stripe; we do not store your card details.</p>
+
+      <h2>3. How We Use Your Data</h2>
+      <p>We use your data to: (a) provide and maintain the Platform; (b) authenticate your account; (c) process payments; (d) send transactional emails (account activation, billing); (e) improve platform features based on aggregate usage analytics; (f) comply with legal obligations.</p>
+
+      <h2>4. Data Storage and Security</h2>
+      <p>Your data is stored on secure servers provided by Supabase (EU West region). We implement industry-standard security measures including encryption at rest and in transit, row-level security, and access controls. No system is completely secure, and we cannot guarantee absolute security.</p>
+
+      <h2>5. Data Sharing</h2>
+      <p>We do not sell your personal data. We may share data with: (a) Supabase for database and authentication services; (b) Stripe for payment processing; (c) analytics providers on an anonymised, aggregate basis; (d) law enforcement when required by law.</p>
+
+      <h2>6. Your Rights (GDPR)</h2>
+      <p>If you are located in the European Economic Area, you have the right to: access your personal data; correct inaccurate data; request deletion of your data; restrict or object to processing; data portability. To exercise any of these rights, contact us at <strong>privacy@sharpe.io</strong>.</p>
+
+      <h2>7. Data Retention</h2>
+      <p>We retain your account data for as long as your account is active. If you delete your account, we will delete your personal data within 30 days, except where retention is required by law.</p>
+
+      <h2>8. Cookies</h2>
+      <p>We use cookies and similar tracking technologies. Please refer to our <a href="#" onclick="navLanding('cookies',null);return false" style="color:var(--blue)">Cookie Policy</a> for details.</p>
+
+      <h2>9. Contact</h2>
+      <p>For privacy-related enquiries, contact our Data Protection Officer at <strong>privacy@sharpe.io</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COOKIE POLICY -->
+<section class="section" id="cookies">
+  <div class="legal-page">
+    <div class="legal-back"><button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="navLanding('landing',null)">← Back to Home</button></div>
+    <h1 class="legal-title">Cookie Policy</h1>
+    <p class="legal-date">Last updated: 1 January 2025</p>
+    <div class="legal-body">
+      <h2>1. What Are Cookies</h2>
+      <p>Cookies are small text files placed on your device when you visit a website. They allow the website to remember your preferences and actions over time, and to function correctly across sessions.</p>
+
+      <h2>2. Cookies We Use</h2>
+      <p><strong>Essential cookies:</strong> Required for the Platform to function. These include authentication tokens (stored under the key <code>sharpe_auth</code>) that keep you logged in during your session. You cannot opt out of essential cookies.<br><br>
+      <strong>Preference cookies:</strong> Remember your settings such as selected news categories, view preferences, and language.<br><br>
+      <strong>Analytics cookies:</strong> Help us understand how users interact with the Platform in aggregate. We use privacy-respecting analytics that do not track individual users across sites.</p>
+
+      <h2>3. Third-Party Cookies</h2>
+      <p>The Platform may include content or services from third parties (such as embedded charts or fonts) that set their own cookies. We do not control these cookies and recommend reviewing the respective third-party privacy policies.</p>
+
+      <h2>4. Managing Cookies</h2>
+      <p>You can control and delete cookies through your browser settings. Note that disabling essential cookies will prevent you from logging in and using core Platform features. For instructions on managing cookies, visit your browser's help documentation.</p>
+
+      <h2>5. Changes to This Policy</h2>
+      <p>We may update this Cookie Policy from time to time. Changes will be posted on this page with an updated revision date.</p>
+
+      <h2>6. Contact</h2>
+      <p>For questions about our use of cookies, contact us at <strong>privacy@sharpe.io</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- RISK DISCLOSURE -->
+<section class="section" id="risk">
+  <div class="legal-page">
+    <div class="legal-back"><button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="navLanding('landing',null)">← Back to Home</button></div>
+    <h1 class="legal-title">Risk Disclosure</h1>
+    <p class="legal-date">Last updated: 1 January 2025</p>
+    <div class="legal-body">
+      <h2>1. Important Notice</h2>
+      <p>Please read this Risk Disclosure carefully before using the Sharpe platform. Trading financial instruments carries significant risks, and you should not trade with money you cannot afford to lose.</p>
+
+      <h2>2. Not Financial Advice</h2>
+      <p>Nothing on the Sharpe platform constitutes financial advice, investment advice, trading advice, or any other type of advice. All content — including signals, trade ideas, educational materials, and market news — is provided solely for informational and educational purposes. You should not make any investment decision based solely on information provided by Sharpe.</p>
+
+      <h2>3. General Market Risk</h2>
+      <p>Financial markets are inherently unpredictable. Prices of instruments including foreign exchange, commodities, equities, and cryptocurrencies can fall as well as rise rapidly and without warning. You may lose some or all of your capital. Past performance of any market, instrument, strategy, or signal is not indicative of future results.</p>
+
+      <h2>4. Leverage Risk</h2>
+      <p>Many trading instruments are available on margin or with leverage, which amplifies both profits and losses. A small adverse price movement can result in losses greater than your initial deposit. You should fully understand how leverage works and whether it is appropriate for your circumstances before trading.</p>
+
+      <h2>5. Cryptocurrency Risk</h2>
+      <p>Cryptocurrencies are highly volatile and largely unregulated. They are not backed by any government or central bank. Crypto markets operate 24/7 and can experience extreme price swings in short periods. Regulatory changes could significantly affect the value or legality of specific cryptocurrencies.</p>
+
+      <h2>6. Signal and Idea Accuracy</h2>
+      <p>Automated signals and trade ideas generated by the Platform are based on technical analysis algorithms applied to historical and current price data. They are not guarantees of future price movement. Signal accuracy will vary and there will be periods of significant drawdown. Always apply your own analysis and risk management before acting on any signal or idea.</p>
+
+      <h2>7. Data Accuracy</h2>
+      <p>Market data, news, and prices displayed on the Platform are sourced from third-party providers. While we make reasonable efforts to provide accurate and timely data, we cannot guarantee its accuracy, completeness, or timeliness. Data may be delayed and should not be relied upon for real-time trading decisions.</p>
+
+      <h2>8. Regulatory Status</h2>
+      <p>Sharpe Analytics Ltd is not a regulated financial institution, broker, or investment adviser. We do not hold any financial services licence. Users are responsible for ensuring that their trading activities comply with applicable laws and regulations in their jurisdiction.</p>
+
+      <h2>9. Seek Professional Advice</h2>
+      <p>Before making any investment or trading decision, you should consider seeking advice from an independent financial adviser who is authorised and regulated in your jurisdiction and who has considered your specific financial situation, objectives, and risk tolerance.</p>
+
+      <h2>10. Contact</h2>
+      <p>For queries related to risk disclosures, contact us at <strong>legal@sharpe.io</strong>.</p>
     </div>
   </div>
 </section>
@@ -2117,7 +2280,7 @@ function renderLivePositions(){
   if(!open.length){
     if(dot) dot.style.display='none';
     if(lbl) lbl.textContent='';
-    grid.innerHTML='<div class="no-open-msg">No open simulated positions. Use the Signals tab or + Add Trade to open one.</div>';
+    grid.innerHTML='<div class="no-open-msg">No open positions. Use the Signals tab or + Add Trade to open one.</div>';
     return;
   }
   if(dot) dot.style.display='inline-block';
@@ -3545,10 +3708,10 @@ document.getElementById('s_date').value = new Date().toISOString().split('T')[0]
       <div class="footer-col">
         <h4>Legal</h4>
         <ul>
-          <li><a href="#">Terms of Service</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Cookie Policy</a></li>
-          <li><a href="#">Risk Disclosure</a></li>
+          <li><a href="#" onclick="navLanding('terms',null);return false">Terms of Service</a></li>
+          <li><a href="#" onclick="navLanding('privacy',null);return false">Privacy Policy</a></li>
+          <li><a href="#" onclick="navLanding('cookies',null);return false">Cookie Policy</a></li>
+          <li><a href="#" onclick="navLanding('risk',null);return false">Risk Disclosure</a></li>
         </ul>
       </div>
     </div>
@@ -3556,8 +3719,9 @@ document.getElementById('s_date').value = new Date().toISOString().split('T')[0]
     <div class="footer-bottom">
       <p>&copy; 2025 Sharpe Analytics Ltd. All rights reserved.</p>
       <div class="footer-bottom-links">
-        <a href="#">Terms</a>
-        <a href="#">Privacy</a>
+        <a href="#" onclick="navLanding('terms',null);return false">Terms</a>
+        <a href="#" onclick="navLanding('privacy',null);return false">Privacy</a>
+        <a href="#" onclick="navLanding('risk',null);return false">Risk Disclosure</a>
         <a href="#">Support</a>
       </div>
     </div>
