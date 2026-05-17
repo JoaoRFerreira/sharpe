@@ -2618,15 +2618,18 @@ async function deleteTradeFromDb(id){
 }
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
-sb.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange((event, session) => {
   console.log('[auth] event:', event, 'user:', session?.user?.id);
   const user = session?.user || null;
   if(user){
     sbUser = user;
-    updateAuthUI(); // update UI immediately, before any async
-    try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
-    try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
-    renderDashboard();
+    updateAuthUI();
+    // defer async work so signInWithPassword resolves immediately
+    setTimeout(async () => {
+      try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
+      try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
+      renderDashboard();
+    }, 0);
   } else {
     sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
     updateAuthUI();
