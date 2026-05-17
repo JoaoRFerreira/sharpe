@@ -2416,7 +2416,9 @@ function initNews(){
 // ── SUPABASE ───────────────────────────────────────────────────
 const SUPA_URL  = 'https://qlvbgkipkxtwaqwpcmuj.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdmJna2lwa3h0d2Fxd3BjbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTY3MjcsImV4cCI6MjA5NDU5MjcyN30.iATkgXOfVYDJp1meE2igoJ33mVD3tJiNww4hyR4hRDs';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
+  auth: { flowType: 'implicit', detectSessionInUrl: true, persistSession: true }
+});
 
 let sbUser = null;   // current auth user
 let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
