@@ -1,0 +1,2792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharpe — Trading Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;
+  --yellow:#d29922;--purple:#bc8cff;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+/* HEADER */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:60px;position:sticky;top:0;z-index:100;gap:32px}
+.logo{font-size:18px;font-weight:700;color:var(--blue);letter-spacing:-.5px;white-space:nowrap}
+.logo span{color:var(--green)}
+nav{display:flex;gap:2px}
+nav button{background:none;border:none;color:var(--muted);padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s}
+nav button:hover{color:var(--text);background:rgba(255,255,255,.06)}
+nav button.active{color:var(--blue);background:rgba(88,166,255,.12)}
+/* MAIN */
+.main{padding:24px;max-width:1440px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.section-title{font-size:20px;font-weight:600;margin-bottom:20px}
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.stat-card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-card .val{font-size:26px;font-weight:700;line-height:1}
+.stat-card .sub{font-size:11px;color:var(--muted);margin-top:5px}
+.green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.yellow{color:var(--yellow)}.purple{color:var(--purple)}
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.chart-card h3{font-size:12px;color:var(--muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+/* TABLE */
+.table-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:rgba(255,255,255,.03)}
+th{padding:11px 14px;text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:13px 14px;border-bottom:1px solid rgba(48,54,61,.5);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+tfoot td{border-top:2px solid var(--border);font-weight:600;background:rgba(255,255,255,.03)}
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.4px}
+.badge-long{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.badge-short{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+.badge-win{background:rgba(63,185,80,.12);color:var(--green)}
+.badge-loss{background:rgba(248,81,73,.12);color:var(--red)}
+.badge-open{background:rgba(88,166,255,.12);color:var(--blue)}
+.pips{font-size:17px;font-weight:700}
+.pips.pos{color:var(--green)}.pips.neg{color:var(--red)}
+.mono{font-family:'SF Mono','Fira Code',monospace;font-size:12px}
+.reason{font-size:11px;color:var(--muted);margin-top:3px;max-width:240px;line-height:1.5}
+/* BUTTONS */
+.btn{padding:7px 15px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#79b8ff}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text)}.btn-ghost:hover{background:rgba(255,255,255,.06)}
+.btn-danger{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.25);padding:3px 9px;font-size:12px}.btn-danger:hover{background:rgba(248,81,73,.25)}
+.btn-win{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.3);flex:1}.btn-win:hover{background:rgba(63,185,80,.25)}
+.btn-loss{background:rgba(248,81,73,.12);color:var(--red);border:1px solid rgba(248,81,73,.3);flex:1}.btn-loss:hover{background:rgba(248,81,73,.25)}
+.filter-row{display:flex;gap:8px;align-items:center}
+.filter-row select{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:26px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;margin-bottom:22px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:11px;color:var(--muted);font-weight:500}
+input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 11px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:56px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+/* SIMULATOR */
+.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.sim-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:22px}
+.sim-card h3{font-size:15px;font-weight:600;margin-bottom:18px}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(48,54,61,.4)}
+.metric-row:last-of-type{border-bottom:none}
+.metric-lbl{font-size:12px;color:var(--muted)}
+.metric-val{font-size:14px;font-weight:600}
+.rr-box{text-align:center;padding:18px;background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:8px;margin-bottom:18px}
+.rr-num{font-size:34px;font-weight:700;color:var(--blue)}
+.rr-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+.sim-btns{display:flex;gap:10px;margin-top:16px}
+.info-banner{background:rgba(88,166,255,.07);border:1px solid rgba(88,166,255,.2);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.info-banner strong{color:var(--blue)}
+/* LEARNING */
+.learn-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.ltab{padding:7px 15px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;transition:all .15s}
+.ltab:hover{color:var(--text);border-color:var(--blue)}
+.ltab.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue)}
+.learn-content{display:none}.learn-content.active{display:block}
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.pc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.pc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.pc-name{font-size:14px;font-weight:600}
+.ptype{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;white-space:nowrap}
+.t-rev{background:rgba(210,153,34,.15);color:var(--yellow)}
+.t-cont{background:rgba(88,166,255,.15);color:var(--blue)}
+.t-bull{background:rgba(63,185,80,.15);color:var(--green)}
+.t-bear{background:rgba(248,81,73,.15);color:var(--red)}
+.t-neut{background:rgba(188,140,255,.15);color:var(--purple)}
+.rel-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin:10px 0 5px;overflow:hidden}
+.rel-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--green))}
+.rel-lbl{font-size:10px;color:var(--muted);margin-bottom:10px}
+.pc-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.pc-rules{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.pc-rules li{font-size:11px;color:var(--muted);padding:2px 0 2px 14px;position:relative;list-style:none;line-height:1.4}
+.pc-rules li::before{content:'→';position:absolute;left:0;color:var(--blue);font-size:10px}
+/* SIGNALS */
+.sig-api-bar{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.sig-api-bar label{white-space:nowrap;font-size:12px;font-weight:600;color:var(--text)}
+.sig-api-bar input{flex:1;min-width:180px}
+.api-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.api-dot.ok{background:var(--green)}.api-dot.demo{background:var(--yellow)}.api-dot.err{background:var(--red)}
+.prov-tabs{display:flex;gap:4px;flex-shrink:0}
+.prov-tab{padding:4px 11px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap}
+.prov-tab.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue);font-weight:600}
+.tf-btn:disabled{opacity:.35;cursor:not-allowed}
+.api-lbl{font-size:12px}
+.scan-bar{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.last-scan{font-size:11px;color:var(--muted)}
+.tf-toggle{display:flex;gap:4px}
+.tf-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px}
+.tf-btn.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue)}
+.ovw-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.market-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.mkt-pill{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;transition:border-color .2s;cursor:default}
+.mkt-pill.bull{border-color:rgba(63,185,80,.25)}.mkt-pill.bear{border-color:rgba(248,81,73,.25)}
+.mp-sym{font-size:13px;font-weight:600;margin-bottom:3px}
+.mp-price{font-size:13px;font-family:'SF Mono','Fira Code',monospace;margin-bottom:3px}
+.mp-meta{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--muted)}
+.mp-rsi{padding:1px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.rsi-ob{background:rgba(248,81,73,.15);color:var(--red)}
+.rsi-os{background:rgba(63,185,80,.15);color:var(--green)}
+.rsi-ok{background:rgba(88,166,255,.12);color:var(--blue)}
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.sig-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;transition:border-color .2s}
+.sig-card.bull-card{border-color:rgba(63,185,80,.3)}.sig-card.bear-card{border-color:rgba(248,81,73,.3)}
+.sig-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.sig-sym{font-size:16px;font-weight:700}
+.sig-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sig-pattern{font-size:19px;font-weight:700;margin-bottom:3px}
+.sig-dir-line{font-size:12px;color:var(--muted);margin-bottom:14px}
+.sig-prices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.spbox{background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px}
+.spbox-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
+.spbox-val{font-size:12px;font-weight:600;font-family:'SF Mono','Fira Code',monospace}
+.sig-rr{display:flex;gap:16px;font-size:12px;margin-bottom:12px;flex-wrap:wrap}
+.sig-rr span{color:var(--muted)}.sig-rr strong{color:var(--text)}
+.conf-row{margin-bottom:14px}
+.conf-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.conf-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px}
+.cf-high{background:linear-gradient(90deg,#3fb950,#58a6ff)}
+.cf-med{background:linear-gradient(90deg,#d29922,#e8943a)}
+.cf-low{background:rgba(248,81,73,.7)}
+.sig-meta-row{display:flex;gap:12px;font-size:11px;color:var(--muted);margin-bottom:16px;flex-wrap:wrap}
+.sig-actions{display:flex;gap:8px}
+.sig-actions .btn{flex:1;font-size:12px;padding:7px}
+.demo-badge{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(210,153,34,.15);color:var(--yellow);font-weight:700;border:1px solid rgba(210,153,34,.3)}
+.no-sig-msg{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:48px;text-align:center;color:var(--muted);font-size:13px}
+.sig-spinner{text-align:center;padding:60px;color:var(--muted);font-size:13px}
+.spin-icon{display:inline-block;font-size:28px;animation:spin 1s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.api-note{font-size:11px;color:var(--muted);margin-top:4px}
+.api-note a{color:var(--blue);text-decoration:none}
+/* AUTO ACTIONS BAR */
+.auto-bar{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap}
+.auto-chk{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;white-space:nowrap;user-select:none}
+.auto-chk input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.auto-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.auto-conf{width:44px;text-align:center;padding:2px 4px;font-size:12px}
+/* OANDA PANEL */
+.oanda-panel{background:var(--card);border:1px solid rgba(88,166,255,.25);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+.oanda-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px 16px}
+.oanda-grid .fg label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+/* NEWS TAB */
+.news-controls{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.news-cat-bar{display:flex;gap:4px;flex-wrap:wrap}
+.ncat{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap}
+.ncat.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue);font-weight:600}
+.news-updated{font-size:11px;color:var(--muted);white-space:nowrap}
+.news-grid-inner{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.news-card{display:block;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;transition:border-color .2s,transform .12s}
+.news-card:hover{border-color:rgba(88,166,255,.4);transform:translateY(-1px)}
+.news-thumb{height:130px;background-size:cover;background-position:center;background-color:rgba(255,255,255,.04);flex-shrink:0}
+.news-body{padding:14px}
+.news-meta{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.news-source{font-size:11px;font-weight:700;color:var(--blue)}
+.news-cat-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.news-time{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap}
+.news-title{font-size:13px;font-weight:600;line-height:1.45;margin-bottom:6px;color:var(--text)}
+.news-desc{font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news-loading{text-align:center;padding:60px;color:var(--muted);font-size:13px}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0}
+.vt-btn{padding:5px 10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1}
+.vt-btn.active{background:rgba(88,166,255,.14);color:var(--blue)}
+.nsig{display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap}
+.nsig-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.3px}
+.nb-bull{background:rgba(63,185,80,.15);color:var(--green)}
+.nb-bear{background:rgba(248,81,73,.15);color:var(--red)}
+.nb-neut{background:rgba(139,148,158,.12);color:var(--muted)}
+.nb-hi{background:rgba(248,81,73,.12);color:var(--red)}
+.nb-med{background:rgba(210,153,34,.12);color:var(--yellow)}
+.nb-low{background:rgba(139,148,158,.1);color:var(--muted)}
+.nsig-reason{font-size:10px;color:var(--muted)}
+.news-list-inner{display:flex;flex-direction:column;gap:6px}
+.nlc{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 14px;text-decoration:none;color:inherit;transition:border-color .18s}
+.nlc:hover{border-color:rgba(88,166,255,.4)}
+.nlc-badges{display:flex;flex-direction:column;gap:4px;flex-shrink:0;width:70px;align-items:center}
+.nlc-body{flex:1;min-width:0}
+.nlc-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.nlc-title{font-size:12px;font-weight:600;line-height:1.4;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* TRADE IDEAS */
+.ideas-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.ideas-filter{display:flex;gap:4px;flex-wrap:wrap}
+.ifilter{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s}
+.ifilter:hover{color:var(--text);border-color:var(--blue)}
+.ifilter.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue);font-weight:600}
+.ideas-date{font-size:11px;color:var(--muted);white-space:nowrap}
+.idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+.idea-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .2s}
+.idea-card.long-card{border-color:rgba(63,185,80,.3)}
+.idea-card.short-card{border-color:rgba(248,81,73,.3)}
+.idea-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.idea-sym{font-size:16px;font-weight:700}
+.idea-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.idea-type-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;background:rgba(88,166,255,.12);color:var(--blue)}
+.idea-strat-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.idea-strat{font-size:11px;color:var(--muted)}
+.idea-tf{font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(188,140,255,.12);color:var(--purple);font-weight:600}
+.idea-rr-row{display:flex;gap:16px;font-size:12px;margin-bottom:12px;flex-wrap:wrap}
+.idea-rr-row span{color:var(--muted)}.idea-rr-row strong{color:var(--text)}
+.idea-why{background:rgba(88,166,255,.04);border-left:3px solid rgba(88,166,255,.35);border-radius:0 6px 6px 0;padding:10px 12px;margin:12px 0 8px;font-size:11px;color:var(--muted);line-height:1.65}
+.idea-why strong{color:var(--blue);font-size:10px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px}
+.idea-risk{background:rgba(210,153,34,.04);border-left:3px solid rgba(210,153,34,.35);border-radius:0 6px 6px 0;padding:8px 12px;font-size:11px;color:var(--muted);line-height:1.55}
+.idea-risk strong{color:var(--yellow);font-size:10px;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+/* PATTERN IMAGES */
+.pc-img{border-radius:6px;overflow:hidden;margin:10px 0 6px;background:rgba(255,255,255,.03)}
+/* PRICE ACTION ENHANCEMENTS */
+.sig-pa-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.struct-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.3px}
+.struct-bull{background:rgba(63,185,80,.15);color:var(--green)}
+.struct-bear{background:rgba(248,81,73,.15);color:var(--red)}
+.struct-rang{background:rgba(139,148,158,.15);color:var(--muted)}
+.kl-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:rgba(210,153,34,.15);color:var(--yellow);border:1px solid rgba(210,153,34,.25)}
+.vol-badge{font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(88,166,255,.1);color:var(--blue)}
+.vol-surge{background:rgba(63,185,80,.12);color:var(--green)}
+.sig-reasons{margin-bottom:14px;border-top:1px solid var(--border);padding-top:10px}
+.sig-reasons-title{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;font-weight:600}
+.sig-reasons ul{margin:0;padding-left:14px}
+.sig-reasons li{font-size:11px;color:var(--muted);margin-bottom:3px;line-height:1.4}
+/* LIVE POSITIONS */
+.lpos-section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.lpos-section-hdr span{font-weight:600;font-size:14px}
+.lpos-section-hdr .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.4s ease infinite}
+.lpos-section-hdr .live-lbl{font-size:11px;color:var(--muted)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.lpos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px}
+.lpos-card{background:var(--card);border-radius:10px;padding:16px}
+.lpos-card.winning{border:1px solid rgba(63,185,80,.35)}.lpos-card.losing{border:1px solid rgba(248,81,73,.35)}.lpos-card.neutral{border:1px solid var(--border)}
+.lpos-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.lpos-left{display:flex;align-items:center;gap:7px}
+.lpos-sym{font-size:14px;font-weight:700}
+.lpos-pnl{font-size:22px;font-weight:700;line-height:1}
+.lpos-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.lpos-row .lpos-lbl{color:var(--muted)}.lpos-row .lpos-val{font-family:'SF Mono','Fira Code',monospace;font-size:12px;font-weight:600}
+.prog-wrap{margin:10px 0 12px}
+.prog-track{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;transition:width .5s}
+.prog-labs{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px}
+.lpos-close{width:100%;padding:7px 12px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s}
+.lpos-close:hover{background:rgba(248,81,73,.12);border-color:var(--red);color:var(--red)}
+.no-open-msg{color:var(--muted);font-size:12px;padding:8px 0 22px}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.4s ease infinite}
+/* TOAST */
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:11px 18px;font-size:13px;font-weight:500;opacity:0;transform:translateX(28px);transition:all .3s;max-width:320px;white-space:nowrap}
+.toast.in{opacity:1;transform:none}
+.tw{border-color:rgba(63,185,80,.5)!important;color:var(--green)}
+.tl{border-color:rgba(248,81,73,.5)!important;color:var(--red)}
+.ti{border-color:rgba(88,166,255,.5)!important;color:var(--blue)}
+/* live P&L in journal */
+.live-pnl{font-size:10px;color:var(--muted);display:block;margin-top:2px;font-family:'SF Mono','Fira Code',monospace}
+/* MISC */
+.empty{text-align:center;padding:50px 20px;color:var(--muted);font-size:13px}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+@media(max-width:800px){.charts-row,.sim-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+/* AUTH */
+.auth-area{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.plan-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;letter-spacing:.5px;text-transform:uppercase}
+.plan-free{background:rgba(139,148,158,.15);color:var(--muted);border:1px solid rgba(139,148,158,.3)}
+.plan-essential{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3)}
+.plan-pro{background:rgba(188,140,255,.15);color:var(--purple);border:1px solid rgba(188,140,255,.3)}
+.auth-email{font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:32px;width:420px;max-width:95vw}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border)}
+.atab{background:none;border:none;color:var(--muted);padding:8px 18px;cursor:pointer;font-size:14px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.atab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.auth-err{font-size:12px;color:var(--red);margin-top:10px;min-height:16px}
+.auth-sep{text-align:center;color:var(--muted);font-size:11px;margin:16px 0;position:relative}
+.auth-sep::before{content:'';position:absolute;left:0;top:50%;width:100%;height:1px;background:var(--border)}
+.auth-sep span{background:var(--card);padding:0 10px;position:relative}
+/* GATE OVERLAY */
+.gate-overlay{position:absolute;inset:0;background:rgba(13,17,23,.85);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:10;backdrop-filter:blur(3px)}
+.gate-icon{font-size:28px}
+.gate-msg{font-size:13px;color:var(--text);font-weight:600}
+.gate-sub{font-size:11px;color:var(--muted)}
+/* PRICING MODAL */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+@media(max-width:600px){.pricing-grid{grid-template-columns:1fr}}
+.price-card{border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center}
+.price-card.featured{border-color:var(--blue);background:rgba(88,166,255,.05)}
+.price-name{font-size:13px;font-weight:700;margin-bottom:6px}
+.price-amt{font-size:28px;font-weight:800;margin-bottom:2px}
+.price-per{font-size:11px;color:var(--muted);margin-bottom:14px}
+.price-feats{list-style:none;text-align:left;font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:5px;margin-bottom:16px}
+.price-feats li::before{content:'✓ ';color:var(--green)}
+.price-feats li.no::before{content:'✗ ';color:var(--red)}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">Sharpe<span>.</span></div>
+  <nav>
+    <button class="active" onclick="nav('dashboard',this)">Dashboard</button>
+    <button onclick="nav('journal',this)">Trade Journal</button>
+    <button onclick="nav('simulator',this)">Simulator</button>
+    <button onclick="nav('learning',this)">Learning Center</button>
+    <button onclick="nav('signals',this)">⚡ Auto Signals</button>
+    <button onclick="nav('news',this)">📰 News</button>
+    <button onclick="nav('ideas',this)">💡 Trade Ideas</button>
+  </nav>
+  <div class="auth-area" id="authArea">
+    <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
+    <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signup')">Sign Up Free</button>
+  </div>
+</header>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<section class="section active" id="dashboard">
+  <div class="section-title">Portfolio Dashboard</div>
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- Live Open Positions -->
+  <div class="lpos-section-hdr">
+    <span>Open Simulated Positions</span>
+    <span class="live-dot" id="priceDot" style="display:none"></span>
+    <span class="live-lbl" id="priceLbl"></span>
+  </div>
+  <div id="livePosGrid" class="lpos-grid"></div>
+
+  <div class="charts-row">
+    <div class="chart-card"><h3>Equity Curve — Cumulative Pips</h3><canvas id="eqChart"></canvas></div>
+    <div class="chart-card"><h3>Win / Loss Split</h3><canvas id="wlChart"></canvas></div>
+  </div>
+  <div class="chart-card"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
+</section>
+
+<!-- JOURNAL -->
+<section class="section" id="journal">
+  <div class="table-controls">
+    <div class="section-title" style="margin:0">Trade Journal</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="filter-row">
+        <select id="fMkt" onchange="renderJournal()"><option value="">All Markets</option></select>
+        <select id="fStat" onchange="renderJournal()">
+          <option value="">All Status</option>
+          <option value="win">Wins</option>
+          <option value="loss">Losses</option>
+          <option value="open">Open</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Trade</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Market</th><th>Dir</th>
+        <th>Entry / Reason</th><th>Stop Loss</th>
+        <th>Exit / Reason</th><th>Pips / Pts</th>
+        <th>Status</th><th></th>
+      </tr></thead>
+      <tbody id="tBody"></tbody>
+      <tfoot id="tFoot"></tfoot>
+    </table>
+  </div>
+</section>
+
+<!-- SIMULATOR -->
+<section class="section" id="simulator">
+  <div class="section-title">Trade Simulator</div>
+  <div class="info-banner"><strong>Paper Trading Mode</strong> — Set up a trade, review the risk:reward metrics, then log it to your journal as a win, loss, or open position.</div>
+  <div class="sim-grid">
+    <div class="sim-card">
+      <h3>Trade Setup</h3>
+      <div class="form-grid">
+        <div class="fg"><label>Market</label><input id="s_mkt" placeholder="e.g. EUR/USD" oninput="calcSim()"></div>
+        <div class="fg"><label>Date</label><input type="date" id="s_date"></div>
+        <div class="fg"><label>Direction</label>
+          <select id="s_dir" onchange="calcSim()"><option>LONG</option><option>SHORT</option></select></div>
+        <div class="fg"><label>Market Type</label>
+          <select id="s_type" onchange="calcSim()">
+            <option value="forex">Forex (÷0.0001)</option>
+            <option value="jpy">Forex JPY (÷0.01)</option>
+            <option value="pts">Index / Commodity (pts)</option>
+          </select></div>
+        <div class="fg"><label>Entry Price</label><input type="number" id="s_entry" step="any" oninput="calcSim()"></div>
+        <div class="fg"><label>Stop Loss</label><input type="number" id="s_sl" step="any" oninput="calcSim()"></div>
+        <div class="fg"><label>Take Profit</label><input type="number" id="s_tp" step="any" oninput="calcSim()"></div>
+        <div class="fg"><label>Account ($)</label><input type="number" id="s_acc" value="10000" oninput="calcSim()"></div>
+        <div class="fg"><label>Risk %</label><input type="number" id="s_risk" value="1" step="0.1" oninput="calcSim()"></div>
+        <div class="fg full"><label>Entry Reason</label><textarea id="s_er" placeholder="e.g. Daily pin bar at key support + 4H bullish engulfing"></textarea></div>
+        <div class="fg full"><label>Exit Reason (fill after close)</label><textarea id="s_xr" placeholder="e.g. Target at weekly resistance, bearish engulfing formed"></textarea></div>
+      </div>
+    </div>
+    <div class="sim-card">
+      <h3>Trade Metrics</h3>
+      <div class="rr-box"><div class="rr-num" id="rrNum">—</div><div class="rr-lbl">Risk : Reward Ratio</div></div>
+      <div class="metric-row"><span class="metric-lbl">Risk (pips/pts)</span><span class="metric-val" id="mRisk">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Reward (pips/pts)</span><span class="metric-val" id="mRew">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Risk ($)</span><span class="metric-val red" id="mRiskU">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Reward ($)</span><span class="metric-val green" id="mRewU">—</span></div>
+      <div class="metric-row"><span class="metric-lbl">Min win rate needed</span><span class="metric-val" id="mMinWR">—</span></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:18px;margin-bottom:8px">Log to Trade Journal:</p>
+      <div class="sim-btns">
+        <button class="btn btn-win" onclick="logSim('win')">Win (TP Hit)</button>
+        <button class="btn btn-loss" onclick="logSim('loss')">Loss (SL Hit)</button>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="logSim('open')">Log as Open Trade</button>
+    </div>
+  </div>
+</section>
+
+<!-- LEARNING -->
+<section class="section" id="learning">
+  <div class="section-title">Learning Center</div>
+  <div class="learn-tabs">
+    <button class="ltab active" onclick="ltab('chart',this)">Chart Patterns</button>
+    <button class="ltab" onclick="ltab('candle',this)">Candlesticks</button>
+    <button class="ltab" onclick="ltab('harmonic',this)">Harmonics & Fibonacci</button>
+    <button class="ltab" onclick="ltab('gap',this)">Gap Theory</button>
+    <button class="ltab" onclick="ltab('scalein',this)">Scale-In Technique</button>
+    <button class="ltab" onclick="ltab('risk',this)">Risk Management</button>
+    <button class="ltab" onclick="ltab('etf',this)">ETF Strategies</button>
+    <button class="ltab" onclick="ltab('crypto',this)">Crypto Strategies</button>
+  </div>
+  <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
+  <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
+  <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
+  <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
+  <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
+  <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
+  <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
+  <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
+</section>
+
+<!-- SIGNALS -->
+<section class="section" id="signals">
+  <div class="section-title">⚡ Auto Signals — Daily Market Analysis</div>
+
+  <!-- API Settings -->
+  <div class="sig-api-bar">
+    <div class="prov-tabs">
+      <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
+      <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
+      <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
+    </div>
+    <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex:1;min-width:240px">
+      <input id="apiKeyInput" type="password" placeholder="" style="flex:1">
+      <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
+    </div>
+    <span style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+      <span class="api-dot demo" id="apiDot"></span>
+      <span class="api-lbl" id="apiLbl">Demo Mode</span>
+    </span>
+  </div>
+
+  <!-- Scan Controls -->
+  <div class="scan-bar">
+    <div class="tf-toggle">
+      <button class="tf-btn active" id="tfDay" onclick="setTf('1day',this)">Daily</button>
+      <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
+    </div>
+    <button class="btn btn-primary" id="scanBtn" onclick="runScan()">⟳ Scan Markets</button>
+    <span class="last-scan" id="lastScanLbl">No scan run yet — click to generate today's signals</span>
+  </div>
+
+  <!-- Auto Actions Bar -->
+  <div class="auto-bar">
+    <label class="auto-chk">
+      <input type="checkbox" id="autoLogChk" onchange="setAutoLog(this.checked)">
+      <span>Auto-log signals ≥</span>
+    </label>
+    <input type="number" id="autoLogConf" class="auto-conf" value="75" min="50" max="93" disabled onchange="updateAutoConf()">
+    <span style="font-size:12px;color:var(--muted)">% confidence</span>
+    <div class="auto-sep"></div>
+    <div id="autoExecWrap" style="display:none;align-items:center;gap:12px">
+      <label class="auto-chk">
+        <input type="checkbox" id="autoExecChk" onchange="setAutoExec(this.checked)">
+        <span>Auto-execute via OANDA</span>
+      </label>
+      <div class="auto-sep"></div>
+    </div>
+    <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-left:auto" onclick="toggleOandaPanel()">⚙ OANDA Setup</button>
+  </div>
+
+  <!-- OANDA Panel -->
+  <div id="oandaPanel" class="oanda-panel" style="display:none">
+    <div class="oanda-grid">
+      <div class="fg">
+        <label>API Token</label>
+        <input type="password" id="oandaTokenInput" placeholder="Personal access token from OANDA">
+      </div>
+      <div class="fg">
+        <label>Account ID</label>
+        <input type="text" id="oandaAccountInput" placeholder="001-001-XXXXXXX-001">
+      </div>
+      <div class="fg">
+        <label>Risk per trade</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="oandaRiskInput" value="1" min="0.1" max="5" step="0.1" style="width:60px">
+          <span style="font-size:12px;color:var(--muted)">% of account balance</span>
+        </div>
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <label class="auto-chk" style="margin-bottom:2px">
+          <input type="checkbox" id="oandaPracticeChk" checked onchange="setOandaPractice(this.checked)">
+          Practice account
+        </label>
+        <button class="btn btn-primary" onclick="connectOanda()">Connect</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:12px">
+      <span class="api-dot demo" id="oandaDot"></span>
+      <span class="api-lbl" id="oandaLbl">Not connected — free practice account at <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">oanda.com</a></span>
+    </div>
+  </div>
+
+  <!-- Market Overview Pills -->
+  <div class="ovw-label">Market Overview</div>
+  <div class="market-strip" id="mktStrip">
+    <div style="color:var(--muted);font-size:12px;padding:8px 0">Run a scan to populate market overview.</div>
+  </div>
+
+  <!-- Signal Cards -->
+  <div class="ovw-label" style="margin-top:8px">Active Signals</div>
+  <div id="sigContainer">
+    <div class="no-sig-msg">Click <strong>Scan Markets</strong> to analyse the market and generate today's trade signals based on price action, EMA trend, RSI and ATR.</div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section class="section" id="news">
+  <div class="section-title">📰 Market News</div>
+  <div class="news-controls">
+    <div class="news-cat-bar">
+      <button class="ncat active" onclick="setNewsCat('all',this)">All</button>
+      <button class="ncat" onclick="setNewsCat('markets',this)">Markets &amp; Forex</button>
+      <button class="ncat" onclick="setNewsCat('crypto',this)">Crypto</button>
+      <button class="ncat" onclick="setNewsCat('etfs',this)">ETFs &amp; Funds</button>
+    </div>
+    <span class="news-updated" id="newsUpdated"></span>
+    <div class="view-toggle">
+      <button class="vt-btn active" id="vtGrid" onclick="setNewsView('grid',this)" title="Grid view">⊞</button>
+      <button class="vt-btn" id="vtList" onclick="setNewsView('list',this)" title="List view">≡</button>
+    </div>
+    <button class="btn btn-primary" id="newsRefreshBtn" onclick="loadNews()" style="font-size:12px;padding:6px 14px">⟳ Refresh</button>
+  </div>
+  <div id="newsGrid">
+    <div class="no-sig-msg">Click <strong>Refresh</strong> to load the latest market news from Reuters, MarketWatch, CoinDesk, CoinTelegraph and more.</div>
+  </div>
+</section>
+
+<!-- TRADE IDEAS -->
+<section class="section" id="ideas">
+  <div class="section-title">💡 Daily Trade Ideas</div>
+  <div class="info-banner" style="margin-bottom:16px">
+    Ideas refresh each day, drawn from 8 strategies across Forex, ETFs, and Crypto: Fibonacci retracements, chart patterns, candlestick signals, sector rotation, on-chain metrics, and sentiment analysis. <strong>Educational only — not financial advice.</strong> Always apply your own risk management before acting.
+  </div>
+  <div class="ideas-header">
+    <div class="ideas-filter">
+      <button class="ifilter active" onclick="setIdeasFilter('all',this)">All Markets</button>
+      <button class="ifilter" onclick="setIdeasFilter('forex',this)">Forex</button>
+      <button class="ifilter" onclick="setIdeasFilter('etf',this)">ETF</button>
+      <button class="ifilter" onclick="setIdeasFilter('crypto',this)">Crypto</button>
+      <button class="ifilter" onclick="setIdeasFilter('commodity',this)">Commodity</button>
+    </div>
+    <span class="ideas-date" id="ideas-date"></span>
+    <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;margin-left:auto" onclick="buildIdeas()">↻ Refresh</button>
+  </div>
+  <div class="idea-grid" id="ideas-grid">
+    <div class="no-sig-msg">Loading trade ideas…</div>
+  </div>
+</section>
+
+</div><!-- /main -->
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="authOverlay">
+  <div class="auth-modal">
+    <div class="auth-tabs">
+      <button class="atab active" id="atab-signin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button class="atab" id="atab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')submitAuth()">
+    </div>
+    <div class="fg" style="margin-bottom:14px">
+      <label>Password</label>
+      <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()">
+    </div>
+    <div id="auth-name-row" class="fg" style="margin-bottom:14px;display:none">
+      <label>Full Name (optional)</label>
+      <input type="text" id="auth-name" placeholder="Your name">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:10px" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+    <div class="auth-err" id="auth-err"></div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
+      <span id="auth-switch-text">Don't have an account? </span>
+      <a href="#" style="color:var(--blue);text-decoration:none" id="auth-switch-link" onclick="switchAuthTab('signup');return false">Sign up free</a>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12px" onclick="closeAuthModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- PRICING MODAL -->
+<div class="overlay" id="pricingOverlay">
+  <div class="modal" style="width:700px;max-width:96vw">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h2 style="margin:0">Upgrade your plan</h2>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px" onclick="closePricingModal()">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:4px" id="pricing-gate-msg"></p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-name">Free</div>
+        <div class="price-amt">$0</div>
+        <div class="price-per">forever</div>
+        <ul class="price-feats">
+          <li>2 instruments (EUR/USD, GBP/USD)</li>
+          <li>Trade journal (10 trades)</li>
+          <li>Learning Center</li>
+          <li>1 trade idea/day</li>
+          <li class="no">Live prices</li>
+          <li class="no">Auto Signals</li>
+          <li class="no">News feed</li>
+          <li class="no">OANDA execution</li>
+        </ul>
+        <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="closePricingModal()">Current plan</button>
+      </div>
+      <div class="price-card featured">
+        <div class="price-name" style="color:var(--blue)">Essential</div>
+        <div class="price-amt">$19</div>
+        <div class="price-per">/month</div>
+        <ul class="price-feats">
+          <li>5 instruments (Forex + Gold)</li>
+          <li>Unlimited trade journal</li>
+          <li>Learning Center</li>
+          <li>3 trade ideas/day + full analysis</li>
+          <li>Live prices (pooled key)</li>
+          <li>Daily auto signals</li>
+          <li>News + sentiment</li>
+          <li class="no">OANDA execution</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="goUpgrade('essential')">Get Essential</button>
+      </div>
+      <div class="price-card">
+        <div class="price-name" style="color:var(--purple)">Pro</div>
+        <div class="price-amt">$49</div>
+        <div class="price-per">/month</div>
+        <ul class="price-feats">
+          <li>All instruments (Forex, ETF, Crypto)</li>
+          <li>Unlimited trade journal</li>
+          <li>Learning Center</li>
+          <li>8 trade ideas/day — all markets</li>
+          <li>Live prices (pooled key)</li>
+          <li>Daily + 4H auto signals</li>
+          <li>News + sentiment</li>
+          <li>OANDA auto-execution</li>
+        </ul>
+        <button class="btn btn-primary" style="width:100%;font-size:12px;background:var(--purple)" onclick="goUpgrade('pro')">Get Pro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">Add Trade</h2>
+    <div class="form-grid">
+      <div class="fg"><label>Date *</label><input type="date" id="t_date"></div>
+      <div class="fg"><label>Market *</label><input id="t_mkt" placeholder="EUR/USD, GOLD, US30…"></div>
+      <div class="fg"><label>Direction</label><select id="t_dir"><option>LONG</option><option>SHORT</option></select></div>
+      <div class="fg"><label>Status</label><select id="t_stat"><option value="win">Win</option><option value="loss">Loss</option><option value="open">Open</option></select></div>
+      <div class="fg"><label>Entry Price *</label><input type="number" id="t_entry" step="any"></div>
+      <div class="fg"><label>Stop Loss *</label><input type="number" id="t_sl" step="any"></div>
+      <div class="fg"><label>Take Profit</label><input type="number" id="t_tp" step="any" placeholder="Optional — enables auto-close tracking"></div>
+      <div class="fg"><label>Exit Price</label><input type="number" id="t_exit" step="any"></div>
+      <div class="fg full"><label>Pips / Points *</label><input type="number" id="t_pips" step="any" placeholder="e.g. 85 or -45"></div>
+      <div class="fg full"><label>Entry Reason *</label><textarea id="t_er"></textarea></div>
+      <div class="fg full"><label>Exit Reason</label><textarea id="t_xr"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTrade()">Save Trade</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEMO DATA ──────────────────────────────────────────────────
+const DEMO = [
+  {id:1,date:'2026-01-15',market:'EUR/USD',direction:'LONG',status:'win',entry:1.03520,sl:1.03100,exit:1.04370,pips:85,
+   entryReason:'Daily pin bar at Jan support zone. 4H bullish engulfing confirmation. Weekly trend intact.',
+   exitReason:'Weekly resistance at 1.0437 reached. Bearish engulfing on 4H — full close.'},
+  {id:2,date:'2026-01-22',market:'GBP/USD',direction:'SHORT',status:'win',entry:1.26800,sl:1.27500,exit:1.25600,pips:120,
+   entryReason:'Head & Shoulders neckline break at 1.2680. Volume surge on daily close below neckline.',
+   exitReason:'H&S measuring objective reached (head-to-neckline distance projected). Strong bounce — full exit.'},
+  {id:3,date:'2026-02-03',market:'XAU/USD',direction:'LONG',status:'win',entry:2645.50,sl:2610.00,exit:2710.00,pips:65,
+   entryReason:'Double bottom at $2580 support. 4H bullish engulfing after second bounce. Daily uptrend intact.',
+   exitReason:'Prior high resistance at $2710. Daily doji formed — partial close, moved stop to breakeven on remainder.'},
+  {id:4,date:'2026-02-10',market:'USD/JPY',direction:'SHORT',status:'loss',entry:152.85,sl:153.50,exit:153.48,pips:-63,
+   entryReason:'Bearish engulfing on daily at key resistance zone. Expecting reversal from 153 level.',
+   exitReason:'Stop hit at 153.50 — price broke above resistance and continued higher. Accepted the loss.'},
+  {id:5,date:'2026-02-18',market:'EUR/USD',direction:'LONG',status:'win',entry:1.04800,sl:1.04300,exit:1.05750,pips:95,
+   entryReason:'Bull flag continuation on 4H. Impulse complete, flag formed with declining volume, breakout confirmed.',
+   exitReason:'Flagpole measurement objective at 1.0575 reached. Bearish rejection candle on 4H — full close.'},
+  {id:6,date:'2026-03-05',market:'CRUDE OIL',direction:'SHORT',status:'loss',entry:71.50,sl:72.80,exit:72.75,pips:-130,
+   entryReason:'Triple top at $72 resistance. Each peak slightly lower. Bearish momentum setup.',
+   exitReason:'Stop hit at $72.80 — unexpected EIA inventory drawdown spiked price. News overrode technical setup.'},
+  {id:7,date:'2026-03-12',market:'GBP/JPY',direction:'LONG',status:'win',entry:193.20,sl:192.60,exit:194.50,pips:130,
+   entryReason:'Scale-in entry #3 in established uptrend. Daily pin bar at support. 4H bullish engulfing confirmed.',
+   exitReason:'Partial close at weekly resistance 194.50. Moved stop to entry on remainder — trend continuation play.'},
+  {id:8,date:'2026-03-20',market:'AUD/USD',direction:'SHORT',status:'win',entry:0.62850,sl:0.63200,exit:0.62200,pips:65,
+   entryReason:'Symmetrical triangle breakdown. Daily close below lower trendline. Prior downtrend continuation.',
+   exitReason:'Triangle width measurement objective reached. Closed in full at target.'},
+  {id:9,date:'2026-04-02',market:'EUR/USD',direction:'SHORT',status:'loss',entry:1.05200,sl:1.05600,exit:1.05550,pips:-35,
+   entryReason:'Inside bar breakout to downside at weekly resistance. Bearish continuation expected.',
+   exitReason:'Stop hit — false breakout reversed sharply. Inside bar signal was ambiguous at this level.'},
+  {id:10,date:'2026-04-15',market:'XAU/USD',direction:'LONG',status:'win',entry:2890.00,sl:2845.00,exit:2965.00,pips:75,
+   entryReason:'Cup & Handle pattern complete on daily. Handle breakout with volume surge. Fibonacci target 2965.',
+   exitReason:'Approaching prior ATH. Daily bearish doji formed — closed position ahead of resistance.'}
+];
+
+// ── STATE ──────────────────────────────────────────────────────
+let trades = [];
+let eqChart = null, wlChart = null;
+let editId = null;
+
+function loadTrades(){
+  if(sbUser){ loadTradesFromDb(); return; }
+  const s = localStorage.getItem('te_trades');
+  trades = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEMO));
+  if(!s) localStorage.setItem('te_trades', JSON.stringify(trades));
+}
+function persist(){
+  if(sbUser){ persistToDb(); return; }
+  localStorage.setItem('te_trades', JSON.stringify(trades));
+  if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
+}
+
+// ── NAV ────────────────────────────────────────────────────────
+function nav(id, btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='journal') renderJournal();
+  if(id==='signals') initSignals();
+  if(id==='news') initNews();
+  if(id==='ideas') renderIdeas();
+}
+function ltab(id, btn){
+  document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.learn-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lc-'+id).classList.add('active');
+}
+
+// ── STATS ──────────────────────────────────────────────────────
+function stats(){
+  const closed = trades.filter(t=>t.status!=='open');
+  const wins   = trades.filter(t=>t.status==='win');
+  const losses = trades.filter(t=>t.status==='loss');
+  const totalPips = closed.reduce((s,t)=>s+(t.pips||0),0);
+  const winPips   = wins.reduce((s,t)=>s+(t.pips||0),0);
+  const lossPips  = Math.abs(losses.reduce((s,t)=>s+(t.pips||0),0));
+  const wr = closed.length ? wins.length/closed.length*100 : 0;
+  const pf = lossPips ? winPips/lossPips : (winPips ? Infinity : 0);
+  const avgW = wins.length   ? winPips/wins.length   : 0;
+  const avgL = losses.length ? lossPips/losses.length : 0;
+  const allP = closed.map(t=>t.pips||0);
+  const best  = allP.length ? Math.max(...allP) : 0;
+  const worst = allP.length ? Math.min(...allP) : 0;
+  // streak
+  let streak=0, sType='';
+  for(let i=trades.length-1;i>=0;i--){
+    const t=trades[i]; if(t.status==='open') continue;
+    if(!streak){sType=t.status;streak=1;}
+    else if(t.status===sType) streak++;
+    else break;
+  }
+  return {total:trades.length,closed:closed.length,wins:wins.length,losses:losses.length,
+    open:trades.filter(t=>t.status==='open').length,
+    totalPips,winPips,lossPips,wr,pf,avgW,avgL,best,worst,streak,sType};
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function renderDashboard(){
+  const s = stats();
+  const cards = [
+    {l:'Total Trades', v:s.total, c:'blue', sub:`${s.wins}W · ${s.losses}L · ${s.open} Open`},
+    {l:'Win Rate', v:s.wr.toFixed(1)+'%', c:s.wr>=50?'green':'red', sub:`${s.wins} of ${s.closed} closed`},
+    {l:'Total Pips', v:(s.totalPips>=0?'+':'')+s.totalPips, c:s.totalPips>=0?'green':'red', sub:'Net pips / points'},
+    {l:'Profit Factor', v:isFinite(s.pf)?s.pf.toFixed(2):'∞', c:s.pf>=1.5?'green':s.pf>=1?'yellow':'red', sub:'Wins ÷ Losses'},
+    {l:'Avg Win', v:'+'+s.avgW.toFixed(0), c:'green', sub:'Pips per winning trade'},
+    {l:'Avg Loss', v:'-'+s.avgL.toFixed(0), c:'red', sub:'Pips per losing trade'},
+    {l:'Best Trade', v:'+'+s.best, c:'green', sub:'Highest single trade'},
+    {l:'Worst Trade', v:s.worst, c:'red', sub:'Lowest single trade'},
+    {l:'Streak', v:s.streak+(s.sType==='win'?' W':s.sType==='loss'?' L':''), c:s.sType==='win'?'green':s.sType==='loss'?'red':'blue', sub:'Current consecutive run'},
+  ];
+  document.getElementById('statsGrid').innerHTML = cards.map(c=>`
+    <div class="stat-card">
+      <div class="lbl">${c.l}</div>
+      <div class="val ${c.c}">${c.v}</div>
+      <div class="sub">${c.sub}</div>
+    </div>`).join('');
+  renderEquity(s);
+  renderWL(s);
+  renderRecent();
+  renderLivePositions();
+  if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
+}
+
+function renderEquity(s){
+  const closed = [...trades].filter(t=>t.status!=='open').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let cum=0;
+  const labels=['Start'], data=[0];
+  closed.forEach(t=>{ cum+=(t.pips||0); labels.push(t.date.slice(5)); data.push(cum); });
+  const up = cum>=0;
+  const ctx = document.getElementById('eqChart').getContext('2d');
+  if(eqChart) eqChart.destroy();
+  eqChart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{
+      data, fill:true, tension:0.35,
+      borderColor: up?'#3fb950':'#f85149',
+      backgroundColor: up?'rgba(63,185,80,.08)':'rgba(248,81,73,.08)',
+      borderWidth:2, pointRadius:4,
+      pointBackgroundColor: data.map((v,i)=>i===0?'transparent':v>=0?'#3fb950':'#f85149'),
+      pointBorderColor:'transparent'
+    }]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(48,54,61,.4)'},ticks:{color:'#8b949e',font:{size:10}}},
+        y:{grid:{color:'rgba(48,54,61,.4)'},ticks:{color:'#8b949e',font:{size:10}}}
+      }}
+  });
+}
+
+function renderWL(s){
+  const ctx = document.getElementById('wlChart').getContext('2d');
+  if(wlChart) wlChart.destroy();
+  wlChart = new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['Wins','Losses','Open'],
+      datasets:[{data:[s.wins,s.losses,s.open],
+        backgroundColor:['rgba(63,185,80,.8)','rgba(248,81,73,.8)','rgba(88,166,255,.8)'],
+        borderColor:['#3fb950','#f85149','#58a6ff'],borderWidth:2}]
+    },
+    options:{responsive:true,cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{color:'#8b949e',font:{size:11},padding:12}}}}
+  });
+}
+
+function renderRecent(){
+  const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  if(!recent.length){document.getElementById('recentDiv').innerHTML='<p class="empty">No trades yet.</p>';return;}
+  document.getElementById('recentDiv').innerHTML=`<table>
+    <thead><tr><th>Date</th><th>Market</th><th>Dir</th><th>Entry Reason</th><th>Pips/Pts</th><th>Status</th></tr></thead>
+    <tbody>${recent.map(t=>`<tr>
+      <td>${t.date}</td>
+      <td><strong>${t.market}</strong></td>
+      <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
+      <td><span style="font-size:11px;color:var(--muted)">${(t.entryReason||'').slice(0,70)}…</span></td>
+      <td><span class="pips ${(t.pips||0)>=0?'pos':'neg'}">${(t.pips||0)>=0?'+':''}${t.pips||0}</span></td>
+      <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ── JOURNAL ────────────────────────────────────────────────────
+function renderJournal(){
+  const mf = document.getElementById('fMkt').value;
+  const sf = document.getElementById('fStat').value;
+  // refresh market dropdown
+  const mkts=[...new Set(trades.map(t=>t.market))].sort();
+  document.getElementById('fMkt').innerHTML='<option value="">All Markets</option>'+
+    mkts.map(m=>`<option value="${m}"${m===mf?' selected':''}>${m}</option>`).join('');
+
+  let rows = trades.filter(t=>{
+    if(mf && t.market!==mf) return false;
+    if(sf && t.status!==sf) return false;
+    return true;
+  }).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  if(!rows.length){
+    document.getElementById('tBody').innerHTML=`<tr><td colspan="9"><div class="empty">No trades match the current filter. <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:12px" onclick="clearFilters()">Clear Filters</button></div></td></tr>`;
+    document.getElementById('tFoot').innerHTML='';
+    return;
+  }
+
+  document.getElementById('tBody').innerHTML = rows.map(t=>`
+    <tr>
+      <td style="white-space:nowrap;color:var(--muted)">${t.date}</td>
+      <td><strong>${t.market}</strong></td>
+      <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
+      <td><div class="mono">${t.entry}</div><div class="reason">${t.entryReason||'—'}</div></td>
+      <td class="mono">${t.sl}</td>
+      <td><div class="mono">${t.exit||'—'}</div><div class="reason">${t.exitReason||'—'}</div></td>
+      <td>${(()=>{
+        if(t.status==='open' && livePrices[t.market]){
+          const lp=livePrices[t.market], ins=getInst(t.market);
+          const unr=(t.direction==='LONG'?(lp-t.entry):(t.entry-lp))*ins.mult;
+          return `<span class="pips ${unr>=0?'pos':'neg'}">${unr>=0?'+':''}${unr.toFixed(1)}</span><span class="live-pnl">live · ${lp.toFixed(ins.dec)}</span>`;
+        }
+        return `<span class="pips ${(t.pips||0)>=0?'pos':'neg'}">${(t.pips||0)>=0?'+':''}${t.pips||0}</span>`;
+      })()}</td>
+      <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
+      <td><button class="btn btn-danger" onclick="delTrade(${t.id})">✕</button></td>
+    </tr>`).join('');
+
+  const tot = rows.reduce((s,t)=>s+(t.pips||0),0);
+  const w=rows.filter(t=>t.status==='win').length;
+  const l=rows.filter(t=>t.status==='loss').length;
+  document.getElementById('tFoot').innerHTML=`<tr>
+    <td colspan="2" style="font-size:11px;color:var(--muted)">${rows.length} trades · ${w}W / ${l}L</td>
+    <td colspan="4"></td>
+    <td><span class="pips ${tot>=0?'pos':'neg'}">${tot>=0?'+':''}${tot}</span></td>
+    <td style="font-size:11px;color:var(--muted)">Total</td>
+    <td></td>
+  </tr>`;
+}
+
+function clearFilters(){
+  document.getElementById('fMkt').value='';
+  document.getElementById('fStat').value='';
+  renderJournal();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function openModal(trade){
+  editId = trade ? trade.id : null;
+  document.getElementById('modalTitle').textContent = trade ? 'Edit Trade' : 'Add Trade';
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('t_date').value  = trade?.date||today;
+  document.getElementById('t_mkt').value   = trade?.market||'';
+  document.getElementById('t_dir').value   = trade?.direction||'LONG';
+  document.getElementById('t_stat').value  = trade?.status||'win';
+  document.getElementById('t_entry').value = trade?.entry||'';
+  document.getElementById('t_sl').value    = trade?.sl||'';
+  document.getElementById('t_tp').value    = trade?.tp||'';
+  document.getElementById('t_exit').value  = trade?.exit||'';
+  document.getElementById('t_pips').value  = trade?.pips||'';
+  document.getElementById('t_er').value    = trade?.entryReason||'';
+  document.getElementById('t_xr').value    = trade?.exitReason||'';
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); editId=null; }
+
+function saveTrade(){
+  const t={
+    id: editId||Date.now(),
+    date:  document.getElementById('t_date').value,
+    market:document.getElementById('t_mkt').value.toUpperCase().trim(),
+    direction:document.getElementById('t_dir').value,
+    status:document.getElementById('t_stat').value,
+    entry: parseFloat(document.getElementById('t_entry').value)||0,
+    sl:    parseFloat(document.getElementById('t_sl').value)||0,
+    tp:    parseFloat(document.getElementById('t_tp').value)||null,
+    exit:  parseFloat(document.getElementById('t_exit').value)||null,
+    pips:  parseFloat(document.getElementById('t_pips').value)||0,
+    entryReason:document.getElementById('t_er').value,
+    exitReason: document.getElementById('t_xr').value
+  };
+  if(!t.date||!t.market){alert('Date and Market are required.');return;}
+  if(!editId && !canAccess('moreTrades')){
+    closeModal();
+    requirePlan('moreTrades', `Free plan is limited to ${planLimits().maxTrades} trades. Upgrade to log unlimited trades.`);
+    return;
+  }
+  if(editId){ const i=trades.findIndex(x=>x.id===editId); if(i>-1) trades[i]=t; }
+  else trades.push(t);
+  if(sbUser) saveTradeToDb(t);
+  persist(); closeModal(); renderJournal(); renderDashboard();
+}
+function delTrade(id){
+  if(!confirm('Delete this trade?')) return;
+  trades=trades.filter(t=>t.id!==id);
+  if(sbUser) deleteTradeFromDb(id);
+  persist(); renderJournal(); renderDashboard();
+}
+
+// ── SIMULATOR ─────────────────────────────────────────────────
+function calcSim(){
+  const dir  = document.getElementById('s_dir').value;
+  const type = document.getElementById('s_type').value;
+  const entry= parseFloat(document.getElementById('s_entry').value);
+  const sl   = parseFloat(document.getElementById('s_sl').value);
+  const tp   = parseFloat(document.getElementById('s_tp').value);
+  const acc  = parseFloat(document.getElementById('s_acc').value)||10000;
+  const rPct = parseFloat(document.getElementById('s_risk').value)||1;
+  const ids  = ['rrNum','mRisk','mRew','mRiskU','mRewU','mMinWR'];
+  if(!entry||!sl||!tp){ids.forEach(i=>document.getElementById(i).textContent='—');return;}
+  const mult = type==='forex'?10000:type==='jpy'?100:1;
+  const riskP  = dir==='LONG'?Math.abs((entry-sl)*mult):Math.abs((sl-entry)*mult);
+  const rewP   = dir==='LONG'?Math.abs((tp-entry)*mult):Math.abs((entry-tp)*mult);
+  const rr = rewP/riskP;
+  const riskU  = acc*(rPct/100);
+  const rewU   = riskU*rr;
+  const minWR  = 1/(1+rr)*100;
+  const unit = type==='pts'?'pts':'pips';
+  document.getElementById('rrNum').textContent   = '1 : '+rr.toFixed(2);
+  document.getElementById('mRisk').textContent   = riskP.toFixed(1)+' '+unit;
+  document.getElementById('mRew').textContent    = rewP.toFixed(1)+' '+unit;
+  document.getElementById('mRiskU').textContent  = '-$'+riskU.toFixed(2);
+  document.getElementById('mRewU').textContent   = '+$'+rewU.toFixed(2);
+  document.getElementById('mMinWR').textContent  = minWR.toFixed(1)+'%';
+}
+
+function logSim(outcome){
+  const mkt   = document.getElementById('s_mkt').value.toUpperCase().trim();
+  const date  = document.getElementById('s_date').value||new Date().toISOString().split('T')[0];
+  const dir   = document.getElementById('s_dir').value;
+  const type  = document.getElementById('s_type').value;
+  const entry = parseFloat(document.getElementById('s_entry').value);
+  const sl    = parseFloat(document.getElementById('s_sl').value);
+  const tp    = parseFloat(document.getElementById('s_tp').value);
+  const er    = document.getElementById('s_er').value||'Simulated trade';
+  const xr    = document.getElementById('s_xr').value;
+  if(!mkt||!entry||!sl||!tp){alert('Fill in Market, Entry, Stop Loss and Take Profit first.');return;}
+  const mult = type==='forex'?10000:type==='jpy'?100:1;
+  const riskP = dir==='LONG'?Math.abs((entry-sl)*mult):Math.abs((sl-entry)*mult);
+  const rewP  = dir==='LONG'?Math.abs((tp-entry)*mult):Math.abs((entry-tp)*mult);
+  const pips  = outcome==='win'?+rewP.toFixed(1):outcome==='loss'?-riskP.toFixed(1):0;
+  const exitP = outcome==='win'?tp:outcome==='loss'?sl:null;
+  trades.push({id:Date.now(),date,market:mkt,direction:dir,status:outcome,entry,sl,
+    tp:outcome==='open'?tp:null,exit:exitP,pips,
+    entryReason:er, exitReason:xr||(outcome==='win'?'Take profit hit':outcome==='loss'?'Stop loss hit':'Trade open')});
+  persist();
+  alert(`Logged as ${outcome.toUpperCase()} · ${pips>=0?'+':''}${pips} pips. Check Trade Journal.`);
+}
+
+// ── PATTERN SVG ILLUSTRATIONS ──────────────────────────────────
+function makeCandleSvg(candles){
+  const W=280,H=90,P=8;
+  const n=candles.length, sp=(W-P*2)/n, cw=Math.min(26,sp*0.52);
+  let s='';
+  for(let i=1;i<4;i++) s+=`<line x1="${P}" y1="${(P+(i/4)*(H-P*2)).toFixed(1)}" x2="${W-P}" y2="${(P+(i/4)*(H-P*2)).toFixed(1)}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+  candles.forEach((c,i)=>{
+    const x=P+sp*(i+0.5), bull=c.c>=c.o, col=bull?'#3fb950':'#f85149';
+    const yO=(P+(1-c.o)*(H-P*2)), yC=(P+(1-c.c)*(H-P*2));
+    const yH=(P+(1-c.h)*(H-P*2)), yL=(P+(1-c.l)*(H-P*2));
+    const y1=Math.min(yO,yC), y2=Math.max(yO,yC), bh=Math.max(2,y2-y1);
+    s+=`<line x1="${x.toFixed(1)}" y1="${yH.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${col}" stroke-width="1.5"/>`;
+    s+=`<rect x="${(x-cw/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${cw}" height="${bh.toFixed(1)}" fill="${bull?col:'none'}" stroke="${col}" stroke-width="1.5" rx="1"/>`;
+    s+=`<line x1="${x.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1.5"/>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="pc-img" style="width:100%;height:88px;display:block">${s}</svg>`;
+}
+function makeLineSvg(segs,h=80){
+  const W=280,P=10;
+  let s='';
+  for(let i=1;i<4;i++) s+=`<line x1="${P}" y1="${(P+(i/4)*(h-P*2)).toFixed(1)}" x2="${W-P}" y2="${(P+(i/4)*(h-P*2)).toFixed(1)}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+  segs.forEach(sg=>{
+    const pts=sg.p.map(([px,py])=>`${(P+px*(W-P*2)).toFixed(1)},${(P+(1-py)*(h-P*2)).toFixed(1)}`);
+    const col=sg.c||'#58a6ff', dash=sg.d?'stroke-dasharray="5,3"':'';
+    if(sg.f){const fp=`${(P+sg.p[0][0]*(W-P*2)).toFixed(1)},${h-P/2} ${pts.join(' ')} ${(P+sg.p[sg.p.length-1][0]*(W-P*2)).toFixed(1)},${h-P/2}`;s+=`<polygon points="${fp}" fill="${sg.f}" opacity="0.13"/>`;}
+    s+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="${sg.w||2}" ${dash} stroke-linejoin="round" stroke-linecap="round"/>`;
+    if(sg.dot){const lp=pts[pts.length-1].split(',');s+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="3.5" fill="${col}"/>`;}
+  });
+  return `<svg viewBox="0 0 ${W} ${h}" xmlns="http://www.w3.org/2000/svg" class="pc-img" style="width:100%;height:${h}px;display:block">${s}</svg>`;
+}
+function patternSvg(name){
+  const G='#3fb950',R='#f85149',B='#58a6ff',Y='#d29922';
+  const imgs={
+    // ── Candlestick ──
+    'Bullish Engulfing':makeCandleSvg([{o:.70,h:.76,l:.54,c:.58},{o:.55,h:.92,l:.48,c:.90}]),
+    'Bearish Engulfing':makeCandleSvg([{o:.30,h:.44,l:.26,c:.40},{o:.42,h:.50,l:.10,c:.14}]),
+    'Hammer':makeCandleSvg([{o:.78,h:.83,l:.62,c:.68},{o:.66,h:.70,l:.52,c:.56},{o:.54,h:.60,l:.42,c:.46},{o:.44,h:.50,l:.12,c:.47}]),
+    'Shooting Star':makeCandleSvg([{o:.32,h:.40,l:.28,c:.38},{o:.38,h:.48,l:.34,c:.44},{o:.44,h:.54,l:.40,c:.50},{o:.48,h:.88,l:.44,c:.46}]),
+    'Doji':makeCandleSvg([{o:.40,h:.55,l:.34,c:.48},{o:.48,h:.62,l:.42,c:.55},{o:.54,h:.54,l:.26,c:.54}]),
+    'Morning Star':makeCandleSvg([{o:.80,h:.85,l:.50,c:.54},{o:.52,h:.57,l:.46,c:.50},{o:.50,h:.84,l:.48,c:.82}]),
+    'Evening Star':makeCandleSvg([{o:.22,h:.26,l:.18,c:.72},{o:.73,h:.78,l:.68,c:.74},{o:.72,h:.76,l:.20,c:.24}]),
+    'Dark Cloud Cover':makeCandleSvg([{o:.30,h:.34,l:.28,c:.74},{o:.80,h:.86,l:.38,c:.44}]),
+    'Piercing Line':makeCandleSvg([{o:.74,h:.78,l:.28,c:.32},{o:.24,h:.62,l:.18,c:.58}]),
+    'Harami':makeCandleSvg([{o:.76,h:.82,l:.18,c:.22},{o:.40,h:.58,l:.36,c:.54}]),
+    'Inside Bar':makeCandleSvg([{o:.32,h:.82,l:.22,c:.74},{o:.56,h:.72,l:.36,c:.48}]),
+    'Three White Soldiers':makeCandleSvg([{o:.18,h:.44,l:.16,c:.42},{o:.38,h:.64,l:.36,c:.62},{o:.58,h:.84,l:.56,c:.82}]),
+    'Three Black Crows':makeCandleSvg([{o:.82,h:.84,l:.56,c:.58},{o:.62,h:.64,l:.36,c:.38},{o:.42,h:.44,l:.16,c:.18}]),
+    // ── Chart Patterns ──
+    'Head & Shoulders':makeLineSvg([
+      {p:[[0,.28],[.14,.65],[.26,.44],[.44,.90],[.58,.44],[.72,.65],[.90,.20]],c:B,w:2,f:B},
+      {p:[[.26,.44],[.90,.44]],c:Y,w:1.5,d:true}
+    ]),
+    'Inverse H&S':makeLineSvg([
+      {p:[[0,.72],[.14,.36],[.26,.56],[.44,.10],[.58,.56],[.72,.36],[.90,.82]],c:G,w:2,f:G},
+      {p:[[.26,.56],[.90,.56]],c:Y,w:1.5,d:true}
+    ]),
+    'Double Top':makeLineSvg([
+      {p:[[0,.28],[.22,.80],[.40,.44],[.58,.80],[.80,.16]],c:R,w:2,f:R},
+      {p:[[.40,.44],[.80,.44]],c:Y,w:1.5,d:true}
+    ]),
+    'Double Bottom':makeLineSvg([
+      {p:[[0,.72],[.22,.20],[.40,.58],[.58,.20],[.80,.84]],c:G,w:2,f:G},
+      {p:[[.40,.58],[.80,.58]],c:Y,w:1.5,d:true}
+    ]),
+    'Triple Top / Bottom':makeLineSvg([
+      {p:[[0,.25],[.18,.78],[.30,.44],[.46,.78],[.58,.44],[.72,.78],[.88,.18]],c:R,w:2},
+      {p:[[.30,.44],[.88,.44]],c:Y,w:1.5,d:true}
+    ]),
+    'Symmetrical Triangle':makeLineSvg([
+      {p:[[0,.88],[.68,.52]],c:R,w:1.5},{p:[[.68,.52],[.90,.82]],c:G,w:2,dot:true},
+      {p:[[0,.12],[.68,.48]],c:G,w:1.5}
+    ]),
+    'Ascending Triangle':makeLineSvg([
+      {p:[[0,.78],[.82,.78]],c:R,w:1.5},{p:[[.82,.78],[1,.96]],c:G,w:2,dot:true},
+      {p:[[0,.18],[.72,.62]],c:G,w:1.5}
+    ]),
+    'Descending Triangle':makeLineSvg([
+      {p:[[0,.82],[.72,.40]],c:R,w:1.5},
+      {p:[[0,.22],[.82,.22]],c:G,w:1.5},{p:[[.82,.22],[1,.04]],c:R,w:2,dot:true}
+    ]),
+    'Bull Flag':makeLineSvg([
+      {p:[[0,.14],[.28,.86]],c:G,w:2.5,f:G},
+      {p:[[.28,.86],[.45,.72],[.55,.78],[.68,.62],[.78,.68]],c:Y,w:1.5},
+      {p:[[.78,.68],[1,.95]],c:G,w:2,dot:true}
+    ]),
+    'Bear Flag':makeLineSvg([
+      {p:[[0,.86],[.28,.14]],c:R,w:2.5,f:R},
+      {p:[[.28,.20],[.45,.34],[.55,.28],[.68,.42],[.78,.35]],c:Y,w:1.5},
+      {p:[[.78,.35],[1,.05]],c:R,w:2,dot:true}
+    ]),
+    'Pennant':makeLineSvg([
+      {p:[[0,.12],[.25,.85]],c:G,w:2.5,f:G},
+      {p:[[.25,.85],[.58,.62]],c:R,w:1.5},{p:[[.25,.70],[.58,.62]],c:G,w:1.5},
+      {p:[[.58,.62],[.85,.94]],c:G,w:2,dot:true}
+    ]),
+    'Cup & Handle':makeLineSvg([
+      {p:[[0,.78],[.15,.55],[.30,.24],[.50,.20],[.65,.50],[.78,.78]],c:B,w:2},
+      {p:[[.78,.78],[.86,.66],[.90,.70]],c:Y,w:1.5},
+      {p:[[.90,.70],[1,.96]],c:G,w:2,dot:true}
+    ]),
+    'Rising Wedge':makeLineSvg([
+      {p:[[0,.42],[.74,.84]],c:R,w:1.5},{p:[[0,.18],[.74,.72]],c:R,w:1.5},
+      {p:[[.74,.78],[1,.28]],c:R,w:2,dot:true}
+    ]),
+    'Falling Wedge':makeLineSvg([
+      {p:[[0,.84],[.74,.42]],c:G,w:1.5},{p:[[0,.62],[.74,.26]],c:G,w:1.5},
+      {p:[[.74,.34],[1,.78]],c:G,w:2,dot:true}
+    ]),
+    // ── Harmonic ──
+    'AB=CD Pattern':makeLineSvg([
+      {p:[[0,.85],[.25,.30]],c:R,w:2},{p:[[.25,.30],[.5,.68]],c:G,w:2},
+      {p:[[.5,.68],[.75,.18]],c:R,w:2},{p:[[.75,.18],[1,.58]],c:G,w:2,dot:true}
+    ],70),
+    'Gartley Pattern':makeLineSvg([
+      {p:[[0,.10],[.20,.88]],c:G,w:2},{p:[[.20,.88],[.36,.48]],c:R,w:2},
+      {p:[[.36,.48],[.52,.72]],c:G,w:2},{p:[[.52,.72],[.72,.26]],c:R,w:2},
+      {p:[[.72,.26],[1,.65]],c:G,w:2,dot:true}
+    ],75),
+    'Bat Pattern':makeLineSvg([
+      {p:[[0,.10],[.20,.88]],c:G,w:2},{p:[[.20,.88],[.38,.45]],c:R,w:2},
+      {p:[[.38,.45],[.54,.70]],c:G,w:2},{p:[[.54,.70],[.74,.16]],c:R,w:2},
+      {p:[[.74,.16],[1,.62]],c:G,w:2,dot:true}
+    ],75),
+    'Butterfly Pattern':makeLineSvg([
+      {p:[[0,.55],[.20,.88]],c:G,w:2},{p:[[.20,.88],[.36,.62]],c:R,w:2},
+      {p:[[.36,.62],[.54,.82]],c:G,w:2},{p:[[.54,.82],[.74,.10]],c:R,w:2},
+      {p:[[.74,.10],[1,.55]],c:G,w:2,dot:true}
+    ],75),
+    'Crab Pattern':makeLineSvg([
+      {p:[[0,.50],[.18,.86]],c:G,w:2},{p:[[.18,.86],[.34,.55]],c:R,w:2},
+      {p:[[.34,.55],[.52,.78]],c:G,w:2},{p:[[.52,.78],[.72,.04]],c:R,w:2},
+      {p:[[.72,.04],[1,.52]],c:G,w:2,dot:true}
+    ],75),
+    // ── Gap Theory ──
+    'Breakaway Gap':makeCandleSvg([{o:.42,h:.52,l:.38,c:.48},{o:.48,h:.56,l:.44,c:.52},{o:.52,h:.58,l:.46,c:.54},{o:.68,h:.78,l:.66,c:.76},{o:.76,h:.86,l:.74,c:.84}]),
+    'Measuring (Runaway) Gap':makeCandleSvg([{o:.20,h:.28,l:.18,c:.26},{o:.26,h:.36,l:.24,c:.34},{o:.34,h:.44,l:.32,c:.42},{o:.58,h:.68,l:.56,c:.66},{o:.66,h:.76,l:.64,c:.74}]),
+    'Exhaustion Gap':makeCandleSvg([{o:.30,h:.40,l:.28,c:.38},{o:.38,h:.50,l:.36,c:.48},{o:.48,h:.60,l:.46,c:.58},{o:.74,h:.84,l:.72,c:.82},{o:.80,h:.82,l:.58,c:.60}]),
+    'Island Reversal':makeCandleSvg([{o:.30,h:.40,l:.28,c:.38},{o:.38,h:.50,l:.36,c:.48},{o:.64,h:.74,l:.62,c:.72},{o:.70,h:.78,l:.68,c:.72},{o:.55,h:.62,l:.32,c:.36}]),
+  };
+  return imgs[name]||'';
+}
+
+// ── LEARNING CARDS ─────────────────────────────────────────────
+function card(name,type,tCls,rel,desc,rules){
+  const img=patternSvg(name);
+  return `<div class="pc">
+    <div class="pc-head">
+      <div class="pc-name">${name}</div>
+      <span class="ptype ${tCls}">${type}</span>
+    </div>
+    ${img}
+    ${rel?`<div class="rel-bar"><div class="rel-fill" style="width:${rel}%"></div></div>
+    <div class="rel-lbl">Reliability: ${rel}%</div>`:''}
+    <div class="pc-desc">${desc}</div>
+    ${rules?.length?`<div class="pc-rules"><ul>${rules.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}
+  </div>`;
+}
+
+function buildLearning(){
+  document.getElementById('lg-chart').innerHTML=[
+    card('Head & Shoulders','Reversal','t-rev',89,'Three peaks — left shoulder, higher head, right shoulder. Neckline connects the two troughs. One of the most statistically reliable bearish reversal patterns.',
+      ['Enter short on daily close below neckline','Target = head-to-neckline distance projected down from neckline','Stop = just above right shoulder','Volume should be lower on right shoulder than left']),
+    card('Inverse H&S','Reversal','t-rev',84,'Three troughs with the middle being lowest. Signals bullish reversal. The neckline is the resistance line to break.',
+      ['Enter long on close above neckline','Target = head-to-neckline distance projected up','Volume surge on breakout confirms validity']),
+    card('Double Top','Reversal','t-rev',88,'Price reaches the same resistance twice, fails both times, then breaks below the trough between the two peaks.',
+      ['Activate only on close below the trough','Target = peak-to-trough distance projected down','Stop = above the second top']),
+    card('Double Bottom','Reversal','t-rev',88,'Two equal lows followed by a break above the peak between them. High-reliability bullish reversal signal.',
+      ['Activate on close above the peak between the lows','Target = lows-to-peak distance projected up','Stop = below second bottom']),
+    card('Triple Top / Bottom','Reversal','t-rev',87,'Three tests of the same level. Market has tried and failed three times — conviction of reversal is high. Same rules as double top/bottom.',
+      ['Third peak/trough failing with declining volume is key','Wider pattern = larger target potential']),
+    card('Symmetrical Triangle','Continuation','t-cont',77,'Converging trendlines — lower highs and higher lows. Breaks in direction of prior trend.',
+      ['Breakout must occur before ¾ of distance to apex','Target = base of triangle projected from breakout','Declining volume during formation, surge on breakout','Wait for daily close beyond the line — false breaks are common']),
+    card('Ascending Triangle','Continuation','t-cont',83,'Flat resistance above, rising support below. Buyers are more aggressive on each pullback. Bullish bias.',
+      ['Enter on close above the flat resistance','Target = height of triangle projected from breakout','Stop = below last swing low inside triangle']),
+    card('Descending Triangle','Continuation','t-cont',83,'Flat support below, falling resistance above. Sellers dominate. Bearish bias.',
+      ['Enter on close below flat support','Target = height of triangle projected down']),
+    card('Bull Flag','Continuation','t-cont',85,'Sharp impulse leg (flagpole) followed by a tight downward-sloping consolidation channel. Volume dries up during flag.',
+      ['Enter on breakout above upper flag trendline','Target = flagpole height added to breakout point','Stop = below lower trendline of the flag']),
+    card('Bear Flag','Continuation','t-cont',85,'Sharp down impulse followed by upward-sloping consolidation. Continuation of downtrend.',
+      ['Enter on break below lower flag trendline','Target = flagpole height subtracted from breakout']),
+    card('Pennant','Continuation','t-cont',82,'Like a flag but the consolidation forms a small symmetrical triangle. Shorter and tighter.',
+      ['Volume dries up sharply during pennant','Explosive breakout with volume surge confirms','Target = flagpole length from breakout']),
+    card('Cup & Handle','Continuation','t-cont',65,'Rounded bottom (cup) followed by brief pullback (handle) before breaking out to new highs. Forms over weeks/months.',
+      ['Handle retracement ≤ 30–50% of cup upward move','Enter on breakout above cup rim','Target = depth of cup projected from rim']),
+    card('Rising Wedge','Reversal','t-rev',73,'Both trendlines slope upward but converge. Price losing momentum on each push — bearish reversal despite bullish appearance.',
+      ['Short on break below lower trendline','Target = wedge height at widest point subtracted from breakout']),
+    card('Falling Wedge','Reversal','t-rev',73,'Both trendlines slope downward and converge. Selling exhausting — bullish reversal.',
+      ['Long on break above upper trendline','Target = wedge height added to breakout','Often precedes explosive upward moves']),
+  ].join('');
+
+  document.getElementById('lg-candle').innerHTML=[
+    card('Bullish Engulfing','Bullish','t-bull',null,'Small bearish candle followed by a larger bullish candle that completely engulfs it. Strong buyer entry signal.',
+      ['Most powerful at downtrend bottoms','Second candle must close above first candle\'s open','Volume surge on engulfing candle = stronger signal','Primary 4H entry trigger in Scale-In technique']),
+    card('Bearish Engulfing','Bearish','t-bear',null,'Small bullish candle followed by a larger bearish candle that fully engulfs it. Sellers have overwhelmed buyers.',
+      ['Most powerful at uptrend tops','Extra weight in already-falling markets','Watch for this at resistance as a position-exit signal']),
+    card('Hammer','Bullish','t-bull',null,'Small body near the top, long lower shadow (≥2× body). Buyers recovered sharply from intraday lows — rejection of lower prices.',
+      ['Must appear in a downtrend to be meaningful','Smaller body + longer tail = stronger signal','Wait for a confirming bullish candle before entering']),
+    card('Shooting Star','Bearish','t-bear',null,'Small body near the low, long upper shadow. Buyers pushed price up but sellers sent it back down — rejection of higher prices.',
+      ['Must appear in an uptrend','Upper shadow ≥ 2× body length','Confirm with the next bearish candle']),
+    card('Doji','Neutral','t-neut',null,'Open and close at approximately the same level. Represents indecision. Signal depends on where it appears.',
+      ['After a strong trend = exhaustion warning','Dragonfly Doji at lows (long lower wick) = bullish','Gravestone Doji at highs (long upper wick) = bearish','Always requires confirmation from next candle']),
+    card('Morning Star','Bullish','t-bull',null,'Three-candle pattern: large bearish candle, small star candle, large bullish candle. Downtrend to uptrend transition.',
+      ['Third candle must close above midpoint of first candle','Gap between star and flanking candles strengthens signal']),
+    card('Evening Star','Bearish','t-bear',null,'Inverse of morning star. Marks peak of uptrend. Large bullish, small star, large bearish candle.',
+      ['Third candle closes below midpoint of first candle','Most powerful at major resistance levels']),
+    card('Dark Cloud Cover','Bearish','t-bear',null,'Bullish candle followed by bearish candle that opens above prior close but closes below its midpoint. Bears take over.',
+      ['Deeper penetration into first candle = stronger signal','Most effective at resistance zones','Use as exit signal from long positions']),
+    card('Piercing Line','Bullish','t-bull',null,'Inverse of dark cloud cover. Bearish candle followed by bullish candle that closes above the midpoint of the bearish candle.',
+      ['Must close above 50% of prior bearish candle','Effective at support zones and exhaustion points']),
+    card('Harami','Neutral','t-neut',null,'Small candle contained entirely within the body of the prior large candle. Momentum is slowing.',
+      ['Bullish harami at downtrend lows = potential reversal','Bearish harami at uptrend highs = potential reversal','Requires confirmation from the following candle']),
+    card('Inside Bar','Neutral','t-neut',null,'Bar whose high and low are both within the range of the prior bar. Market is pausing — breakout direction gives the trade.',
+      ['Bearish bias when inside bar forms at resistance in downtrend','Bullish bias when at support in uptrend','Entry: breakout of inside bar high or low']),
+    card('Three White Soldiers','Bullish','t-bull',null,'Three consecutive long bullish candles each closing higher, with small wicks. One of the strongest multi-bar reversal signals.',
+      ['Each candle opens within prior candle\'s body','Long wicks reduce reliability','After a prolonged downtrend = very strong signal']),
+    card('Three Black Crows','Bearish','t-bear',null,'Three consecutive long bearish candles each closing lower. Steady strong selling pressure.',
+      ['Each candle opens within prior candle\'s body','Most powerful after a prolonged uptrend']),
+  ].join('');
+
+  document.getElementById('lg-harmonic').innerHTML=[
+    card('Key Fibonacci Levels','Reference','t-neut',null,'The backbone of all harmonic pattern trading — these ratios define entry zones, stops, and targets.',
+      ['0.382 — Shallow retracement (strong trend)','0.500 — 50% level (key psychological zone)','0.618 — Golden ratio, most common deep retracement','0.786 — Deep retracement (Bat / Crab entry zone)','1.272 — First extension target','1.618 — Golden extension (primary target)','2.618 — Extended target for deep patterns']),
+    card('AB=CD Pattern','Harmonic','t-neut',null,'The foundational harmonic. AB and CD legs are equal in price and time. Point D is the potential reversal zone (PRZ).',
+      ['CD = AB in length (1:1)','BC retracement of AB = 0.382–0.886','Entry at D with stop beyond 1.618 extension','Works in both bullish and bearish form']),
+    card('Gartley Pattern','Harmonic','t-neut',null,'5-point XABCD pattern. D falls at 0.786 retracement of XA. One of the most common harmonic patterns.',
+      ['AB = 0.618 retracement of XA','BC = 0.382–0.886 retracement of AB','CD = 1.272–1.618 extension of BC','D = 0.786 retracement of XA','Stop: beyond X point']),
+    card('Bat Pattern','Harmonic','t-neut',null,'More precise variant of Gartley. D reaches 0.886 retracement of XA — deeper PRZ, tighter stops.',
+      ['AB = 0.382–0.500 retracement of XA','BC = 0.382–0.886 retracement of AB','CD = 1.618–2.618 extension of BC','D = 0.886 retracement of XA']),
+    card('Butterfly Pattern','Harmonic','t-neut',null,'D extends beyond X — trades in an extension zone rather than a retracement. Marks exhaustion moves.',
+      ['AB = 0.786 retracement of XA','CD = 1.618–2.618 extension of BC','D = 1.272 or 1.618 extension of XA (beyond X)','Stop: beyond 1.618 of XA']),
+    card('Crab Pattern','Harmonic','t-neut',null,'Most extreme harmonic. D reaches 1.618 extension of XA. Deepest pattern — widest stop required.',
+      ['AB = 0.382–0.618 retracement of XA','CD = 2.618–3.618 extension of BC','D = 1.618 extension of XA','Confirm with reversal candlestick at D before entering']),
+    card('Harmonic Entry Rules','Rules','t-neut',null,'Standard entry and stop framework from the Carlos & Company guide — applies to all harmonic patterns.',
+      ['Entry: 1–2 ticks above/below the breakout bar at point D','Stop: critical Fibonacci confluence level beyond D','Target 1: C point of the pattern','Target 2: A point of the pattern','Target 3: 1.618 extension of CD leg','Always wait for a reversal candlestick at D before entering']),
+  ].join('');
+
+  document.getElementById('lg-gap').innerHTML=[
+    card('Common (Pattern) Gap','Gap Type','t-neut',null,'Gap within a consolidation area or chart pattern. No trend significance — almost always filled quickly.',
+      ['Occurs within rectangles, flags, congestion zones','Usually filled within 1–3 sessions','No actionable trading signal','"No trade" is often the best response']),
+    card('Breakaway Gap','Gap Type','t-cont',null,'A gap that breaks out of a chart pattern or consolidation range. Marks the beginning of a new directional move. Often does NOT fill immediately.',
+      ['Appears at breakout from triangles, rectangles, H&S patterns','High volume = strong confirmation','Gap acts as support/resistance on any retest','If price fills this gap quickly, the breakout has failed']),
+    card('Measuring (Runaway) Gap','Gap Type','t-neut',null,'Appears roughly in the middle of a strong established trend. Confirms healthy trend and provides a measuring point for the target.',
+      ['Occurs ~halfway through the total move','Project pre-gap distance forward to estimate full target','Signals strong trend with institutional participation']),
+    card('Exhaustion Gap','Gap Type','t-rev',null,'A gap near the end of an extended trend — the final burst of momentum. Immediately followed by price stalling or reversing.',
+      ['Appears after a long sustained trend','Followed by reversal candlestick within 1–3 sessions','If gap is filled quickly → trend exhaustion confirmed','Key tell: gap NOT followed by continued momentum']),
+    card('Island Reversal','Gap Type','t-rev',null,'Two gaps in opposite directions with a cluster of candles between them, creating an "island" isolated from the prior trend. Very reliable reversal signal.',
+      ['Island top: exhaustion gap up → consolidation → breakaway gap down','Island bottom: exhaustion gap down → consolidation → breakaway gap up','The island cluster is "trapped" — price moves away without returning','Target: back to the beginning of the island formation']),
+  ].join('');
+
+  document.getElementById('lg-scalein').innerHTML=[
+    card('What Is Scaling-In?','Strategy','t-neut',null,'Also called pyramiding — opening multiple positions in the same direction as a confirmed strong trend, adding each time a new signal appears. Amplifies returns without increasing the initial risk.',
+      ['Each new position carries its own independent stop','Earlier positions should be at breakeven or in profit before adding','Only applies in established trends — never countertrend','Prerequisite: 3 consecutive profitable months on daily chart single positions']),
+    card('The Rules (Colibri Method)','Rules','t-neut',null,'Complete rule set tested on all major FX pairs and equity indices (DAX, DOW). No indicators — pure price action.',
+      ['1. Find a daily signal (pin bar / engulfing) in the direction of the main trend','2. Drop to the 4-hour chart','3. Take ONLY 4H engulfing patterns in the same direction','4. Engulfing can be 2 or 3 bars (each engulfing the prior)','5. Entry: 1 pip above high (long) / below low (short)','6. Stop: 10 pips beyond bar\'s low/high OR nearest swing structure (whichever is further)','7. S/R: use only monthly / weekly / daily highs and lows','8. Targets: next monthly / weekly / daily level']),
+    card('EUR/JPY Case Study (Oct 2014)','Example','t-neut',null,'Daily pin bar at monthly support → 16 bullish 4H engulfing setups found. 4 stopped out (75% win rate). All held to 148.00 resistance.',
+      ['Single buy-and-hold: ~1,000 pips','Scale-in result: 7,075 pips gross (7× amplification)','Key: even 15% win rate produces near-breakeven results with this R:R structure']),
+    card('Crude Oil Case Study','Example','t-neut',null,'14 bullish engulfing setups on 4H across a sustained uptrend. Only 1 stopped out.',
+      ['13 of 14 positions profitable','Entries 7 and 10: stops placed beyond nearest swing highs, not just 10 pips above bar','Rule: respect swing structure over mechanical distance']),
+    card('Core Philosophy','Mindset','t-neut',null,'The Colibri guide distills to one sentence — and it synthesizes everything across all four source documents.',
+      ['"Cut losers fast. Let winners run."','Win rate is irrelevant — holding time in a profitable position is everything','"Holding long enough is what makes the difference between a millionaire and broke"','Beginners: 4H is the minimum timeframe — never go lower','Scalpers have the worst long-term track record of all trader types']),
+  ].join('');
+
+  document.getElementById('lg-risk').innerHTML=[
+    card('Win Rate vs Risk:Reward','Core Concept','t-neut',null,'The two variables that determine long-term profitability. Each compensates for weaknesses in the other.',
+      ['Win rate 40–70% + R:R ≥ 1:2 = sustainable edge','Minimum win rate needed = 1 ÷ (1 + R:R)','R:R 1:3 → only 25% win rate needed to break even','R:R 1:1 → 50% win rate needed to break even','Focus first on R:R — let win rate find its natural level']),
+    card('Profit Factor','Core Concept','t-neut',null,'Gross profit ÷ gross loss across all trades. The most useful single-number system evaluation metric.',
+      ['< 1.0 — Losing system','1.0–1.5 — Break-even or marginal','1.5–2.0 — Solid positive edge','> 2.0 — Excellent (scale-in case studies achieved ~2.5+)','Calculate monthly — declining trend in PF = review setups']),
+    card('Position Sizing (1% Rule)','Rule','t-neut',null,'Risk no more than 1–2% of total capital per trade. Allows survival of long losing streaks.',
+      ['Risk $ = Account × Risk%','Stop distance in pips determines position size','10 losses at 1% risk → 9.5% drawdown (survivable)','10 losses at 10% risk → 65% drawdown (potentially fatal)']),
+    card('Stop Loss Placement','Rule','t-neut',null,'Stops must go at structurally meaningful levels — where being wrong is confirmed by price action, not arbitrary distance.',
+      ['Place stop beyond nearest swing high/low','Harmonic patterns: stop beyond critical Fibonacci confluence','Engulfing patterns: 10 pips beyond bar low/high OR nearest swing (whichever is further)','Never move stop further away to avoid being stopped out','Trail stop to breakeven once 1R profit is achieved']),
+    card('Pattern Activation Rule','Rule','t-neut',null,'A pattern is not valid until price closes beyond its boundary line on the timeframe being traded.',
+      ['H&S: requires close below neckline','Triangle: requires close beyond trendline','Rectangle: requires close beyond boundary','Intrabar breaches cause false entries — wait for the candle to close','Multiple consecutive closes = strongest confirmation']),
+    card('Best Market Conditions','Guidance','t-neut',null,'The conditions and instruments that give these techniques the highest probability of working, synthesised from all four source documents.',
+      ['Best: Forex major pairs (EUR/USD, GBP/USD, AUD/USD, USD/JPY)','Best: Index futures (ES, NQ, DAX, DOW)','Best: Commodity futures (XAU/USD, Crude Oil)','Avoid: Individual stocks into earnings','Avoid: Illiquid instruments and exotic pairs','Avoid: Low-liquidity sessions (Asian session for non-Asian pairs)','Always check the economic calendar before entry']),
+    card('"No Trade Is a Trade"','Philosophy','t-neut',null,'Explicitly stated in the Axis Direct document. When a pattern is unclear, the signal is weak, or news risk is high — sitting on the sidelines is a valid and often profitable decision.',
+      ['Forcing trades in ambiguous conditions is the most common beginner mistake','Patience waiting for high-probability setups is itself an edge','A week with zero trades but zero losses is a good week']),
+  ].join('');
+
+  document.getElementById('lg-etf').innerHTML=[
+    card('Buy & Hold (Core/Passive)','Passive','t-neut',null,'The simplest and statistically hardest-to-beat ETF strategy. Buy broad market index ETFs and hold through all market cycles. Historical CAGR ~10.2% (S&P 500). Vanguard research shows 90%+ of active funds underperform over 15+ years.',
+      ['Core holdings: SPY / VOO (S&P 500), QQQ (Nasdaq 100), VTI (Total US Market)','International diversification: VXUS, EFA, VWO (emerging markets)','Rebalance annually — restore target allocation (e.g., 60/40 or 80/20)','Reinvest dividends automatically via DRIP','Time in market consistently beats timing the market']),
+    card('Sector Rotation','Cyclical','t-cont',null,'Different sectors of the economy outperform at different stages of the business cycle. Rotate into the leading sector as the cycle advances. Based on the classic Fidelity/State Street sector rotation model.',
+      ['Early Expansion: Technology (XLK), Consumer Discretionary (XLY)','Mid Expansion: Industrials (XLI), Materials (XLB)','Late Expansion: Energy (XLE), Financials (XLF)','Recession: Consumer Staples (XLP), Utilities (XLU), Healthcare (XLV)','Signal: Leading indicators — yield curve slope, ISM PMI, initial jobless claims','Transition signal: 3-month relative strength of each sector vs SPY']),
+    card('Factor Investing (Smart Beta)','Factor','t-cont',null,'Tilt the portfolio toward specific risk factors with long-term return premiums above the market. Backed by decades of academic research (Fama-French, Asness).',
+      ['Value: VTV, IVE — buy cheap stocks (low P/E, P/B)','Momentum: MTUM, PDP — buy recent 12-month winners, skip last month','Quality: QUAL, SPHQ — high ROE, low debt, stable earnings','Low Volatility: SPLV, USMV — outperform in downturns with lower drawdown','Size (Small Cap): VBR, IWM — small-caps outperform long-term with more volatility','Dividend Growth: VIG, DGRO — growing dividends signal quality earnings','Multi-factor: combine 2–3 factors to smooth cycles; avoid doubling up on same exposures']),
+    card('Momentum Trading','Momentum','t-cont',null,'ETFs trend strongly because they represent diversified baskets — individual volatility is smoothed out. Ride the trend with systematic signals.',
+      ['Entry signal: ADX > 25 (strong trend) + RSI(14) > 50 (bullish momentum) + price above 200-day SMA','Relative strength entry: ETF has outperformed SPY for 1–3 months','Position size: 2–5% per ETF, max 5 positions simultaneously','Stop: 2× ATR(14) below entry or below 50-day SMA','Trail stop up to lock in profits — never trail down','Review monthly: drop ETFs whose relative strength ranking falls below top 5 in universe']),
+    card('Mean Reversion (BB + RSI)','Mean Rev.','t-rev',null,'ETFs revert to the mean after short-term dislocations — particularly effective for sector and country ETFs. Backtested 62% win rate on broad index ETFs (2010–2023).',
+      ['Setup: price touches or breaks below lower Bollinger Band (20-day, 2σ)','Confirm: RSI(14) < 30 (oversold) OR RSI(2) < 10 (short-term extreme)','Entry: next day open after confirmation candle','Target: middle Bollinger Band (20-day SMA) — typically 3–8 sessions','Stop: close below lower BB by more than 1×ATR','Inverse for short: upper BB touch + RSI > 70 + short ETF equivalent']),
+    card('Breakout Trading (52-Week High)','Breakout','t-cont',null,'ETFs breaking to new 52-week highs continue higher more often than they reverse. Momentum persists when backed by strong sector fundamentals.',
+      ['Entry: daily close above 52-week high with volume ≥ 1.5× 20-day average','Confirm: underlying sector or index also trending up (SPY, QQQ not in downtrend)','Stop: below breakout candle low or prior resistance level (now support)','Target 1: prior resistance + (resistance − support distance)','Target 2: 1.5× initial range (partial exit at T1, trail remainder)','Avoid breakouts into major macro events (FOMC, CPI) — wait for post-event settle']),
+    card('Covered Calls (Income)','Options','t-neut',null,'Sell call options against long ETF positions to generate 1–2% monthly income (12–24% annualized). Best for sideways to slightly bullish markets.',
+      ['Sell calls 30–45 DTE (days to expiration) at 70–85% probability of profit (OTM)','Delta target: 0.20–0.30 (call is ~20–30% likely to expire in-the-money)','Close/roll at 50% of premium collected — do not hold to expiration','If ETF rallies past strike: roll up-and-out (higher strike, further expiration)','Best ETFs: SPY, QQQ, IWM — liquid options with tight spreads','Avoid during high-VIX volatility events — premium is high but risk of assignment spikes']),
+    card('Cash-Secured Puts (Entry)','Options','t-bull',null,'Sell put options on ETFs you want to own at a lower price. Get paid to wait for the right entry level. Generates 12–28%+ annualized yield on cash collateral.',
+      ['Sell puts at 10–15% below current price with 30–45 DTE','Strike = level where you are genuinely willing to own the ETF long-term','Collect premium upfront — if ETF stays above strike, keep premium and repeat','If assigned: you own ETF at strike (effectively bought at discount = strike − premium)','Follow with covered calls once assigned to build the "Wheel" strategy','Best candidates: SPY, QQQ, IWM, GLD — index ETFs with high liquidity']),
+    card('ETF Risk Management','Risk Rules','t-neut',null,'ETFs carry lower single-stock risk but still suffer from broad market drawdowns. These rules protect capital across all ETF strategies.',
+      ['Max position per ETF: 5–10% of portfolio','Max sector concentration: 25% of portfolio in any one sector','Use a market regime filter: if SPY < 200-day SMA, go to cash/bonds/defensive ETFs','Drawdown rule: if portfolio drops 15% from peak, reduce all positions by 50%','Rebalance trigger: any position drifts >5% from target — rebalance immediately','Avoid leveraged ETFs (2×/3×) for buy-and-hold — daily rebalancing causes decay','Liquidity rule: only trade ETFs with >$500M AUM and >1M average daily volume']),
+  ].join('');
+
+  document.getElementById('lg-crypto').innerHTML=[
+    card('HODLing (Long-Term Hold)','Long-Term','t-bull',null,'Buy Bitcoin and/or Ethereum and hold through multiple market cycles (4+ years). The simplest strategy has historically produced the best risk-adjusted returns for most retail investors. BTC has averaged +200% every 4-year cycle from cycle low to peak.',
+      ['Allocation: 1–5% of total portfolio for conservative; up to 20% for aggressive','Bitcoin 4-year halving cycle: price peaks ~12–18 months after each halving','Cold storage (hardware wallet) is mandatory for holdings >$1,000','Never invest more than you can afford to lose entirely — volatility is extreme','DCA into position over 6–12 months to reduce timing risk','Exit strategy: distribute at MVRV Z-Score > 6 or Pi Cycle Top signal (see On-Chain)']),
+    card('Dollar-Cost Averaging (DCA)','DCA','t-bull',null,'Invest a fixed amount into crypto at regular intervals regardless of price. Eliminates the need to time entries. Studies show Monday is historically the optimal DCA day for BTC (weekend retail selling creates slight dip).',
+      ['Fixed schedule: weekly or monthly, same amount, same day','Bear market DCA: increase amount by 50–100% when Fear & Greed Index < 20','Bull market DCA: reduce or stop new purchases when F&G > 80','Avoid DCA into altcoins below top-10 market cap — liquidity and survival risk','Platform: use recurring buy on exchange OR self-custody with on-chain DCA apps','Combine with HODL: DCA to build the position, then switch to HODL and cold storage']),
+    card('Trend Following (Golden / Death Cross)','Trend','t-cont',null,'Use moving average crossovers on the daily/weekly chart to stay long in bull markets and exit (or short) in bear markets. Simple but effective — avoids holding through 70–80% drawdowns.',
+      ['Golden Cross: 50-day SMA crosses above 200-day SMA → BUY signal','Death Cross: 50-day SMA crosses below 200-day SMA → SELL / exit long','200-week SMA: the ultimate long-term bull/bear dividing line — price below = bear market floor','Weekly 21 EMA × 55 EMA cross also widely used','Stop: close below 200-day SMA for 3 consecutive days = exit remaining position','Apply to BTC first — BTC trend directs the whole market; altcoins follow with amplified moves']),
+    card('Swing Trading (Fibonacci)','Swing','t-neut',null,'Capture 20–40% moves within a larger trend using Fibonacci retracement levels as entry zones and extensions as targets. Most effective on BTC and ETH on the 4H–daily chart.',
+      ['Identify trend: higher highs + higher lows (uptrend) or opposite','Draw Fibonacci from swing low to swing high (uptrend) or high to low (downtrend)','Entry zones: 0.382 (shallow pullback in strong trend), 0.618 (standard), 0.786 (deep)','Confirm entry with RSI divergence or engulfing candle at the retracement level','Target 1: 1.272 extension (~20% above entry); Target 2: 1.618 extension (~35–40%)','Stop: below 0.886 retracement — if it breaks, pattern is invalid']),
+    card('Range Trading (S/R + RSI)','Range','t-neut',null,'Crypto spends 70–80% of time in consolidation ranges. Buy at range support with oversold RSI, sell at range resistance with overbought RSI. Best for sideways markets (BTC dominance flat or declining slightly).',
+      ['Define range: at least 2 touches of support AND 2 touches of resistance','Entry long: price at support + RSI(14) < 35 + confirming bullish candle','Entry short/exit: price at resistance + RSI(14) > 65 + bearish candle','Stop: close beyond range boundary by >3% (false breakout filter)','Target: opposite side of the range (R:R typically 2:1 to 3:1)','Abandon range if price breaks with volume > 2× average — switch to breakout strategy']),
+    card('BTC Dominance Rotation','Rotation','t-neut',null,'Bitcoin dominance (BTC.D) measures BTC\'s share of total crypto market cap. It predicts when capital rotates from BTC into altcoins (altcoin season) and vice versa.',
+      ['BTC.D > 55% and declining → capital rotating into altcoins → overweight ETH and large caps','BTC.D < 40% and rising → capital fleeing altcoins back to BTC → reduce altcoin exposure','Altcoin season signal: BTC.D drops below its 20-week MA while ETH/BTC rising','Risk-off signal: BTC.D rising sharply → sell altcoins first, hold BTC or cash','ETH/BTC ratio: rising = ETH outperformance cycle; falling = BTC dominance phase','Altcoin plays during alt season: prioritize top-10 by market cap — lower liquidity risk']),
+    card('On-Chain Analysis','On-Chain','t-neut',null,'Blockchain data provides unique transparency unavailable in traditional markets. On-chain metrics predict cycle tops and bottoms with historical accuracy that no chart indicator can match.',
+      ['MVRV Z-Score: Market Cap vs Realized Cap. Z > 6 = historically overvalued (SELL zone). Z < 0 = historically undervalued (BUY zone)','NUPL (Net Unrealized P&L): > 0.75 = euphoria/SELL; < 0 = capitulation/BUY','SOPR (Spent Output Profit Ratio): < 1.0 during bull markets = buy the dip; sellers accepting losses','Pi Cycle Top: 111-day MA crosses above 2× 350-day MA = within days of cycle top (100% accurate 2013–2021)','Exchange Flows: net exchange inflows → sell pressure building; outflows → accumulation','ETF Flows (2024+): institutional demand signal — sustained inflows = bullish; outflows = caution']),
+    card('Funding Rate Trading','Contrarian','t-rev',null,'In perpetual futures, funding rates are paid between longs and shorts. Extreme funding reveals crowded positions — the best fade opportunities in crypto.',
+      ['Positive funding > 0.1% per 8h → market is heavily long → contrarian SHORT signal','Negative funding < −0.05% per 8h → market is heavily short → contrarian LONG signal','Check: Coinglass, Bybt, or exchange-native funding dashboards','Combine with price: high funding + price at major resistance = strong short setup','OI (Open Interest) surge + extreme funding = squeeze risk — position size conservatively','Reset signal: funding returns to 0.01–0.03% range = crowded trade unwound, re-enter trend']),
+    card('Fear & Greed Index','Sentiment','t-rev',null,'Alternative.me publishes the Crypto Fear & Greed Index (0–100). Extreme readings are contrarian signals — the crowd is almost always wrong at extremes. Warren Buffett\'s rule applied to crypto.',
+      ['Index < 20 (Extreme Fear) = maximum accumulation zone — buy aggressively, DCA hard','Index 20–40 (Fear) = good entry area — increase positions','Index 50–60 (Neutral/Slight Greed) = hold, no action','Index > 80 (Extreme Greed) = distribute — take 25–50% profits','Index sustained at 90+ = top is likely near — exit 75%+ of speculative positions','Combine with MVRV: both in extreme = very high conviction signal']),
+    card('Crypto Risk Management','Risk Rules','t-neut',null,'Crypto is the highest-volatility asset class available to retail investors. Standard position sizing rules must be stricter than any other asset class.',
+      ['Max crypto allocation: 5% (conservative), 10% (moderate), 20% (aggressive) of total portfolio','Within crypto: BTC 50–60%, ETH 20–30%, altcoins max 20% (top-10 only for managed risk)','Never use leverage >2× — 3–5× leverage wipes accounts in normal BTC corrections','Stop-loss: always set; never remove. Crypto can drop 30% in 24h','Tax: each trade is a taxable event in most jurisdictions — track cost basis from day one','Hardware wallet: any amount >3 months salary should be in cold storage, not on exchange','Exit plan: define % targets for partial exits BEFORE entering — greed kills profits at tops']),
+  ].join('');
+}
+
+// ── LIVE PRICE ENGINE ─────────────────────────────────────────
+
+let livePrices  = {};   // { 'EUR/USD': 1.0870 }
+let simPrices   = {};   // demo random-walk state
+let priceInterval = null;
+
+function getInst(symbol){
+  return INSTRUMENTS.find(i=>i.symbol===symbol) ||
+    {symbol, type:'Other', mult:1, dec:2, unit:'pts', base:100};
+}
+
+function startPricing(){
+  if(priceInterval) return;
+  pollPrices();
+  priceInterval = setInterval(pollPrices, 6000);
+}
+function stopPricing(){
+  if(priceInterval){ clearInterval(priceInterval); priceInterval=null; }
+}
+
+async function pollPrices(){
+  const open = trades.filter(t=>t.status==='open');
+  if(!open.length){ stopPricing(); renderLivePositions(); return; }
+  const symbols=[...new Set(open.map(t=>t.market))];
+  for(const sym of symbols){
+    try{ livePrices[sym] = await fetchLivePrice(sym); } catch(e){}
+  }
+  // Check SL/TP for each open trade
+  open.forEach(t=>{ const p=livePrices[t.market]; if(p) checkSlTp(t,p); });
+  renderLivePositions();
+  // refresh journal live column if visible
+  if(document.getElementById('journal').classList.contains('active')) renderJournal();
+}
+
+async function fetchLivePrice(symbol){
+  if(sigApiKey){
+    const url=`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${sigApiKey}`;
+    const r=await fetch(url); const d=await r.json();
+    if(d.price) return parseFloat(d.price);
+    throw new Error('no price');
+  }
+  if(sigAvKey&&symbol!=='XAU/USD'){
+    try{
+      const rates=await fetchErRates();
+      const p=deriveErPrice(symbol,rates);
+      if(p) return p;
+    } catch(e){}
+  }
+  // Demo: random-walk from trade entry price
+  const trade = trades.find(t=>t.status==='open'&&t.market===symbol);
+  const inst = getInst(symbol);
+  if(!simPrices[symbol]){
+    const base = trade ? trade.entry : (inst.base||100);
+    simPrices[symbol]={ price:base, atr:base*0.0045/inst.mult*inst.mult };
+  }
+  const s=simPrices[symbol];
+  const tick=(Math.random()-0.49)*s.atr*0.18;
+  s.price=Math.max(s.price*0.98, s.price+tick);
+  return s.price;
+}
+
+function checkSlTp(trade, price){
+  if(trade.status!=='open') return;
+  const isLong=trade.direction==='LONG';
+  if((isLong && price<=trade.sl)||(!isLong && price>=trade.sl)){
+    closeSimTrade(trade.id, price, 'loss', `Stop loss triggered at ${price.toFixed(getInst(trade.market).dec)}`);
+    return;
+  }
+  if(trade.tp && ((isLong && price>=trade.tp)||(!isLong && price<=trade.tp))){
+    closeSimTrade(trade.id, price, 'win', `Take profit hit at ${price.toFixed(getInst(trade.market).dec)}`);
+  }
+}
+
+function closeSimTrade(id, exitPrice, status, reason){
+  const trade=trades.find(t=>t.id===id);
+  if(!trade||trade.status!=='open') return;
+  const inst=getInst(trade.market);
+  const isLong=trade.direction==='LONG';
+  const pips=isLong?(exitPrice-trade.entry)*inst.mult:(trade.entry-exitPrice)*inst.mult;
+  trade.exit=+exitPrice.toFixed(inst.dec);
+  trade.pips=+pips.toFixed(1);
+  trade.status=status;
+  trade.exitReason=reason;
+  persist();
+  showToast(`${trade.market} ${trade.direction} — ${status.toUpperCase()}  ${pips>=0?'+':''}${pips.toFixed(1)} ${inst.unit}`, status==='win'?'tw':'tl');
+  renderDashboard();
+}
+
+function manualClosePos(id, price){
+  const trade=trades.find(t=>t.id===id);
+  if(!trade) return;
+  const inst=getInst(trade.market);
+  const isLong=trade.direction==='LONG';
+  const pips=isLong?(price-trade.entry)*inst.mult:(trade.entry-price)*inst.mult;
+  if(!confirm(`Close ${trade.market} ${trade.direction} at ${price.toFixed(inst.dec)}?\nP&L: ${pips>=0?'+':''}${pips.toFixed(1)} ${inst.unit}`)) return;
+  closeSimTrade(id, price, pips>=0?'win':'loss', `Manually closed at ${price.toFixed(inst.dec)}`);
+}
+
+function renderLivePositions(){
+  const open=trades.filter(t=>t.status==='open');
+  const dot=document.getElementById('priceDot');
+  const lbl=document.getElementById('priceLbl');
+  const grid=document.getElementById('livePosGrid');
+  if(!grid) return;
+
+  if(!open.length){
+    if(dot) dot.style.display='none';
+    if(lbl) lbl.textContent='';
+    grid.innerHTML='<div class="no-open-msg">No open simulated positions. Use the Signals tab or + Add Trade to open one.</div>';
+    return;
+  }
+  if(dot) dot.style.display='inline-block';
+  if(lbl) lbl.textContent=sigApiKey?'· Live (Twelve Data)':sigAvKey?'· Live forex (open.er-api.com) · updates every 6s':'· Demo simulation · updates every 6s';
+
+  const hasPrices=open.some(t=>livePrices[t.market]);
+  if(!hasPrices){
+    grid.innerHTML='<div class="no-open-msg"><span class="live-dot" style="margin-right:6px"></span>Fetching prices…</div>';
+    return;
+  }
+
+  grid.innerHTML=open.map(t=>{
+    const price=livePrices[t.market];
+    if(!price) return `<div class="lpos-card neutral"><div class="lpos-top"><span class="lpos-sym">${t.market}</span></div><div style="font-size:12px;color:var(--muted)">Awaiting price data…</div></div>`;
+    const inst=getInst(t.market);
+    const isLong=t.direction==='LONG';
+    const pips=isLong?(price-t.entry)*inst.mult:(t.entry-price)*inst.mult;
+    const isWin=pips>=0;
+    const slPips=Math.abs(t.entry-t.sl)*inst.mult;
+    const tpPips=t.tp?Math.abs(t.tp-t.entry)*inst.mult:null;
+    const pipsToSL=Math.max(0, isLong?(price-t.sl)*inst.mult:(t.sl-price)*inst.mult);
+    const pipsToTP=tpPips?Math.max(0,(isLong?(t.tp-price)*inst.mult:(price-t.tp)*inst.mult)):null;
+    let progPct=0, progCol=isWin?'var(--green)':'var(--red)';
+    if(isWin&&tpPips) progPct=Math.min(100,pips/tpPips*100);
+    else if(!isWin) progPct=Math.min(100,Math.abs(pips)/slPips*100);
+
+    return `<div class="lpos-card ${isWin?'winning':'losing'}">
+      <div class="lpos-top">
+        <div class="lpos-left">
+          <span class="lpos-sym">${t.market}</span>
+          <span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span>
+          <span class="live-dot" title="Price updating"></span>
+        </div>
+        <span class="lpos-pnl ${isWin?'pos':'neg'}">${pips>=0?'+':''}${pips.toFixed(1)} <small style="font-size:12px;font-weight:400">${inst.unit}</small></span>
+      </div>
+      <div class="lpos-row"><span class="lpos-lbl">Entry</span><span class="lpos-val">${t.entry}</span></div>
+      <div class="lpos-row"><span class="lpos-lbl">Current</span><span class="lpos-val" style="color:${isWin?'var(--green)':'var(--red)'}">${price.toFixed(inst.dec)} ${pips>=0?'▲':'▼'}</span></div>
+      <div class="lpos-row"><span class="lpos-lbl">Stop Loss</span><span class="lpos-val" style="color:var(--red)">${t.sl} <span style="font-weight:400;color:var(--muted)">(${pipsToSL.toFixed(1)} ${inst.unit} away)</span></span></div>
+      ${t.tp?`<div class="lpos-row"><span class="lpos-lbl">Take Profit</span><span class="lpos-val" style="color:var(--green)">${t.tp} <span style="font-weight:400;color:var(--muted)">(${pipsToTP!==null?pipsToTP.toFixed(1):'?'} ${inst.unit} away)</span></span></div>`:''}
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-fill" style="width:${progPct.toFixed(1)}%;background:${progCol}"></div></div>
+        <div class="prog-labs">
+          <span>${isWin?'Toward TP':'Toward SL'}: ${progPct.toFixed(0)}%</span>
+          <span>Since ${t.date}</span>
+        </div>
+      </div>
+      <button class="lpos-close" onclick="manualClosePos(${t.id},${price})">Close at ${price.toFixed(inst.dec)}</button>
+    </div>`;
+  }).join('');
+}
+
+function showToast(msg, cls='ti'){
+  const wrap=document.getElementById('toastWrap');
+  if(!wrap) return;
+  const el=document.createElement('div');
+  el.className=`toast ${cls}`;
+  el.textContent=msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>el.classList.add('in')); });
+  setTimeout(()=>{ el.classList.remove('in'); setTimeout(()=>el.remove(),350); },5000);
+}
+
+// ── SIGNALS ENGINE ────────────────────────────────────────────
+
+const INSTRUMENTS = [
+  {symbol:'EUR/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.0870},
+  {symbol:'GBP/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.2720},
+  {symbol:'USD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:151.40},
+  {symbol:'AUD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.6430},
+  {symbol:'USD/CAD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.3580},
+  {symbol:'NZD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.5960},
+  {symbol:'USD/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8960},
+  {symbol:'XAU/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:3280.0},
+];
+
+let sigApiKey = localStorage.getItem('te_apikey') || '';
+let sigAvKey  = localStorage.getItem('av_apikey')  || '';
+let sigProvider = 'demo';
+let sigTf = '1day';
+let sigResults = [];
+let erRates = null, erLastFetch = 0;
+
+// Auto-log & OANDA
+let autoLog      = localStorage.getItem('auto_log') === 'true';
+let autoLogConf  = parseInt(localStorage.getItem('auto_log_conf')) || 75;
+let autoExecute  = localStorage.getItem('auto_execute') === 'true';
+let oandaToken   = localStorage.getItem('oanda_token')   || '';
+let oandaAccount = localStorage.getItem('oanda_account') || '';
+let oandaPractice= localStorage.getItem('oanda_practice') !== 'false';
+let oandaRisk    = parseFloat(localStorage.getItem('oanda_risk')) || 1;
+let oandaBalance = 0;
+
+// ── Seeded RNG (LCG) ──
+function makeSeed(n){ let s=n; return ()=>{ s=(Math.imul(1664525,s)+1013904223)|0; return (s>>>0)/0xffffffff; }; }
+
+// ── Technical Indicators ──
+function calcEmaAll(data, period){
+  const k=2/(period+1); const out=[data[0]];
+  for(let i=1;i<data.length;i++) out.push(data[i]*k+out[i-1]*(1-k));
+  return out;
+}
+function calcRsi(closes, period=14){
+  if(closes.length<period+2) return 50;
+  let ag=0,al=0;
+  for(let i=1;i<=period;i++){ const d=closes[i]-closes[i-1]; if(d>0)ag+=d; else al-=d; }
+  ag/=period; al/=period;
+  for(let i=period+1;i<closes.length;i++){
+    const d=closes[i]-closes[i-1];
+    ag=(ag*(period-1)+Math.max(d,0))/period;
+    al=(al*(period-1)+Math.max(-d,0))/period;
+  }
+  return al===0?100:100-100/(1+ag/al);
+}
+function calcAtr(highs,lows,closes,period=14){
+  const trs=[];
+  for(let i=1;i<closes.length;i++) trs.push(Math.max(highs[i]-lows[i],Math.abs(highs[i]-closes[i-1]),Math.abs(lows[i]-closes[i-1])));
+  if(trs.length<period) return trs.reduce((s,v)=>s+v,0)/trs.length||0.001;
+  let a=trs.slice(0,period).reduce((s,v)=>s+v,0)/period;
+  for(let i=period;i<trs.length;i++) a=(a*(period-1)+trs[i])/period;
+  return a||0.001;
+}
+
+// ── Pattern Detection ──
+function detectPat(cs){
+  const n=cs.length; if(n<2) return null;
+  const c=cs[n-1], p=cs[n-2], pp=n>=3?cs[n-3]:null;
+  const cBody=Math.abs(c.close-c.open), pBody=Math.abs(p.close-p.open);
+  const cRange=c.high-c.low, pRange=p.high-p.low;
+  const cLo=Math.min(c.open,c.close), cHi=Math.max(c.open,c.close);
+  const lw=cLo-c.low, uw=c.high-cHi;
+
+  if(cRange>0 && cBody<cRange*0.08) return {name:'Doji',dir:'NEUTRAL',str:1};
+  if(p.close<p.open&&c.close>c.open&&c.open<=p.close&&c.close>=p.open&&cBody>pBody*0.8)
+    return {name:'Bullish Engulfing',dir:'LONG',str:3};
+  if(p.close>p.open&&c.close<c.open&&c.open>=p.close&&c.close<=p.open&&cBody>pBody*0.8)
+    return {name:'Bearish Engulfing',dir:'SHORT',str:3};
+  if(lw>cBody*2&&uw<cBody*0.5&&cRange>0)
+    return {name:'Bullish Pin Bar',dir:'LONG',str:2};
+  if(uw>cBody*2&&lw<cBody*0.5&&cRange>0)
+    return {name:'Bearish Pin Bar',dir:'SHORT',str:2};
+  if(c.high<p.high&&c.low>p.low) return {name:'Inside Bar',dir:'NEUTRAL',str:1};
+  if(pp){
+    const ppBody=Math.abs(pp.close-pp.open);
+    if(pp.close<pp.open&&pBody<ppBody*0.3&&c.close>c.open&&c.close>(pp.open+pp.close)/2)
+      return {name:'Morning Star',dir:'LONG',str:3};
+    if(pp.close>pp.open&&pBody<ppBody*0.3&&c.close<c.open&&c.close<(pp.open+pp.close)/2)
+      return {name:'Evening Star',dir:'SHORT',str:3};
+    if(pp.close>pp.open&&p.close>p.open&&c.close>c.open&&c.close>p.close&&p.close>pp.close)
+      return {name:'Three White Soldiers',dir:'LONG',str:3};
+    if(pp.close<pp.open&&p.close<p.open&&c.close<c.open&&c.close<p.close&&p.close<pp.close)
+      return {name:'Three Black Crows',dir:'SHORT',str:3};
+  }
+  return null;
+}
+
+// ── Price Action & Volume Helpers ──
+function findSwings(candles, pivot=2){
+  const highs=[], lows=[];
+  for(let i=pivot; i<candles.length-pivot; i++){
+    let isH=true, isL=true;
+    for(let j=1;j<=pivot;j++){
+      if(candles[i-j].high>=candles[i].high||candles[i+j].high>=candles[i].high) isH=false;
+      if(candles[i-j].low<=candles[i].low||candles[i+j].low<=candles[i].low) isL=false;
+    }
+    if(isH) highs.push({price:candles[i].high, idx:i});
+    if(isL) lows.push({price:candles[i].low, idx:i});
+  }
+  return {highs, lows};
+}
+
+function priceStructure(highs, lows){
+  const rH=highs.slice(-3), rL=lows.slice(-3);
+  if(rH.length<2||rL.length<2) return 'unknown';
+  const hh=rH[rH.length-1].price>rH[rH.length-2].price;
+  const hl=rL[rL.length-1].price>rL[rL.length-2].price;
+  const ll=rL[rL.length-1].price<rL[rL.length-2].price;
+  const lh=rH[rH.length-1].price<rH[rH.length-2].price;
+  if(hh&&hl) return 'bullish';
+  if(ll&&lh) return 'bearish';
+  return 'ranging';
+}
+
+function analyzeVolume(candles, period=20){
+  const vols=candles.map(c=>c.volume||0);
+  if(!vols.some(v=>v>0)) return null;
+  const recent=vols.slice(-(period+1));
+  const avg=recent.slice(0,-1).reduce((s,v)=>s+v,0)/period;
+  const last=recent[recent.length-1];
+  const ratio=avg>0?last/avg:1;
+  const last5=vols.slice(-6,-1);
+  const declining=last5.length>=2&&last5[last5.length-1]<last5[0]*0.8;
+  return {avg:+avg.toFixed(0), last:+last.toFixed(0), ratio:+ratio.toFixed(2), declining};
+}
+
+// ── Analyse array of candles for one instrument ──
+function analyseCandles(candles, inst){
+  if(candles.length<220) return null;
+  const closes=candles.map(c=>c.close);
+  const highs=candles.map(c=>c.high);
+  const lows=candles.map(c=>c.low);
+  const e20a=calcEmaAll(closes,20), e50a=calcEmaAll(closes,50), e200a=calcEmaAll(closes,200);
+  const e20=e20a[e20a.length-1], e50=e50a[e50a.length-1], e200=e200a[e200a.length-1];
+  const rsiVal=calcRsi(closes,14);
+  const atrVal=calcAtr(highs,lows,closes,14);
+  const last=candles[candles.length-1];
+  const prev=candles[candles.length-2];
+  const pat=detectPat(candles.slice(-3));
+  const aboveE200=last.close>e200;
+  const bullTrend=e20>e50&&e50>e200, bearTrend=e20<e50&&e50<e200;
+  const trendStr=bullTrend?'Strong Uptrend ↑':bearTrend?'Strong Downtrend ↓':aboveE200?'Uptrend (partial)':'Downtrend (partial)';
+
+  // Price action & volume
+  const {highs:swingH, lows:swingL}=findSwings(candles.slice(-60), 2);
+  const struct=priceStructure(swingH, swingL);
+  const vol=analyzeVolume(candles);
+  const swingLevels=[...swingH.slice(-6).map(s=>s.price), ...swingL.slice(-6).map(s=>s.price)];
+  const atKeyLevel=swingLevels.length>0&&swingLevels.some(lvl=>Math.abs(lvl-last.close)<atrVal);
+  const nearestLevel=swingLevels.length>0?swingLevels.reduce((b,lvl)=>Math.abs(lvl-last.close)<Math.abs(b-last.close)?lvl:b, swingLevels[0]):null;
+
+  const overview={
+    symbol:inst.symbol, type:inst.type,
+    price:+last.close.toFixed(inst.dec),
+    change:+(last.close-prev.close).toFixed(inst.dec),
+    trend:aboveE200?'bull':'bear',
+    rsi:+rsiVal.toFixed(1),
+    atrPips:+(atrVal*inst.mult).toFixed(1)
+  };
+
+  if(!pat||pat.dir==='NEUTRAL') return {overview, signal:null};
+
+  const dir=pat.dir;
+  const trendOk=(dir==='LONG'&&aboveE200)||(dir==='SHORT'&&!aboveE200);
+  const rsiOk=(dir==='LONG'&&rsiVal<65)||(dir==='SHORT'&&rsiVal>35);
+  if(!trendOk&&!rsiOk) return {overview, signal:null};
+
+  const entry=last.close;
+  const stop =dir==='LONG'?entry-atrVal*1.5:entry+atrVal*1.5;
+  const t1   =dir==='LONG'?entry+atrVal*2.5:entry-atrVal*2.5;
+  const t2   =dir==='LONG'?entry+atrVal*4.0:entry-atrVal*4.0;
+  const rr   =Math.abs(t1-entry)/Math.abs(stop-entry);
+
+  const structAligned=(dir==='LONG'&&struct==='bullish')||(dir==='SHORT'&&struct==='bearish');
+
+  let conf=30;
+  if(trendOk) conf+=22;
+  if(bullTrend||bearTrend) conf+=15;
+  if(rsiOk) conf+=13;
+  conf+=pat.str===3?15:pat.str===2?8:0;
+  if(structAligned) conf+=10;
+  if(atKeyLevel) conf+=12;
+  if(vol&&vol.ratio>2.0) conf+=15;
+  else if(vol&&vol.ratio>1.5) conf+=10;
+  if(vol&&vol.declining) conf+=8;
+  conf=Math.min(93,conf);
+
+  const reasons=[];
+  if(trendOk) reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA200 — trend aligned`);
+  if(bullTrend||bearTrend) reasons.push(`EMAs stacked (20/50/200) — strong ${dir==='LONG'?'uptrend':'downtrend'}`);
+  if(rsiOk) reasons.push(`RSI ${rsiVal.toFixed(0)} — ${dir==='LONG'?'room to run, not overbought':'room to fall, not oversold'}`);
+  if(pat.str===3) reasons.push(`${pat.name} — high-conviction reversal pattern`);
+  else if(pat.str===2) reasons.push(`${pat.name} — moderate-strength pattern`);
+  if(structAligned) reasons.push(`Price structure: ${struct} (${dir==='LONG'?'HH + HL sequence':'LH + LL sequence'} confirmed)`);
+  if(atKeyLevel&&nearestLevel) reasons.push(`Pattern at key S/R — nearest level ${nearestLevel.toFixed(inst.dec)} (${(Math.abs(nearestLevel-entry)*inst.mult).toFixed(0)} ${inst.unit} away)`);
+  if(vol&&vol.ratio>2.0) reasons.push(`Volume surge ${vol.ratio}×avg — strong conviction behind move`);
+  else if(vol&&vol.ratio>1.5) reasons.push(`Above-average volume ${vol.ratio}×avg — confirms breakout`);
+  if(vol&&vol.declining) reasons.push('Volume declining before pattern — consolidation signals imminent breakout');
+
+  return {
+    overview,
+    signal:{
+      symbol:inst.symbol, type:inst.type, dir, pat:pat.name,
+      entry:+entry.toFixed(inst.dec), stop:+stop.toFixed(inst.dec),
+      t1:+t1.toFixed(inst.dec), t2:+t2.toFixed(inst.dec),
+      rr:+rr.toFixed(2),
+      riskPips:+(Math.abs(entry-stop)*inst.mult).toFixed(1),
+      conf, rsi:+rsiVal.toFixed(1), trend:trendStr,
+      atrPips:+(atrVal*inst.mult).toFixed(1),
+      structure:struct, atKeyLevel, nearestLevel:nearestLevel?+nearestLevel.toFixed(inst.dec):null,
+      volRatio:vol?vol.ratio:null, volDeclining:vol?vol.declining:false,
+      reasons,
+      unit:inst.unit, mult:inst.mult, dec:inst.dec, isDemo:false
+    }
+  };
+}
+
+// ── Build synthetic demo candles with a seeded detectable pattern ──
+function buildDemoCandles(inst, seed, dayOffset){
+  const rng=makeSeed(seed);
+  const vol=inst.base*0.005; // ~0.5% daily vol
+  const candles=[];
+  let price=inst.base*(0.96+rng()*0.08);
+  // 217 "background" candles with realistic declining volume before the pattern
+  for(let i=0;i<217;i++){
+    const o=price; const d=(rng()-0.47)*vol;
+    const c=o+d;
+    const h=Math.max(o,c)+rng()*vol*0.6;
+    const l=Math.min(o,c)-rng()*vol*0.6;
+    // Volume declines in last 5 background bars to signal consolidation
+    const baseVol=Math.floor(rng()*2500+800);
+    const declineFactor=i>=212?0.5-((i-212)*0.07):1;
+    candles.push({open:o,high:h,low:l,close:c, volume:Math.floor(baseVol*declineFactor)});
+    price=c;
+  }
+  // Force a specific pattern in last 3 bars based on dayOffset
+  const patterns=['bullishEngulf','bearishEngulf','morningStar','eveningStar','pinBull','pinBear','3whiteSoldiers','3blackCrows'];
+  const pick=patterns[(dayOffset+Math.floor(rng()*2))%patterns.length];
+  price=candles[candles.length-1].close;
+  const patVol=()=>Math.floor(rng()*8000+12000); // High volume on pattern candles
+
+  if(pick==='bullishEngulf'||pick==='3whiteSoldiers'){
+    let p=price*(1-vol*0.5);
+    for(let i=0;i<3;i++){
+      const o=p; const c=o+vol*(0.6+rng()*0.6);
+      candles.push({open:o,high:c+vol*0.2,low:o-vol*0.1,close:c,volume:patVol()}); p=c;
+    }
+  } else if(pick==='bearishEngulf'||pick==='3blackCrows'){
+    let p=price*(1+vol*0.5);
+    for(let i=0;i<3;i++){
+      const o=p; const c=o-vol*(0.6+rng()*0.6);
+      candles.push({open:o,high:o+vol*0.1,low:c-vol*0.2,close:c,volume:patVol()}); p=c;
+    }
+  } else if(pick==='morningStar'){
+    candles.push({open:price,high:price+vol*0.1,low:price-vol*1.2,close:price-vol*1.0,volume:patVol()});
+    candles.push({open:price-vol*1.0,high:price-vol*0.7,low:price-vol*1.2,close:price-vol*0.9,volume:Math.floor(patVol()*0.5)});
+    candles.push({open:price-vol*0.9,high:price+vol*0.3,low:price-vol*1.0,close:price-vol*0.1,volume:patVol()});
+  } else if(pick==='eveningStar'){
+    candles.push({open:price,high:price+vol*1.2,low:price-vol*0.1,close:price+vol*1.0,volume:patVol()});
+    candles.push({open:price+vol*1.0,high:price+vol*1.2,low:price+vol*0.7,close:price+vol*0.9,volume:Math.floor(patVol()*0.5)});
+    candles.push({open:price+vol*0.9,high:price+vol*1.0,low:price-vol*0.3,close:price+vol*0.1,volume:patVol()});
+  } else if(pick==='pinBull'){
+    candles.push({open:price,high:price+vol*0.2,low:price-vol*2.5,close:price+vol*0.1,volume:Math.floor(patVol()*0.7)});
+    candles.push({open:price,high:price+vol*0.15,low:price-vol*2.0,close:price+vol*0.05,volume:Math.floor(patVol()*0.6)});
+    candles.push({open:price,high:price+vol*0.2,low:price-vol*2.8,close:price+vol*0.12,volume:patVol()});
+  } else {
+    candles.push({open:price,high:price+vol*2.5,low:price-vol*0.2,close:price-vol*0.1,volume:Math.floor(patVol()*0.7)});
+    candles.push({open:price,high:price+vol*2.0,low:price-vol*0.15,close:price-vol*0.05,volume:Math.floor(patVol()*0.6)});
+    candles.push({open:price,high:price+vol*2.8,low:price-vol*0.2,close:price-vol*0.12,volume:patVol()});
+  }
+  return candles;
+}
+
+// ── Fetch from Twelve Data API ──
+async function fetchTd(symbol){
+  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${sigTf}&outputsize=220&apikey=${sigApiKey}`;
+  const r=await fetch(url);
+  const d=await r.json();
+  if(d.status==='error') throw new Error(d.message||'API error');
+  if(!d.values) throw new Error('No data returned');
+  return d.values.reverse().map(v=>({
+    datetime:v.datetime, open:+v.open, high:+v.high, low:+v.low, close:+v.close,
+    volume:v.volume?+v.volume:0
+  }));
+}
+
+// ── Fetch from Alpha Vantage (FX_DAILY) ──
+async function fetchAv(symbol){
+  const [from,to]=symbol.split('/');
+  if(!from||!to) throw new Error('Cannot parse symbol: '+symbol);
+  const url=`https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&outputsize=full&apikey=${sigAvKey}`;
+  const r=await fetch(url); const d=await r.json();
+  if(d['Error Message']) throw new Error(d['Error Message']);
+  if(d['Note']||d['Information']) throw new Error('Alpha Vantage rate limit reached (5 req/min, 25/day)');
+  const series=d['Time Series FX (Daily)'];
+  if(!series) throw new Error('No FX data for '+symbol);
+  return Object.entries(series)
+    .sort((a,b)=>a[0].localeCompare(b[0]))
+    .slice(-220)
+    .map(([datetime,v])=>({
+      datetime, open:+v['1. open'], high:+v['2. high'],
+      low:+v['3. low'], close:+v['4. close'], volume:0
+    }));
+}
+
+// ── Free forex rates (open.er-api.com — no key required) ──
+async function fetchErRates(){
+  if(erRates&&Date.now()-erLastFetch<60000) return erRates;
+  const r=await fetch('https://open.er-api.com/v6/latest/USD');
+  const d=await r.json();
+  if(d.result!=='success') throw new Error('ExchangeRate API failed');
+  erRates=d.rates; erLastFetch=Date.now();
+  return erRates;
+}
+function deriveErPrice(symbol, rates){
+  const [base,quote]=symbol.split('/');
+  if(base==='USD') return rates[quote]||null;
+  if(quote==='USD') return rates[base]?1/rates[base]:null;
+  return (rates[base]&&rates[quote])?rates[quote]/rates[base]:null;
+}
+
+// ── Render Market Overview Strip ──
+function renderMktStrip(results){
+  document.getElementById('mktStrip').innerHTML=results.map(r=>{
+    const ov=r.overview;
+    const up=ov.change>=0;
+    const rsiCls=ov.rsi>70?'rsi-ob':ov.rsi<30?'rsi-os':'rsi-ok';
+    return `<div class="mkt-pill ${ov.trend}">
+      <div class="mp-sym">${ov.symbol}</div>
+      <div class="mp-price" style="color:${up?'var(--green)':'var(--red)'}">${ov.price} ${up?'▲':'▼'}</div>
+      <div class="mp-meta">
+        <span style="color:${ov.trend==='bull'?'var(--green)':'var(--red)'}">${ov.trend==='bull'?'BULL':'BEAR'}</span>
+        <span class="mp-rsi ${rsiCls}">RSI ${ov.rsi}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render Signal Cards ──
+function renderSignals(results, isDemo){
+  const sigs=results.filter(r=>r.signal);
+  if(!sigs.length){
+    document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg">
+      No actionable signals found in current market conditions for the selected timeframe.<br>
+      <span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">This is normal — waiting for high-probability setups is itself part of the edge.</span>
+    </div>`;
+    return;
+  }
+  document.getElementById('sigContainer').innerHTML=`<div class="sig-grid">${sigs.map(r=>sigCard(r.signal,isDemo)).join('')}</div>`;
+}
+
+function sigCard(s, isDemo){
+  const isLong=s.dir==='LONG';
+  const confCls=s.conf>=75?'cf-high':s.conf>=55?'cf-med':'cf-low';
+  const structCls=s.structure==='bullish'?'struct-bull':s.structure==='bearish'?'struct-bear':'struct-rang';
+  const structLabel=s.structure==='bullish'?'HH+HL Structure':s.structure==='bearish'?'LH+LL Structure':'Ranging Structure';
+  const volBadge=s.volRatio!=null
+    ?(s.volRatio>1.5
+      ?`<span class="vol-badge vol-surge">Vol ${s.volRatio}× avg${s.volDeclining?' · Prior decline':''}</span>`
+      :`<span class="vol-badge">Vol ${s.volRatio}× avg${s.volDeclining?' · Prior decline':''}</span>`)
+    :'';
+  const klBadge=s.atKeyLevel?'<span class="kl-badge">⚑ Key S/R</span>':'';
+  const reasonsHtml=s.reasons&&s.reasons.length
+    ?`<div class="sig-reasons"><div class="sig-reasons-title">Why this signal</div><ul>${s.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>`
+    :'';
+  return `<div class="sig-card ${isLong?'bull-card':'bear-card'}">
+    ${isDemo?'<span class="demo-badge" title="Demo data — connect API for live prices">DEMO</span>':''}
+    <div class="sig-top">
+      <div>
+        <div class="sig-sym">${s.symbol}</div>
+        <div style="font-size:11px;color:var(--muted)">${s.type}</div>
+      </div>
+      <div class="sig-badges">
+        <span class="badge ${isLong?'badge-long':'badge-short'}">${s.dir}</span>
+        <span class="badge" style="background:rgba(88,166,255,.1);color:var(--blue);font-size:10px">${sigTf==='1day'?'Daily':'4H'}</span>
+      </div>
+    </div>
+    <div class="sig-pattern" style="color:${isLong?'var(--green)':'var(--red)'}">${s.pat}</div>
+    <div class="sig-dir-line">${isLong?'▲ Bullish Signal — Look to go Long':'▼ Bearish Signal — Look to go Short'}</div>
+    <div class="sig-pa-row">
+      <span class="struct-badge ${structCls}">${structLabel}</span>
+      ${klBadge}
+      ${volBadge}
+    </div>
+    <div class="sig-prices">
+      <div class="spbox">
+        <div class="spbox-lbl">Entry Zone</div>
+        <div class="spbox-val">${s.entry}</div>
+      </div>
+      <div class="spbox" style="border:1px solid rgba(248,81,73,.2)">
+        <div class="spbox-lbl">Stop Loss</div>
+        <div class="spbox-val" style="color:var(--red)">${s.stop}</div>
+      </div>
+      <div class="spbox" style="border:1px solid rgba(63,185,80,.2)">
+        <div class="spbox-lbl">Target 1</div>
+        <div class="spbox-val" style="color:var(--green)">${s.t1}</div>
+      </div>
+      <div class="spbox" style="border:1px solid rgba(63,185,80,.15)">
+        <div class="spbox-lbl">Target 2</div>
+        <div class="spbox-val" style="color:var(--green)">${s.t2}</div>
+      </div>
+    </div>
+    <div class="sig-rr">
+      <span>R:R <strong>1:${s.rr}</strong></span>
+      <span>Risk <strong>${s.riskPips} ${s.unit}</strong></span>
+      <span>ATR <strong>${s.atrPips} ${s.unit}</strong></span>
+    </div>
+    <div class="conf-row">
+      <div class="conf-labels"><span>Signal Confidence</span><span>${s.conf}%</span></div>
+      <div class="conf-track"><div class="conf-fill ${confCls}" style="width:${s.conf}%"></div></div>
+    </div>
+    <div class="sig-meta-row">
+      <span>📊 RSI: ${s.rsi}</span>
+      <span>📈 ${s.trend}</span>
+      <span>⚡ Min win rate: ${(1/(1+s.rr)*100).toFixed(0)}%</span>
+    </div>
+    ${reasonsHtml}
+    <div class="sig-actions">
+      <button class="btn btn-primary" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Add to Journal</button>
+      <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Open in Simulator</button>
+    </div>
+  </div>`;
+}
+
+// ── Add signal directly to journal ──
+function addSigToJournal(s, silent=false){
+  const today=new Date().toISOString().split('T')[0];
+  const t={
+    id:Date.now(), date:today, market:s.symbol, direction:s.dir, status:'open',
+    entry:s.entry, sl:s.stop, tp:s.t1, exit:null, pips:0,
+    entryReason:`${s.pat} on ${sigTf==='1day'?'daily':'4H'} chart. ${s.trend}. RSI: ${s.rsi}. ATR: ${s.atrPips} ${s.unit}.`,
+    exitReason:''
+  };
+  trades.push(t); persist();
+  if(!silent) alert(`${s.symbol} ${s.dir} logged as Open in Trade Journal.`);
+}
+
+// ── Send signal to simulator ──
+function sendToSim(s){
+  const isLong=s.dir==='LONG';
+  document.getElementById('s_mkt').value=s.symbol;
+  document.getElementById('s_dir').value=s.dir;
+  document.getElementById('s_entry').value=s.entry;
+  document.getElementById('s_sl').value=s.stop;
+  document.getElementById('s_tp').value=s.t1;
+  document.getElementById('s_type').value=s.unit==='pips'?(s.mult===100?'jpy':'forex'):'pts';
+  document.getElementById('s_er').value=`${s.pat} signal. ${s.trend}. RSI: ${s.rsi}.`;
+  calcSim();
+  // switch to simulator tab
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('nav button')[2].classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('simulator').classList.add('active');
+}
+
+// ── Main scan function ──
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  btn.disabled=true; btn.textContent='Scanning…';
+
+  const isDemo=!sigApiKey&&!sigAvKey;
+  const isTd=!!sigApiKey;
+  const isAv=!sigApiKey&&!!sigAvKey;
+  const delay=isTd?8000:isAv?13000:0;
+  const provLabel=isTd?'Twelve Data':isAv?'Alpha Vantage (daily only)':'Demo';
+  const estSecs=delay>0?Math.ceil(INSTRUMENTS.length*delay/1000):0;
+
+  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${INSTRUMENTS.length} instruments via ${provLabel}…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Rate limit: ~${estSecs}s total — one request every ${delay/1000}s</span>`:''}</div>`;
+  document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Fetching market data…</div>';
+
+  const today=new Date();
+  const daySeed=today.getFullYear()*10000+((today.getMonth()+1)*100)+today.getDate();
+
+  try{
+    const results=[];
+    for(let i=0;i<INSTRUMENTS.length;i++){
+      const inst=INSTRUMENTS[i];
+      try{
+        let candles;
+        if(isDemo){
+          candles=buildDemoCandles(inst, daySeed*(i+1), i);
+        } else if(isTd){
+          candles=await fetchTd(inst.symbol);
+          if(i<INSTRUMENTS.length-1) await new Promise(r=>setTimeout(r,delay));
+        } else {
+          candles=await fetchAv(inst.symbol);
+          if(i<INSTRUMENTS.length-1) await new Promise(r=>setTimeout(r,delay));
+        }
+        const result=analyseCandles(candles, inst);
+        if(result) results.push(result);
+      } catch(e){
+        console.warn(`Failed ${inst.symbol}:`, e.message);
+      }
+    }
+    sigResults=results;
+    renderMktStrip(results);
+    renderSignals(results, isDemo);
+    if(autoLog||(!isDemo&&autoExecute)) processAutoActions(results, isDemo);
+    const now=new Date();
+    document.getElementById('lastScanLbl').textContent=
+      `Last scan: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} · ${INSTRUMENTS.length} instruments · ${results.filter(r=>r.signal).length} signal(s)${isDemo?' · DEMO':''}`;
+    setApiStatus(isDemo?'demo':'ok');
+  } catch(err){
+    document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg" style="color:var(--red)">Scan failed: ${err.message}</div>`;
+    setApiStatus('err');
+  }
+  btn.disabled=false; btn.textContent='⟳ Scan Markets';
+}
+
+// ── OANDA Integration ──
+function oandaBase(){ return oandaPractice?'https://api-fxpractice.oanda.com/v3':'https://api-fxtrade.oanda.com/v3'; }
+function toOandaInstrument(symbol){ return symbol.replace('/','_'); }
+
+function calcOandaUnits(signal){
+  if(!oandaBalance) return 1000;
+  const riskAmt = oandaBalance*(oandaRisk/100);
+  const stopDist = Math.abs(signal.entry-signal.stop);
+  if(!stopDist) return 1000;
+  // USD-base pairs: P&L per unit = stopDist/entry (in USD)
+  const usdBase = ['USD/JPY','USD/CAD','USD/CHF'].includes(signal.symbol);
+  const units = usdBase
+    ? Math.floor(riskAmt*signal.entry/stopDist)
+    : Math.floor(riskAmt/stopDist);
+  return Math.max(1000, Math.min(units, 500000));
+}
+
+async function connectOanda(){
+  const token   = document.getElementById('oandaTokenInput').value.trim()  || oandaToken;
+  const account = document.getElementById('oandaAccountInput').value.trim() || oandaAccount;
+  const risk    = parseFloat(document.getElementById('oandaRiskInput').value) || 1;
+  if(!token||!account){ alert('Enter your OANDA API token and account ID first.'); return; }
+  oandaToken=token; oandaAccount=account; oandaRisk=risk;
+  localStorage.setItem('oanda_token',token);
+  localStorage.setItem('oanda_account',account);
+  localStorage.setItem('oanda_risk',risk);
+  const dot=document.getElementById('oandaDot'), lbl=document.getElementById('oandaLbl');
+  dot.className='api-dot demo'; lbl.textContent='Connecting…';
+  try{
+    const r=await fetch(`${oandaBase()}/accounts/${oandaAccount}/summary`,{
+      headers:{'Authorization':`Bearer ${oandaToken}`,'Accept-Datetime-Format':'RFC3339'}
+    });
+    const d=await r.json();
+    if(!d.account) throw new Error(d.errorMessage||'No account data — check token and account ID');
+    oandaBalance=parseFloat(d.account.balance);
+    const riskAmt=(oandaBalance*oandaRisk/100).toFixed(2);
+    dot.className='api-dot ok';
+    lbl.textContent=`${oandaPractice?'Practice':'Live'} · Balance: ${oandaBalance.toFixed(2)} ${d.account.currency} · Risk ${oandaRisk}% = ${riskAmt} per trade`;
+    document.getElementById('oandaTokenInput').value='';
+    document.getElementById('oandaAccountInput').placeholder=account;
+    document.getElementById('autoExecWrap').style.display='flex';
+  } catch(e){
+    dot.className='api-dot err';
+    lbl.textContent='Failed: '+e.message;
+  }
+}
+
+async function oandaPlaceOrder(signal){
+  const units=calcOandaUnits(signal);
+  const isLong=signal.dir==='LONG';
+  const body={order:{
+    type:'MARKET',
+    instrument:toOandaInstrument(signal.symbol),
+    units:(isLong?units:-units).toString(),
+    stopLossOnFill:{price:signal.stop.toFixed(signal.dec)},
+    takeProfitOnFill:{price:signal.t1.toFixed(signal.dec)},
+    tradeClientExtensions:{comment:`AutoSignal conf:${signal.conf}% ${signal.pat}`}
+  }};
+  const r=await fetch(`${oandaBase()}/accounts/${oandaAccount}/orders`,{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${oandaToken}`,'Content-Type':'application/json','Accept-Datetime-Format':'RFC3339'},
+    body:JSON.stringify(body)
+  });
+  const d=await r.json();
+  if(d.orderFillTransaction||d.orderCreateTransaction) return d;
+  throw new Error(d.errorMessage||(d.errorCode?`OANDA ${d.errorCode}`:JSON.stringify(d).slice(0,120)));
+}
+
+async function processAutoActions(results, isDemo=false){
+  const today=new Date().toISOString().split('T')[0];
+  const sigs=results.filter(r=>r.signal).map(r=>r.signal);
+  for(const sig of sigs){
+    if(sig.conf<autoLogConf) continue;
+    const alreadyLogged=trades.some(t=>t.market===sig.symbol&&t.date===today&&t.status==='open');
+    if(autoLog&&!alreadyLogged){
+      addSigToJournal(sig, true);
+      showToast(`Auto-logged${isDemo?' (demo)':''}: ${sig.symbol} ${sig.dir} · ${sig.conf}% conf`,'tw');
+    }
+    if(!isDemo&&autoExecute&&oandaToken&&oandaAccount&&!alreadyLogged){
+      try{
+        const units=calcOandaUnits(sig);
+        await oandaPlaceOrder(sig);
+        showToast(`OANDA order placed: ${sig.symbol} ${sig.dir} · ${units.toLocaleString()} units`,'tw');
+      } catch(e){
+        showToast(`OANDA failed (${sig.symbol}): ${e.message}`,'tl');
+      }
+    }
+  }
+}
+
+function setAutoLog(v){
+  autoLog=v; localStorage.setItem('auto_log',v);
+  document.getElementById('autoLogConf').disabled=!v;
+}
+function setAutoExec(v){ autoExecute=v; localStorage.setItem('auto_execute',v); }
+function setOandaPractice(v){ oandaPractice=v; localStorage.setItem('oanda_practice',v); }
+function updateAutoConf(){
+  autoLogConf=parseInt(document.getElementById('autoLogConf').value)||75;
+  localStorage.setItem('auto_log_conf',autoLogConf);
+}
+function toggleOandaPanel(){
+  const p=document.getElementById('oandaPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+
+// ── API Provider management ──
+function setProvider(p, btn){
+  sigProvider=p;
+  localStorage.setItem('sig_provider',p);
+  document.querySelectorAll('.prov-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const keyRow=document.getElementById('apiKeyRow');
+  const input=document.getElementById('apiKeyInput');
+  const tf4h=document.getElementById('tf4h');
+  if(p==='demo'){
+    keyRow.style.display='none';
+    setApiStatus('demo');
+    tf4h.disabled=false; tf4h.title='';
+  } else {
+    keyRow.style.display='flex';
+    const hasSaved=p==='td'?!!sigApiKey:!!sigAvKey;
+    input.value='';
+    input.placeholder=p==='td'
+      ?(hasSaved?'Twelve Data key saved — click Scan Markets':'Free key from twelvedata.com — 800 credits/day, Daily + 4H')
+      :(hasSaved?'Alpha Vantage key saved — click Scan Markets':'Free key from alphavantage.co — 25 req/day, Daily only');
+    if(p==='av'){
+      tf4h.disabled=true; tf4h.title='Alpha Vantage free: daily candles only';
+      if(sigTf==='4h'){ sigTf='1day'; document.getElementById('tfDay').classList.add('active'); tf4h.classList.remove('active'); }
+    } else {
+      tf4h.disabled=false; tf4h.title='';
+    }
+    setApiStatus(hasSaved?'ok':'demo');
+  }
+}
+function saveApiKey(){
+  const k=document.getElementById('apiKeyInput').value.trim();
+  if(!k){alert('Please enter an API key first.');return;}
+  if(sigProvider==='td'){ sigApiKey=k; localStorage.setItem('te_apikey',k); }
+  else if(sigProvider==='av'){ sigAvKey=k; localStorage.setItem('av_apikey',k); }
+  setApiStatus('ok');
+  document.getElementById('apiKeyInput').value='';
+  document.getElementById('apiKeyInput').placeholder=sigProvider==='td'?'Twelve Data key saved — click Scan Markets':'Alpha Vantage key saved — click Scan Markets';
+  runScan();
+}
+function setApiStatus(s){
+  const dot=document.getElementById('apiDot'), lbl=document.getElementById('apiLbl');
+  dot.className='api-dot '+(s==='ok'?'ok':s==='demo'?'demo':'err');
+  if(s==='ok'&&sigProvider==='td') lbl.textContent='Twelve Data connected · Daily + 4H · 800 credits/day';
+  else if(s==='ok'&&sigProvider==='av') lbl.textContent='Alpha Vantage connected · Daily only · 25 req/day · live prices via open.er-api.com';
+  else if(s==='demo') lbl.innerHTML='Demo Mode — <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">Twelve Data</a> or <a href="https://alphavantage.co" target="_blank" style="color:var(--blue)">Alpha Vantage</a> (both free)';
+  else lbl.textContent='Connection error — check key and try again';
+}
+function setTf(tf, btn){
+  if(tf==='4h'&&sigProvider==='av') return;
+  sigTf=tf;
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function initSignals(){
+  // Restore API provider
+  const saved=localStorage.getItem('sig_provider')||(sigApiKey?'td':sigAvKey?'av':'demo');
+  sigProvider=saved;
+  const tabMap={td:'provTabTd',av:'provTabAv',demo:'provTabDemo'};
+  const tabEl=document.getElementById(tabMap[saved]||'provTabDemo');
+  setProvider(saved, tabEl);
+  // Restore auto-log state
+  document.getElementById('autoLogChk').checked=autoLog;
+  document.getElementById('autoLogConf').value=autoLogConf;
+  document.getElementById('autoLogConf').disabled=!autoLog;
+  // Restore OANDA state
+  if(oandaToken&&oandaAccount){
+    document.getElementById('oandaRiskInput').value=oandaRisk;
+    document.getElementById('oandaPracticeChk').checked=oandaPractice;
+    document.getElementById('oandaAccountInput').placeholder=oandaAccount;
+    document.getElementById('autoExecWrap').style.display='flex';
+    document.getElementById('autoExecChk').checked=autoExecute;
+    const lbl=document.getElementById('oandaLbl');
+    lbl.textContent=`${oandaPractice?'Practice':'Live'} account saved · click Connect to verify · Risk ${oandaRisk}%`;
+  }
+}
+
+// ── NEWS ───────────────────────────────────────────────────────
+const NEWS_FEEDS={
+  markets:[
+    {url:'https://feeds.reuters.com/reuters/businessNews',      label:'Reuters'},
+    {url:'https://feeds.marketwatch.com/marketwatch/topstories/',label:'MarketWatch'},
+    {url:'https://finance.yahoo.com/news/rssindex',             label:'Yahoo Finance'},
+    {url:'https://www.investing.com/rss/news.rss',              label:'Investing.com'},
+  ],
+  crypto:[
+    {url:'https://www.coindesk.com/arc/outboundfeeds/rss/',     label:'CoinDesk'},
+    {url:'https://cointelegraph.com/rss',                       label:'CoinTelegraph'},
+    {url:'https://decrypt.co/feed',                             label:'Decrypt'},
+  ],
+  etfs:[
+    {url:'https://etfdb.com/news/feed/',                        label:'ETF Database'},
+    {url:'https://www.etf.com/sections/etf-news?rss=1',         label:'ETF.com'},
+  ],
+};
+let newsCat='all', newsView='list', newsTimer=null;
+
+function newsTimeAgo(d){
+  const s=(Date.now()-new Date(d))/1000;
+  if(s<60) return 'Just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function stripHtml(h){
+  return h.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#\d+;/g,'').replace(/\s+/g,' ').trim().slice(0,220);
+}
+async function fetchFeed(feed){
+  try{
+    const r=await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`);
+    const d=await r.json();
+    if(d.status!=='ok') return [];
+    return d.items.map(it=>({title:it.title,link:it.link,date:it.pubDate,desc:stripHtml(it.description||it.content||''),source:feed.label,img:it.thumbnail||'',cat:feed.cat}));
+  } catch(e){ return []; }
+}
+async function loadNews(){
+  const btn=document.getElementById('newsRefreshBtn');
+  btn.disabled=true; btn.textContent='⟳ Loading…';
+  document.getElementById('newsGrid').innerHTML='<div class="news-loading"><span class="spin-icon">⟳</span><br>Fetching latest news…</div>';
+  const catColors={markets:'#58a6ff',crypto:'#d29922',etfs:'#3fb950'};
+  const catLabels={markets:'Markets',crypto:'Crypto',etfs:'ETFs'};
+  const feedList=newsCat==='all'
+    ?[...NEWS_FEEDS.markets.map(f=>({...f,cat:'markets'})),...NEWS_FEEDS.crypto.map(f=>({...f,cat:'crypto'})),...NEWS_FEEDS.etfs.map(f=>({...f,cat:'etfs'}))]
+    :NEWS_FEEDS[newsCat].map(f=>({...f,cat:newsCat}));
+  const settled=await Promise.allSettled(feedList.map(f=>fetchFeed(f)));
+  const items=settled.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const seen=new Set();
+  const unique=items.filter(it=>{const k=it.title.slice(0,42).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  if(!unique.length){
+    document.getElementById('newsGrid').innerHTML='<div class="no-sig-msg">No articles loaded — some feeds may be temporarily unavailable. Try again in a moment.</div>';
+  } else {
+    renderNews(unique, catColors, catLabels);
+  }
+  document.getElementById('newsUpdated').textContent='Updated '+new Date().toLocaleTimeString();
+  btn.disabled=false; btn.textContent='⟳ Refresh';
+}
+
+function analyzeNewsSentiment(title, desc){
+  const t=(title+' '+desc).toLowerCase();
+  const BULL=['rally','rallies','surge','surges','gain','gains','rise','rises','rose','climbs','growth','upgrade','upgraded','beats','beat','exceeds','exceeded','positive','strong','strength','record high','breakout','higher','boost','recovery','recover','outperform','profit','rebound','soar','advance','green'];
+  const BEAR=['fall','falls','fell','drop','drops','dropped','decline','declines','crash','crashed','sell','downgrade','downgraded','misses','missed','below expectations','weak','weakness','loss','losses','lower','cut','cuts','fears','warning','warns','downturn','recession','rate hike','sell-off','plunge','slump','concern','crisis','default'];
+  const HIGH=['federal reserve','fed rate','interest rate',' cpi ','inflation','gdp','nonfarm','central bank',' ecb ','bank of england',' boj ','geopolit','war ','conflict','sanction','financial crisis','emergency','debt ceiling','collapse'];
+  const MED=['earnings','revenue','quarterly','ipo','merger','acquisition','opec','crude oil','gold','bitcoin','ethereum','btc ','eth ','crypto','s&p 500','nasdaq','dow jones','market index','forex'];
+  let b=0, br=0;
+  BULL.forEach(w=>{if(t.includes(w))b++;});
+  BEAR.forEach(w=>{if(t.includes(w))br++;});
+  const impact=HIGH.some(w=>t.includes(w))?'high':MED.some(w=>t.includes(w))?'medium':'low';
+  const total=b+br;
+  let sentiment='neutral', conf=0;
+  if(total>0){
+    const sc=(b-br)/Math.max(total,2);
+    if(sc>=0.25){sentiment='bull'; conf=Math.min(87,50+Math.round(sc*60));}
+    else if(sc<=-0.25){sentiment='bear'; conf=Math.min(87,50+Math.round(Math.abs(sc)*60));}
+  }
+  const reasons={bull:{high:'Major bullish catalyst',medium:'Positive market data',low:'Bullish tone detected'},bear:{high:'Major risk event',medium:'Negative market data',low:'Bearish tone detected'},neutral:{high:'Key event — direction unclear',medium:'Mixed signals',low:'Neutral coverage'}};
+  return {sentiment, conf, impact, reason:reasons[sentiment][impact]};
+}
+
+function renderNews(items, catColors, catLabels){
+  const CC=catColors||{markets:'#58a6ff',crypto:'#d29922',etfs:'#3fb950'};
+  const CL=catLabels||{markets:'Markets',crypto:'Crypto',etfs:'ETFs'};
+  const analyzed=items.map(it=>({...it,...analyzeNewsSentiment(it.title,it.desc)}));
+  const sBadge=s=>s==='bull'?'<span class="nsig-badge nb-bull">📈 BULL</span>':s==='bear'?'<span class="nsig-badge nb-bear">📉 BEAR</span>':'<span class="nsig-badge nb-neut">◆ NEUTRAL</span>';
+  const iBadge=i=>i==='high'?'<span class="nsig-badge nb-hi">⚡ HIGH IMPACT</span>':i==='medium'?'<span class="nsig-badge nb-med">◎ MED IMPACT</span>':'<span class="nsig-badge nb-low">· LOW</span>';
+  if(newsView==='list'){
+    document.getElementById('newsGrid').innerHTML=`<div class="news-list-inner">${analyzed.map(it=>`
+      <a href="${it.link}" target="_blank" rel="noopener" class="nlc">
+        <div class="nlc-badges">
+          ${sBadge(it.sentiment)}
+          ${iBadge(it.impact)}
+        </div>
+        <div class="nlc-body">
+          <div class="nlc-meta">
+            <span class="news-source">${it.source}</span>
+            <span class="news-cat-pill" style="background:${CC[it.cat]||'#58a6ff'}22;color:${CC[it.cat]||'#58a6ff'}">${CL[it.cat]||it.cat}</span>
+            <span class="news-time">${newsTimeAgo(it.date)}</span>
+            <span class="nsig-reason">${it.reason}${it.conf?' · '+it.conf+'%':''}</span>
+          </div>
+          <div class="nlc-title">${it.title}</div>
+        </div>
+      </a>`).join('')}</div>`;
+  } else {
+    document.getElementById('newsGrid').innerHTML=`<div class="news-grid-inner">${analyzed.map(it=>`
+      <a href="${it.link}" target="_blank" rel="noopener" class="news-card">
+        ${it.img?`<div class="news-thumb" style="background-image:url('${it.img}')"></div>`:''}
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">${it.source}</span>
+            <span class="news-cat-pill" style="background:${CC[it.cat]||'#58a6ff'}22;color:${CC[it.cat]||'#58a6ff'}">${CL[it.cat]||it.cat}</span>
+            <span class="news-time">${newsTimeAgo(it.date)}</span>
+          </div>
+          <div class="news-title">${it.title}</div>
+          ${it.desc?`<div class="news-desc">${it.desc}</div>`:''}
+          <div class="nsig">
+            ${sBadge(it.sentiment)}
+            ${iBadge(it.impact)}
+            <span class="nsig-reason">${it.reason}${it.conf?' · '+it.conf+'%':''}</span>
+          </div>
+        </div>
+      </a>`).join('')}</div>`;
+  }
+}
+
+function setNewsCat(cat,btn){
+  newsCat=cat;
+  document.querySelectorAll('.ncat').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadNews();
+}
+function setNewsView(v,btn){
+  newsView=v;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Re-render last loaded items if available
+  const grid=document.getElementById('newsGrid');
+  const inner=grid.querySelector('.news-grid-inner,.news-list-inner');
+  if(inner) loadNews(); // reload to re-render in new layout
+}
+function initNews(){
+  if(!newsTimer) newsTimer=setInterval(()=>{ if(document.getElementById('news').classList.contains('active')) loadNews(); },300000);
+  // Set list as default view
+  document.getElementById('vtList').classList.add('active');
+  document.getElementById('vtGrid').classList.remove('active');
+  loadNews();
+}
+
+// ── SUPABASE ───────────────────────────────────────────────────
+const SUPA_URL  = 'https://qlvbgkipkxtwaqwpcmuj.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdmJna2lwa3h0d2Fxd3BjbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTY3MjcsImV4cCI6MjA5NDU5MjcyN30.iATkgXOfVYDJp1meE2igoJ33mVD3tJiNww4hyR4hRDs';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+let sbUser = null;   // current auth user
+let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
+
+const PLAN_LIMITS = {
+  free:      { maxTrades:10, instruments:['EUR/USD','GBP/USD'], liveData:false, signals:false, ideasCount:1, news:false, autoLog:false, oanda:false },
+  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','XAU/USD'], liveData:true, signals:true, ideasCount:3, news:true, autoLog:true, oanda:false },
+  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:8, news:true, autoLog:true, oanda:true }
+};
+
+function planLimits(){ return PLAN_LIMITS[sbPlan] || PLAN_LIMITS.free; }
+
+function canAccess(feature){
+  const p = planLimits();
+  if(feature === 'liveData')   return p.liveData;
+  if(feature === 'signals')    return p.signals;
+  if(feature === 'news')       return p.news;
+  if(feature === 'autoLog')    return p.autoLog;
+  if(feature === 'oanda')      return p.oanda;
+  if(feature === 'moreTrades') return p.maxTrades === Infinity || trades.length < p.maxTrades;
+  return true;
+}
+
+function requirePlan(feature, msg){
+  if(canAccess(feature)) return true;
+  document.getElementById('pricing-gate-msg').textContent = msg || 'Upgrade to access this feature.';
+  document.getElementById('pricingOverlay').classList.add('open');
+  return false;
+}
+
+// ── AUTH UI ────────────────────────────────────────────────────
+let authTabMode = 'signin';
+
+function openAuthModal(mode){
+  authTabMode = mode || 'signin';
+  switchAuthTab(authTabMode);
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  document.getElementById('authOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('auth-email').focus(), 100);
+}
+
+function closeAuthModal(){ document.getElementById('authOverlay').classList.remove('open'); }
+function closePricingModal(){ document.getElementById('pricingOverlay').classList.remove('open'); }
+function goUpgrade(plan){ closePricingModal(); showToast('Stripe payments coming soon — contact us at hello@sharpe.io to upgrade.','info'); }
+
+function switchAuthTab(mode){
+  authTabMode = mode;
+  document.getElementById('atab-signin').classList.toggle('active', mode==='signin');
+  document.getElementById('atab-signup').classList.toggle('active', mode==='signup');
+  document.getElementById('auth-submit-btn').textContent = mode==='signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-name-row').style.display = mode==='signup' ? 'flex' : 'none';
+  document.getElementById('auth-switch-text').textContent = mode==='signin' ? "Don't have an account? " : 'Already have an account? ';
+  document.getElementById('auth-switch-link').textContent = mode==='signin' ? 'Sign up free' : 'Sign in';
+  document.getElementById('auth-switch-link').onclick = (e)=>{ e.preventDefault(); switchAuthTab(mode==='signin'?'signup':'signin'); };
+}
+
+async function submitAuth(){
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-err');
+  const btn   = document.getElementById('auth-submit-btn');
+  if(!email || !pass){ errEl.textContent = 'Email and password are required.'; return; }
+  btn.textContent = 'Please wait…'; btn.disabled = true; errEl.textContent = '';
+  try {
+    let res;
+    if(authTabMode === 'signin'){
+      res = await sb.auth.signInWithPassword({ email, password: pass });
+    } else {
+      res = await sb.auth.signUp({ email, password: pass });
+    }
+    if(res.error) throw res.error;
+    if(authTabMode === 'signup' && !res.data?.session){
+      errEl.style.color = 'var(--green)';
+      errEl.textContent = 'Check your email to confirm your account, then sign in.';
+    } else {
+      closeAuthModal();
+    }
+  } catch(e){
+    errEl.style.color = 'var(--red)';
+    errEl.textContent = e.message || 'Something went wrong.';
+  } finally {
+    btn.textContent = authTabMode==='signin' ? 'Sign In' : 'Create Account';
+    btn.disabled = false;
+  }
+}
+
+function updateAuthUI(){
+  const area = document.getElementById('authArea');
+  if(!area) return;
+  if(sbUser){
+    const planCls = 'plan-'+sbPlan;
+    area.innerHTML = `
+      <span class="plan-badge ${planCls}">${sbPlan.toUpperCase()}</span>
+      <span class="auth-email">${sbUser.email}</span>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="signOut()">Sign Out</button>`;
+  } else {
+    area.innerHTML = `
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
+      <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signup')">Sign Up Free</button>`;
+  }
+}
+
+async function loadProfile(){
+  if(!sbUser) return;
+  const { data } = await sb.from('profiles').select('plan,plan_expires_at').eq('id', sbUser.id).single();
+  if(data){
+    sbPlan = data.plan || 'free';
+    if(data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) sbPlan = 'free';
+  }
+  updateAuthUI();
+}
+
+async function signOut(){
+  await sb.auth.signOut();
+  sbUser = null; sbPlan = 'free';
+  loadTrades(); // revert to localStorage
+  updateAuthUI();
+  renderDashboard();
+  showToast('Signed out successfully.','info');
+}
+
+// ── SUPABASE TRADE OPERATIONS ──────────────────────────────────
+function toDbTrade(t, userId){
+  return { id: typeof t.id==='string' ? t.id : undefined, user_id:userId,
+    date:t.date, market:t.market, direction:t.direction, status:t.status,
+    entry:t.entry, sl:t.sl, tp:t.tp, exit:t.exit, pips:t.pips,
+    entry_reason:t.entryReason, exit_reason:t.exitReason };
+}
+function fromDbTrade(r){
+  return { id:r.id, date:r.date, market:r.market, direction:r.direction, status:r.status,
+    entry:r.entry, sl:r.sl, tp:r.tp, exit:r.exit, pips:r.pips,
+    entryReason:r.entry_reason, exitReason:r.exit_reason };
+}
+
+async function loadTradesFromDb(){
+  if(!sbUser) return;
+  const { data, error } = await sb.from('trades').select('*').eq('user_id', sbUser.id).order('created_at', { ascending:false });
+  if(error){ console.error('loadTrades', error); return; }
+  trades = (data||[]).map(fromDbTrade);
+  renderDashboard();
+  if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
+}
+
+async function persistToDb(){
+  if(!sbUser){ localStorage.setItem('te_trades', JSON.stringify(trades)); return; }
+  localStorage.setItem('te_trades', JSON.stringify(trades));
+  if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
+}
+
+async function saveTradeToDb(t){
+  if(!sbUser) return;
+  const row = toDbTrade(t, sbUser.id);
+  const { error } = await sb.from('trades').upsert(row, { onConflict:'id' });
+  if(error) console.error('saveTradeToDb', error);
+}
+
+async function deleteTradeFromDb(id){
+  if(!sbUser) return;
+  await sb.from('trades').delete().eq('id', id).eq('user_id', sbUser.id);
+}
+
+// ── AUTH STATE LISTENER ────────────────────────────────────────
+sb.auth.onAuthStateChange(async (event, session) => {
+  sbUser = session?.user || null;
+  if(sbUser){
+    await loadProfile();
+    await loadTradesFromDb();
+    renderDashboard();
+    showToast('Welcome back!', 'info');
+  } else {
+    sbPlan = 'free';
+    updateAuthUI();
+  }
+});
+
+// ── TRADE IDEAS ────────────────────────────────────────────────
+const IDEA_POOL = [
+  // FOREX
+  {sym:'EUR/USD',type:'forex',dir:'long',tf:'Daily',strat:'Fibonacci 0.618 + Pin Bar',
+   entLo:1.0820,entHi:1.0870,sl:1.0745,tp1:1.0990,tp2:1.1120,conf:74,
+   why:'Price pulled back to the 0.618 Fibonacci retracement of the Feb–Apr impulse leg, coinciding exactly with the 50-day EMA. A pin bar formed at this confluence — long lower wick with sellers unable to sustain the push below 1.0820. Price structure is bullish (higher highs, higher lows since February). RSI(14) recovered from 32 back above 43.',
+   risk:'USD CPI release midweek. Hold off entry until after the print, or reduce size 50% pre-event.'},
+  {sym:'GBP/USD',type:'forex',dir:'short',tf:'Daily',strat:'Double Top',
+   entLo:1.2960,entHi:1.3010,sl:1.3090,tp1:1.2820,tp2:1.2650,conf:79,
+   why:'Two tests of 1.3000–1.3015 produced near-identical swing highs separated by three weeks. The second peak formed with lower RSI (bearish divergence) and significantly lower volume. A close below the 1.2870 trough between peaks activates the pattern. Measured target: 1.2650 (280 pips down).',
+   risk:'BoE rate decision next week — consensus is hold, but any hawkish surprise could push price through the stop.'},
+  {sym:'USD/JPY',type:'forex',dir:'short',tf:'4H',strat:'Bearish Engulfing at Resistance',
+   entLo:153.20,entHi:153.60,sl:154.20,tp1:151.80,tp2:150.40,conf:68,
+   why:'Price rallied into the weekly resistance zone at 153.50–154.00 and printed a bearish engulfing candle on the 4H chart — volume surged 40% above average on that candle. EMA structure (20 below 50) remains bearish. This aligns with the daily downtrend as a scale-in entry.',
+   risk:'BoJ intervention risk above 155. Position size conservatively — 0.5% risk max.'},
+  {sym:'AUD/USD',type:'forex',dir:'long',tf:'Daily',strat:'Bullish Divergence + 0.618 Fib',
+   entLo:0.6350,entHi:0.6390,sl:0.6280,tp1:0.6510,tp2:0.6640,conf:71,
+   why:'RSI(14) made a higher low while price made a lower low into the 0.618 retracement — classic bullish divergence. The level coincides with a prior monthly support at 0.6370. Three declining-volume candles into the low suggest exhaustion selling. China PMI improvement is a macro tailwind for AUD.',
+   risk:'RBA meeting in 8 days. AUD can move 80–120 pips on rate surprises. Reduce size 40% if holding through the meeting.'},
+  {sym:'GBP/USD',type:'forex',dir:'long',tf:'4H',strat:'Bull Flag Breakout',
+   entLo:1.2740,entHi:1.2775,sl:1.2670,tp1:1.2900,tp2:1.3020,conf:76,
+   why:'A 200-pip impulse leg developed over three sessions, followed by a five-session tight downward consolidation — the flag. Volume dried up significantly during the flag. A breakout above 1.2775 on above-average volume triggers the entry. Target = flagpole height added to breakout point.',
+   risk:'US jobs data on Friday. If released before Target 1 is reached, trail stop to entry.'},
+  {sym:'EUR/USD',type:'forex',dir:'short',tf:'Daily',strat:'Rising Wedge Breakdown',
+   entLo:1.0890,entHi:1.0930,sl:1.1010,tp1:1.0740,tp2:1.0600,conf:70,
+   why:'A rising wedge formed over six weeks with converging trendlines. Despite higher prices, RSI made lower highs (bearish divergence). Price broke below the lower trendline on above-average volume. Best entry: retest of the broken trendline from below. Measured target ≈150 pips.',
+   risk:'Enter on a clean retest of the broken trendline rather than chasing the initial break.'},
+  {sym:'USD/JPY',type:'forex',dir:'long',tf:'Daily',strat:'50-day EMA Bounce + Inside Bar',
+   entLo:149.40,entHi:149.85,sl:148.50,tp1:151.20,tp2:152.80,conf:67,
+   why:'Price found support at the 50-day SMA after a 350-pip correction. An inside bar formed at this level — a consolidation pause before continuation. The weekly trend remains bullish. The US–Japan rate differential is still wide, continuing to favor USD/JPY longs on dips.',
+   risk:'BoJ officials are increasingly hawkish. Any guidance shift at the next press conference could accelerate yen strength.'},
+  // COMMODITY
+  {sym:'XAU/USD',type:'commodity',dir:'long',tf:'Daily',strat:'Breakout Continuation',
+   entLo:3260,entHi:3315,sl:3180,tp1:3450,tp2:3620,conf:77,
+   why:'Gold broke out of a 3-week consolidation range (3180–3285) on strong volume — a breakout continuation within the primary uptrend. The prior breakaway gap was never filled, confirming institutional participation. Central bank demand remains structurally elevated and the 20-day EMA is rising below price.',
+   risk:'A DXY surge above 106 on risk-off flows would pressure gold. Monitor the dollar closely.'},
+  {sym:'XAU/USD',type:'commodity',dir:'short',tf:'4H',strat:'Exhaustion Gap + Shooting Star',
+   entLo:3420,entHi:3460,sl:3510,tp1:3310,tp2:3200,conf:64,
+   why:'Price gapped up and formed a shooting star candlestick at a prior resistance level — classic exhaustion gap pattern. RSI(14) at 78 on the 4H. Momentum diverging. This is a tactical short targeting a return to the breakout zone, not a trend reversal.',
+   risk:'Gold is in a primary uptrend — this is a counter-trend trade. Use tight stops and small size.'},
+  // ETF
+  {sym:'SPY',type:'etf',dir:'long',tf:'Daily',strat:'Momentum (ADX + 200-day SMA)',
+   entLo:568,entHi:575,sl:554,tp1:595,tp2:622,conf:73,
+   why:'S&P 500 (SPY) remains above its rising 200-day SMA with ADX at 28 — confirming a strong trend. RSI pulled back to 52 from 65, a healthy cooling without losing trend structure. The prior week\'s high is being retested as support. Earnings season beat rate at 74% — above the 5-year average. Sector rotation shows Industrials and Tech leading — consistent with mid-cycle expansion.',
+   risk:'Fed minutes midweek. Any hawkish surprise could trigger a 1–2% selloff. Size 50% before the release.'},
+  {sym:'QQQ',type:'etf',dir:'short',tf:'Daily',strat:'Bearish Engulfing at Resistance + RSI Divergence',
+   entLo:494,entHi:501,sl:512,tp1:472,tp2:455,conf:68,
+   why:'QQQ formed a bearish engulfing candle at the 500 resistance level (prior all-time high) with RSI at 71 (overbought) and volume 35% above average. RSI made a lower high versus price — bearish divergence. This is a mean-reversion trade targeting the 50-day SMA (~472).',
+   risk:'NVDA earnings this week. A strong beat could push QQQ through 512. Avoid holding through that print.'},
+  {sym:'GLD',type:'etf',dir:'long',tf:'Weekly',strat:'Safe-Haven Rotation + Cup & Handle',
+   entLo:308,entHi:318,sl:294,tp1:342,tp2:368,conf:75,
+   why:'Gold ETF (GLD) is confirmed above the 20/50/200-week MAs. A 4-week consolidation formed a handle on a massive cup pattern. Central bank gold buying hit a record Q1 this year; declining real yields add further support. Weekly RSI at 62 — elevated but not overbought.',
+   risk:'Fed turning hawkish (real yields surging above 2.2%) is the primary threat. Monitor 10-year TIPS yield.'},
+  {sym:'XLE',type:'etf',dir:'long',tf:'Daily',strat:'Late-Cycle Sector Rotation',
+   entLo:88,entHi:92,sl:83,tp1:102,tp2:115,conf:71,
+   why:'Energy (XLE) is the classic late-cycle outperformer. ISM Manufacturing PMI has peaked and is slowly declining — late expansion phase. Crude oil found support at $78/barrel with OPEC+ extending supply cuts. XLE is breaking out of a 3-month base with a volume surge. Relative strength vs SPY has been improving for six weeks.',
+   risk:'EIA demand data Wednesday. Weak demand figures could drag XLE 3–5% despite the technical setup.'},
+  {sym:'XLF',type:'etf',dir:'long',tf:'Daily',strat:'Ascending Triangle Breakout',
+   entLo:48.20,entHi:49.10,sl:45.80,tp1:54.00,tp2:58.50,conf:74,
+   why:'Financials (XLF) built a textbook ascending triangle over eight weeks — flat resistance at $49, rising support trendline. Volume dried up during formation. The yield curve has steepened, positive for bank net interest margins. A close above $49 on volume gives a measured target of ~$54.',
+   risk:'Any bank-specific credit concern or earnings miss can abort the breakout. Confirm with a second close above $49 before adding.'},
+  {sym:'QQQ',type:'etf',dir:'long',tf:'Daily',strat:'Mean Reversion (BB + RSI)',
+   entLo:458,entHi:465,sl:448,tp1:484,tp2:498,conf:69,
+   why:'QQQ touched the lower Bollinger Band (20-day, 2σ) with RSI(14) at 28 — a historically reliable mean-reversion setup. Backtested win rate on QQQ: 62% (2010–2023). The 200-day SMA is rising, confirming the primary uptrend. Target: return to the middle Bollinger Band (20-day SMA).',
+   risk:'This is mean reversion, not trend-following. Exit immediately if QQQ closes below the lower BB by more than 1×ATR.'},
+  // CRYPTO
+  {sym:'BTC/USD',type:'crypto',dir:'long',tf:'Daily',strat:'Golden Cross + On-Chain MVRV',
+   entLo:94000,entHi:98500,sl:86000,tp1:112000,tp2:136000,conf:76,
+   why:'BTC completed a Golden Cross (50-day SMA crossed above 200-day SMA) three weeks ago. On-chain: MVRV Z-Score at 2.4 — well below the 6.0+ sell zone. SOPR above 1.0 confirms coins spending in profit (healthy bull market). ETF inflows positive for 12 consecutive days. Post-halving timing: currently 13 months after halving — historically the strongest part of the 4-year cycle.',
+   risk:'BTC remains correlated with risk assets. A macro shock can cause a 15–20% correction. Never risk more than 2% of portfolio on a single crypto entry.'},
+  {sym:'ETH/USD',type:'crypto',dir:'long',tf:'Daily',strat:'BTC Dominance Rotation + ETH/BTC Breakout',
+   entLo:2750,entHi:2920,sl:2480,tp1:3450,tp2:4250,conf:72,
+   why:'BTC dominance fell from 58% to 53% over three weeks — altcoin rotation beginning. ETH/BTC ratio broke above its 20-week MA, signaling an ETH outperformance phase. On-chain: ETH staking yield at 4.2% and net exchange outflows are increasing (accumulation). ETF flow data shows ETH spot ETF inflows accelerating.',
+   risk:'ETH/BTC momentum can reverse quickly. If BTC dominance starts rising again, reduce ETH exposure immediately. Scale out 30% at $3,450.'},
+  {sym:'BTC/USD',type:'crypto',dir:'short',tf:'4H',strat:'Funding Rate Fade + RSI Overbought',
+   entLo:105500,entHi:108500,sl:112500,tp1:96500,tp2:90000,conf:63,
+   why:'Perpetual futures funding rate spiked to +0.12% per 8 hours — the most crowded long in 6 months. Daily RSI reached 78. Price is 28% extended above the 50-day SMA. At these funding levels, BTC historically corrects 8–15% within 2–3 weeks as over-leveraged longs are flushed.',
+   risk:'High-funding fades can take weeks in a bull market. BTC can stay overbought for extended periods. Use tight stops. This is a high-risk, short-duration tactical trade only.'},
+  {sym:'BTC/USD',type:'crypto',dir:'long',tf:'Weekly',strat:'DCA Entry (Fear & Greed < 20)',
+   entLo:82000,entHi:88000,sl:72000,tp1:112000,tp2:142000,conf:78,
+   why:'Fear & Greed Index dropped to 18 (Extreme Fear) — historically one of the strongest buy signals over a 90-day horizon for BTC. On-chain NUPL at 0.32 (Hope/Optimism phase — far from euphoria). The 200-week SMA at $65,000 provides a massive long-term floor. This is a DCA entry — spread purchases over 4–6 weeks.',
+   risk:'Extreme fear can deepen further. Max portfolio crypto allocation: 5–10% regardless of conviction. This is a multi-month position.'},
+  {sym:'ETH/USD',type:'crypto',dir:'long',tf:'Daily',strat:'Fibonacci 0.618 + MVRV Below 2.5',
+   entLo:2600,entHi:2760,sl:2380,tp1:3250,tp2:4100,conf:73,
+   why:'ETH pulled back to the 0.618 Fibonacci retracement of the Jan–Mar impulse and the 50-day SMA — a textbook retracement entry in an uptrend. MVRV Z-Score at 1.8 (well below the danger zone). Net exchange outflows signal accumulation. ETF inflows were positive 8 of the last 10 trading days.',
+   risk:'ETH historically underperforms BTC during late-cycle risk-off events. If BTC drops >15% from peak, ETH may drop 25–35%. Manage position size accordingly.'},
+  {sym:'SOL/USD',type:'crypto',dir:'long',tf:'Daily',strat:'Altcoin Momentum (BTC Dom. Declining)',
+   entLo:162,entHi:176,sl:145,tp1:218,tp2:270,conf:70,
+   why:'BTC dominance declining and ETH/BTC breaking out signals altcoin season. SOL is top-5 by market cap with strong on-chain metrics — DEX volume up 40% MoM. ADX at 32 confirms a strong trend. 50-day SMA recently crossed above the 200-day SMA. RSI(14) at 58 — momentum without being overbought.',
+   risk:'Altcoins can reverse 30–50% in a week during risk-off. Max 1–2% of portfolio. Monitor BTC dominance daily.'},
+  {sym:'ETH/USD',type:'crypto',dir:'short',tf:'4H',strat:'Bearish Divergence at Resistance',
+   entLo:3480,entHi:3555,sl:3685,tp1:3100,tp2:2900,conf:65,
+   why:'ETH hit the $3,500 resistance zone (prior swing high) with RSI making a lower high versus price on the 4H chart — bearish divergence. Funding rate elevated at +0.08%. Volume declining on the approach to resistance. This targets the 0.618 Fibonacci retracement at ~$3,100.',
+   risk:'This is a tactical counter-trend trade. Any positive macro surprise or BTC new ATH should trigger an immediate exit.'},
+];
+
+let ideasFilter = 'all';
+let ideasSelected = [];
+
+function buildIdeas(){
+  const today = new Date();
+  const seed = today.getFullYear()*10000+(today.getMonth()+1)*100+today.getDate();
+  const rng = makeSeed(seed);
+  const shuffled = [...IDEA_POOL];
+  for(let i=shuffled.length-1;i>0;i--){
+    const j=Math.floor(rng()*(i+1));
+    [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+  }
+  ideasSelected = shuffled.slice(0,8).map(idea=>({
+    ...idea,
+    conf: Math.min(93,Math.max(55,idea.conf+Math.floor((rng()-0.5)*10)))
+  }));
+  const el = document.getElementById('ideas-date');
+  if(el) el.textContent = today.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  renderIdeas();
+}
+
+function renderIdeas(){
+  const container = document.getElementById('ideas-grid');
+  if(!container) return;
+  const list = ideasFilter==='all' ? ideasSelected : ideasSelected.filter(i=>i.type===ideasFilter);
+  if(!list.length){
+    container.innerHTML='<div class="no-sig-msg">No ideas match the current filter — try "All Markets".</div>';
+    return;
+  }
+  const typeLabel = {forex:'Forex',etf:'ETF',crypto:'Crypto',commodity:'Commodity'};
+  container.innerHTML = list.map(idea=>{
+    const isLong = idea.dir==='long';
+    const dirBadge = isLong
+      ? '<span class="badge badge-long">▲ LONG</span>'
+      : '<span class="badge badge-short">▼ SHORT</span>';
+    const fmt = v=>{
+      if(idea.type==='crypto') return '$'+Math.round(v).toLocaleString();
+      if(idea.type==='etf') return '$'+v.toFixed(2);
+      if(idea.sym==='USD/JPY') return v.toFixed(2);
+      if(idea.sym==='XAU/USD') return '$'+v.toFixed(0);
+      return v.toFixed(4);
+    };
+    const entStr = fmt(idea.entLo)+' – '+fmt(idea.entHi);
+    const mid = (idea.entLo+idea.entHi)/2;
+    const riskD = Math.abs(mid-idea.sl);
+    const rr1 = (Math.abs(idea.tp1-mid)/riskD).toFixed(1);
+    const rr2 = (Math.abs(idea.tp2-mid)/riskD).toFixed(1);
+    const cfCls = idea.conf>=75?'cf-high':idea.conf>=65?'cf-med':'cf-low';
+    return `<div class="idea-card ${isLong?'long-card':'short-card'}">
+      <div class="idea-top">
+        <div class="idea-sym">${idea.sym}</div>
+        <div class="idea-badges">
+          <span class="idea-type-badge">${typeLabel[idea.type]||idea.type}</span>
+          ${dirBadge}
+        </div>
+      </div>
+      <div class="idea-strat-row">
+        <span class="idea-strat">${idea.strat}</span>
+        <span class="idea-tf">${idea.tf}</span>
+      </div>
+      <div class="sig-prices">
+        <div class="spbox"><div class="spbox-lbl">Entry Zone</div><div class="spbox-val" style="font-size:11px">${entStr}</div></div>
+        <div class="spbox"><div class="spbox-lbl">Stop Loss</div><div class="spbox-val red">${fmt(idea.sl)}</div></div>
+        <div class="spbox"><div class="spbox-lbl">Target 1</div><div class="spbox-val green">${fmt(idea.tp1)}</div></div>
+        <div class="spbox"><div class="spbox-lbl">Target 2</div><div class="spbox-val green">${fmt(idea.tp2)}</div></div>
+      </div>
+      <div class="idea-rr-row">
+        <span>R:R (T1) <strong>1 : ${rr1}</strong></span>
+        <span>R:R (T2) <strong>1 : ${rr2}</strong></span>
+      </div>
+      <div class="conf-row">
+        <div class="conf-labels"><span>Confidence</span><span>${idea.conf}%</span></div>
+        <div class="conf-track"><div class="conf-fill ${cfCls}" style="width:${idea.conf}%"></div></div>
+      </div>
+      <div class="idea-why"><strong>Why This Trade</strong>${idea.why}</div>
+      <div class="idea-risk"><strong>⚠ Key Risk</strong>${idea.risk}</div>
+    </div>`;
+  }).join('');
+}
+
+function setIdeasFilter(f,btn){
+  ideasFilter=f;
+  document.querySelectorAll('.ifilter').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderIdeas();
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+loadTrades();
+renderDashboard();
+buildLearning();
+buildIdeas();
+initSignals();
+updateAuthUI();
+document.getElementById('s_date').value = new Date().toISOString().split('T')[0];
+</script>
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+</body>
+</html>
