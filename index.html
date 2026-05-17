@@ -22,7 +22,7 @@
   --purple:#7c3aed;--purple-dim:rgba(124,58,237,.08);
   --accent:#2563eb;--accent-dim:rgba(37,99,235,.08);--accent-border:rgba(37,99,235,.2);
 }
-body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 /* HEADER */
 .header{background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:64px;position:sticky;top:0;z-index:100;gap:32px;box-shadow:0 1px 12px rgba(37,99,235,.06)}
 .logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#2563eb,#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px;white-space:nowrap}
@@ -34,7 +34,7 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 /* MAIN */
 .main{padding:28px;max-width:1440px;margin:0 auto}
 .section{display:none}.section.active{display:block}
-#landing{margin:0 -28px -28px;overflow-x:hidden}
+#landing{width:100vw;margin-left:calc(-50vw + 50%);margin-bottom:-28px;overflow-x:hidden}
 .section-title{font-size:22px;font-weight:800;margin-bottom:22px;letter-spacing:-.3px}
 /* STAT CARDS */
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px}
@@ -553,6 +553,8 @@ textarea{resize:vertical;min-height:56px}
   <nav id="landingNav">
     <button class="lp-nav-item active" onclick="navLanding('landing',this)">Home</button>
     <button class="lp-nav-item" onclick="navLanding('pricing-page',this)">Pricing</button>
+    <button class="lp-nav-item" onclick="navLanding('news',this)">News</button>
+    <button class="lp-nav-item" onclick="navLanding('learning',this)">Learning</button>
   </nav>
   <div class="auth-area" id="authArea">
     <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
@@ -3326,7 +3328,7 @@ function updateAuthUI(){
     if(landingNav) landingNav.style.display = 'flex';
     // return to landing if on an app page
     const active = document.querySelector('.section.active');
-    if(active && !['landing','pricing-page'].includes(active.id)){
+    if(active && !['landing','pricing-page','news','learning','terms','privacy','cookies','risk'].includes(active.id)){
       document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
       document.getElementById('landing').classList.add('active');
       document.querySelectorAll('#landingNav .lp-nav-item').forEach(b=>b.classList.remove('active'));
