@@ -345,6 +345,7 @@ textarea{resize:vertical;min-height:56px}
     <button onclick="nav('signals',this)">⚡ Auto Signals</button>
     <button onclick="nav('news',this)">📰 News</button>
     <button onclick="nav('ideas',this)">💡 Trade Ideas</button>
+    <button id="adminNavBtn" style="display:none;color:#f85149" onclick="nav('admin',this)">⚙ Admin</button>
   </nav>
   <div class="auth-area" id="authArea">
     <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
@@ -612,6 +613,26 @@ textarea{resize:vertical;min-height:56px}
   </div>
 </section>
 
+<!-- ADMIN -->
+<section class="section" id="admin">
+  <div class="section-title">⚙ Admin Panel</div>
+  <div class="stats-grid" id="admin-stats"></div>
+  <div class="table-wrap" style="margin-top:20px">
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Plan</th>
+          <th>Admin</th>
+          <th>Joined</th>
+          <th>Change Plan</th>
+        </tr>
+      </thead>
+      <tbody id="admin-users"></tbody>
+    </table>
+  </div>
+</section>
+
 </div><!-- /main -->
 
 <!-- AUTH MODAL -->
@@ -791,6 +812,7 @@ function nav(id, btn){
   if(id==='signals') initSignals();
   if(id==='news') initNews();
   if(id==='ideas') renderIdeas();
+  if(id==='admin') loadAdminPanel();
 }
 function ltab(id, btn){
   document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
@@ -2530,12 +2552,14 @@ function updateAuthUI(){
 
 async function loadProfile(){
   if(!sbUser) return;
-  const { data } = await sb.from('profiles').select('plan,plan_expires_at').eq('id', sbUser.id).single();
+  const { data } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
   if(data){
     sbPlan = data.plan || 'free';
     if(data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) sbPlan = 'free';
+    sbIsAdmin = !!data.is_admin;
   }
   updateAuthUI();
+  showAdminNav();
 }
 
 async function signOut(){
@@ -2792,6 +2816,61 @@ function setIdeasFilter(f,btn){
   document.querySelectorAll('.ifilter').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderIdeas();
+}
+
+// ── ADMIN ──────────────────────────────────────────────────────
+let sbIsAdmin = false;
+
+async function loadAdminPanel(){
+  if(!sbIsAdmin){ showToast('Access denied.','tl'); return; }
+  // Load all users
+  const { data: users, error } = await sb.from('profiles')
+    .select('id,email,plan,is_admin,created_at')
+    .order('created_at', { ascending: false });
+  if(error){ console.error('admin load', error); return; }
+
+  // Stats
+  const total = users.length;
+  const byPlan = { free:0, essential:0, pro:0 };
+  users.forEach(u => { byPlan[u.plan] = (byPlan[u.plan]||0) + 1; });
+  const mrr = (byPlan.essential * 19) + (byPlan.pro * 49);
+
+  document.getElementById('admin-stats').innerHTML = `
+    <div class="stat-card"><div class="lbl">Total Users</div><div class="val blue">${total}</div></div>
+    <div class="stat-card"><div class="lbl">Free</div><div class="val">${byPlan.free||0}</div></div>
+    <div class="stat-card"><div class="lbl">Essential</div><div class="val blue">${byPlan.essential||0}</div></div>
+    <div class="stat-card"><div class="lbl">Pro</div><div class="val purple">${byPlan.pro||0}</div></div>
+    <div class="stat-card"><div class="lbl">MRR</div><div class="val green">$${mrr}</div><div class="sub">Monthly recurring</div></div>`;
+
+  // User table
+  document.getElementById('admin-users').innerHTML = users.map(u => `
+    <tr>
+      <td>${u.email||'—'}</td>
+      <td><span class="plan-badge plan-${u.plan}">${u.plan.toUpperCase()}</span></td>
+      <td>${u.is_admin ? '✓' : ''}</td>
+      <td style="font-size:11px;color:var(--muted)">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+      <td>
+        <select style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text);font-size:12px"
+          onchange="adminSetPlan('${u.id}', this.value, this)">
+          <option value="free"   ${u.plan==='free'?'selected':''}>Free</option>
+          <option value="essential" ${u.plan==='essential'?'selected':''}>Essential</option>
+          <option value="pro"    ${u.plan==='pro'?'selected':''}>Pro</option>
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+async function adminSetPlan(userId, plan, el){
+  el.disabled = true;
+  const { error } = await sb.from('profiles').update({ plan }).eq('id', userId);
+  if(error){ showToast('Update failed: '+error.message,'tl'); el.disabled=false; return; }
+  showToast('Plan updated to '+plan,'tw');
+  el.disabled = false;
+}
+
+function showAdminNav(){
+  const btn = document.getElementById('adminNavBtn');
+  if(btn) btn.style.display = sbIsAdmin ? 'inline-block' : 'none';
 }
 
 // ── INIT ───────────────────────────────────────────────────────
