@@ -2549,12 +2549,18 @@ function updateAuthUI(){
 
 async function loadProfile(){
   if(!sbUser) return;
-  const { data, error } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
-  console.log('[loadProfile] user:', sbUser.id, 'data:', data, 'error:', error);
-  if(data){
-    sbPlan = data.plan || 'free';
-    if(data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) sbPlan = 'free';
-    sbIsAdmin = !!data.is_admin;
+  try {
+    const { data, error } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
+    console.log('[loadProfile] data:', JSON.stringify(data), 'error:', JSON.stringify(error));
+    if(error){ showToast('Profile error: '+error.message, 'tl'); }
+    if(data){
+      sbPlan = data.plan || 'free';
+      if(data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) sbPlan = 'free';
+      sbIsAdmin = !!data.is_admin;
+    }
+  } catch(e){
+    console.warn('[loadProfile] threw:', e);
+    showToast('Profile exception: '+e.message, 'tl');
   }
   updateAuthUI();
   showAdminNav();
