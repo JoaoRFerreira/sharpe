@@ -2550,7 +2550,9 @@ function updateAuthUI(){
 async function loadProfile(){
   if(!sbUser) return;
   try {
-    const { data, error } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
+    const timeout = new Promise((_,rej) => setTimeout(() => rej(new Error('DB timeout — RLS may be blocking')), 8000));
+    const query = sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
+    const { data, error } = await Promise.race([query, timeout]);
     console.log('[loadProfile] data:', JSON.stringify(data), 'error:', JSON.stringify(error));
     if(error){ showToast('Profile error: '+error.message, 'tl'); }
     if(data){
@@ -2560,19 +2562,19 @@ async function loadProfile(){
     }
   } catch(e){
     console.warn('[loadProfile] threw:', e);
-    showToast('Profile exception: '+e.message, 'tl');
+    showToast('Profile err: '+e.message, 'tl');
   }
   updateAuthUI();
   showAdminNav();
 }
 
 async function signOut(){
-  await sb.auth.signOut();
-  sbUser = null; sbPlan = 'free';
-  loadTrades(); // revert to localStorage
+  sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
   updateAuthUI();
+  showAdminNav();
   renderDashboard();
-  showToast('Signed out successfully.','info');
+  showToast('Signed out.','info');
+  sb.auth.signOut().catch(e => console.warn('signOut', e));
 }
 
 // ── SUPABASE TRADE OPERATIONS ──────────────────────────────────
