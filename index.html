@@ -2553,7 +2553,8 @@ function updateAuthUI(){
 
 async function loadProfile(){
   if(!sbUser) return;
-  const { data } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
+  const { data, error } = await sb.from('profiles').select('plan,plan_expires_at,is_admin').eq('id', sbUser.id).single();
+  console.log('[loadProfile] user:', sbUser.id, 'data:', data, 'error:', error);
   if(data){
     sbPlan = data.plan || 'free';
     if(data.plan_expires_at && new Date(data.plan_expires_at) < new Date()) sbPlan = 'free';
