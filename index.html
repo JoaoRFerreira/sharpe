@@ -2445,36 +2445,57 @@ function logSim(outcome){
 }
 
 // ── PATTERN SVG ILLUSTRATIONS ──────────────────────────────────
+let _sid=0;
 function makeCandleSvg(candles){
-  const W=280,H=116,P=12;
-  const BG='#f7f9ff', GRID='rgba(37,99,235,.08)';
-  const n=candles.length, sp=(W-P*2)/n, cw=Math.min(30,sp*0.55);
-  let s=`<rect width="${W}" height="${H}" fill="${BG}"/>`;
-  for(let i=1;i<4;i++) s+=`<line x1="${P}" y1="${(P+(i/4)*(H-P*2)).toFixed(1)}" x2="${W-P}" y2="${(P+(i/4)*(H-P*2)).toFixed(1)}" stroke="${GRID}" stroke-width="1"/>`;
+  const W=280,H=116,P=14,id=++_sid;
+  const n=candles.length,sp=(W-P*2)/n,cw=Math.min(28,sp*0.52);
+  let s=`<defs><linearGradient id="cbg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eef2ff"/><stop offset="100%" stop-color="#f7f9ff"/></linearGradient></defs>`;
+  s+=`<rect width="${W}" height="${H}" fill="url(#cbg${id})" rx="8"/>`;
+  s+=`<rect width="${W}" height="${H}" fill="none" stroke="rgba(37,99,235,.1)" stroke-width="1" rx="8"/>`;
+  for(let i=1;i<4;i++){const y=(P+(i/4)*(H-P*2)).toFixed(1);s+=`<line x1="${P}" y1="${y}" x2="${W-P}" y2="${y}" stroke="rgba(37,99,235,.07)" stroke-width="1"/>`;}
   candles.forEach((c,i)=>{
-    const x=P+sp*(i+0.5), bull=c.c>=c.o;
-    const colG='#059669', colR='#dc2626', col=bull?colG:colR;
-    const yO=(P+(1-c.o)*(H-P*2)), yC=(P+(1-c.c)*(H-P*2));
-    const yH=(P+(1-c.h)*(H-P*2)), yL=(P+(1-c.l)*(H-P*2));
-    const y1=Math.min(yO,yC), y2=Math.max(yO,yC), bh=Math.max(2,y2-y1);
-    const fillColor=bull?colG:'rgba(220,38,38,.14)';
-    s+=`<line x1="${x.toFixed(1)}" y1="${yH.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${col}" stroke-width="1.5"/>`;
-    s+=`<rect x="${(x-cw/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${cw}" height="${bh.toFixed(1)}" fill="${fillColor}" stroke="${col}" stroke-width="1.5" rx="2"/>`;
-    s+=`<line x1="${x.toFixed(1)}" y1="${y2.toFixed(1)}" x2="${x.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1.5"/>`;
+    const x=P+sp*(i+0.5),bull=c.c>=c.o;
+    const col=bull?'#059669':'#dc2626';
+    const yO=P+(1-c.o)*(H-P*2),yC=P+(1-c.c)*(H-P*2);
+    const yH=P+(1-c.h)*(H-P*2),yL=P+(1-c.l)*(H-P*2);
+    const y1=Math.min(yO,yC),y2=Math.max(yO,yC),bh=Math.max(2.5,y2-y1);
+    const fill=bull?'rgba(5,150,105,.15)':'rgba(220,38,38,.12)';
+    s+=`<line x1="${x.toFixed(1)}" y1="${yH.toFixed(1)}" x2="${x.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1.5" stroke-linecap="round"/>`;
+    s+=`<rect x="${(x-cw/2).toFixed(1)}" y="${y1.toFixed(1)}" width="${cw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${fill}" stroke="${col}" stroke-width="1.5" rx="2.5"/>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="pc-img" style="width:100%;height:116px;display:block">${s}</svg>`;
 }
 function makeLineSvg(segs,h=100){
-  const W=280,P=12;
-  const BG='#f7f9ff', GRID='rgba(37,99,235,.08)';
-  let s=`<rect width="${W}" height="${h}" fill="${BG}"/>`;
-  for(let i=1;i<4;i++) s+=`<line x1="${P}" y1="${(P+(i/4)*(h-P*2)).toFixed(1)}" x2="${W-P}" y2="${(P+(i/4)*(h-P*2)).toFixed(1)}" stroke="${GRID}" stroke-width="1"/>`;
+  const W=280,P=14,id=++_sid;
+  // Convert normalised [px,py] → screen [sx,sy]
+  function sc([px,py]){return[+(P+px*(W-P*2)).toFixed(1),+(P+(1-py)*(h-P*2)).toFixed(1)];}
+  // Catmull-Rom → cubic bezier path (tension 0.35); straight line for 2-pt segs
+  function smoothD(spts){
+    if(spts.length<2)return'';
+    if(spts.length===2)return`M${spts[0][0]},${spts[0][1]} L${spts[1][0]},${spts[1][1]}`;
+    let d=`M${spts[0][0]},${spts[0][1]}`;
+    for(let i=0;i<spts.length-1;i++){
+      const p0=spts[Math.max(0,i-1)],p1=spts[i],p2=spts[i+1],p3=spts[Math.min(spts.length-1,i+2)];
+      const t=0.35;
+      const cx1=+(p1[0]+(p2[0]-p0[0])*t/2).toFixed(1),cy1=+(p1[1]+(p2[1]-p0[1])*t/2).toFixed(1);
+      const cx2=+(p2[0]-(p3[0]-p1[0])*t/2).toFixed(1),cy2=+(p2[1]-(p3[1]-p1[1])*t/2).toFixed(1);
+      d+=` C${cx1},${cy1} ${cx2},${cy2} ${p2[0]},${p2[1]}`;
+    }
+    return d;
+  }
+  let s=`<defs><linearGradient id="lbg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#eef2ff"/><stop offset="100%" stop-color="#f7f9ff"/></linearGradient><clipPath id="lcp${id}"><rect width="${W}" height="${h}" rx="8"/></clipPath></defs>`;
+  s+=`<rect width="${W}" height="${h}" fill="url(#lbg${id})" rx="8"/>`;
+  s+=`<rect width="${W}" height="${h}" fill="none" stroke="rgba(37,99,235,.1)" stroke-width="1" rx="8"/>`;
+  for(let i=1;i<4;i++){const y=(P+(i/4)*(h-P*2)).toFixed(1);s+=`<line x1="${P}" y1="${y}" x2="${W-P}" y2="${y}" stroke="rgba(37,99,235,.07)" stroke-width="1"/>`;}
   segs.forEach(sg=>{
-    const pts=sg.p.map(([px,py])=>`${(P+px*(W-P*2)).toFixed(1)},${(P+(1-py)*(h-P*2)).toFixed(1)}`);
-    const col=sg.c||'#2563eb', dash=sg.d?'stroke-dasharray="5,3"':'';
-    if(sg.f){const fp=`${(P+sg.p[0][0]*(W-P*2)).toFixed(1)},${h-P/2} ${pts.join(' ')} ${(P+sg.p[sg.p.length-1][0]*(W-P*2)).toFixed(1)},${h-P/2}`;s+=`<polygon points="${fp}" fill="${sg.f}" opacity="0.08"/>`;}
-    s+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="${sg.w||2}" ${dash} stroke-linejoin="round" stroke-linecap="round"/>`;
-    if(sg.dot){const lp=pts[pts.length-1].split(',');s+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="4" fill="${col}" stroke="${BG}" stroke-width="1.5"/>`;}
+    const col=sg.c||'#2563eb',spts=sg.p.map(sc),d=smoothD(spts);
+    if(sg.f){
+      const fd=`${d} L${spts[spts.length-1][0]},${h-P/2} L${spts[0][0]},${h-P/2} Z`;
+      s+=`<path d="${fd}" fill="${sg.f}" opacity="0.09" clip-path="url(#lcp${id})"/>`;
+    }
+    const dash=sg.d?'stroke-dasharray="6,4"':'';
+    s+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="${sg.w||2}" ${dash} stroke-linecap="round" stroke-linejoin="round"/>`;
+    if(sg.dot){const lp=spts[spts.length-1];s+=`<circle cx="${lp[0]}" cy="${lp[1]}" r="4.5" fill="${col}" stroke="#f7f9ff" stroke-width="2"/>`;}
   });
   return `<svg viewBox="0 0 ${W} ${h}" xmlns="http://www.w3.org/2000/svg" class="pc-img" style="width:100%;height:${h}px;display:block">${s}</svg>`;
 }
