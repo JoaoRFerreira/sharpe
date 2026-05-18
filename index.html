@@ -1437,57 +1437,87 @@ textarea{resize:vertical;min-height:56px}
         <h2>Simple, transparent pricing</h2>
         <p>Start free, upgrade when you're ready. No hidden fees.</p>
       </div>
-      <!-- 3 pricing cards inline here using same pp-card classes -->
+      <!-- Billing toggle -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:36px">
+        <span id="billMonthLbl" style="font-size:13px;font-weight:700;color:var(--text)">Monthly</span>
+        <label class="toggle-sw" style="cursor:pointer" onclick="toggleBilling()"><input type="checkbox" id="billToggle" style="display:none"><span class="toggle-sl"></span></label>
+        <span id="billAnnualLbl" style="font-size:13px;color:var(--muted)">Annual <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
+      </div>
       <div class="pricing-page-cards">
+        <!-- Starter (Free) -->
         <div class="pp-card">
-          <div class="pp-name">Free</div>
-          <div class="pp-price"><span class="pp-price-amt">$0</span><span class="pp-price-per">/mo</span></div>
-          <div class="pp-price-desc">Perfect for getting started</div>
+          <div class="pp-name">Starter</div>
+          <div class="pp-price">
+            <span class="pp-price-amt" id="price-free">$0</span>
+            <span class="pp-price-per">/mo</span>
+          </div>
+          <div class="pp-price-desc">Build habits. No credit card needed.</div>
           <div class="pp-divider"></div>
           <ul class="pp-feats">
-            <li><span class="chk chk-yes">✓</span><span>Up to 10 trades in journal</span></li>
-            <li><span class="chk chk-yes">✓</span><span>2 instruments (EUR/USD, GBP/USD)</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>50 trades</strong> in journal</span></li>
+            <li><span class="chk chk-yes">✓</span><span>3 instruments — EUR/USD, GBP/USD, USD/JPY</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Full learning center &amp; trade simulator</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Portfolio dashboard &amp; equity chart</span></li>
             <li><span class="chk chk-yes">✓</span><span>1 daily trade idea</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Portfolio dashboard</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Learning center</span></li>
-            <li><span class="chk chk-no">✗</span><span>Auto signals</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Market news feed</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Demo signals preview</span></li>
+            <li><span class="chk chk-no">✗</span><span>Live signal scanner</span></li>
+            <li><span class="chk chk-no">✗</span><span>Market news &amp; sentiment</span></li>
           </ul>
-          <button class="pp-btn pp-btn-free" onclick="openAuthModal('signup')">Get Started Free</button>
+          <button class="pp-btn pp-btn-free" onclick="openAuthModal('signup')">Start for Free →</button>
         </div>
+        <!-- Trader (Essential) -->
         <div class="pp-card pp-featured">
-          <div class="pp-popular">MOST POPULAR</div>
-          <div class="pp-name">Essential</div>
-          <div class="pp-price"><span class="pp-price-amt">$19</span><span class="pp-price-per">/mo</span></div>
-          <div class="pp-price-desc">For serious traders</div>
+          <div class="pp-popular">BEST VALUE</div>
+          <div class="pp-name">Trader</div>
+          <div class="pp-price">
+            <span class="pp-price-amt" id="price-essential">$15</span>
+            <span class="pp-price-per">/mo</span>
+          </div>
+          <div class="pp-price-orig" id="price-essential-orig" style="display:none;font-size:12px;color:var(--muted);text-decoration:line-through;margin-bottom:2px">$15/mo</div>
+          <div class="pp-price-desc">Everything you need to trade consistently.</div>
           <div class="pp-divider"></div>
           <ul class="pp-feats">
-            <li><span class="chk chk-yes">✓</span><span>Unlimited trades in journal</span></li>
-            <li><span class="chk chk-yes">✓</span><span>5 instruments including XAU/USD</span></li>
-            <li><span class="chk chk-yes">✓</span><span>3 daily trade ideas</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Auto signals scanner</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Market news feed</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Auto trade logging</span></li>
-            <li><span class="chk chk-no">✗</span><span>OANDA live integration</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>Unlimited</strong> trades in journal</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>14 instruments</strong> — Forex majors, crosses &amp; Gold/Silver</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Live signal scanner — Daily &amp; 4H</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Auto-log signals to journal</span></li>
+            <li><span class="chk chk-yes">✓</span><span>5 daily trade ideas with full analysis</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Market news with sentiment scoring</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Advanced performance analytics</span></li>
+            <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
           </ul>
-          <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Essential</button>
+          <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading →</button>
+          <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">7-day free trial · cancel anytime</div>
         </div>
+        <!-- Pro -->
         <div class="pp-card pp-pro">
           <div class="pp-name">Pro</div>
-          <div class="pp-price"><span class="pp-price-amt">$49</span><span class="pp-price-per">/mo</span></div>
-          <div class="pp-price-desc">For professional traders</div>
+          <div class="pp-price">
+            <span class="pp-price-amt" id="price-pro">$39</span>
+            <span class="pp-price-per">/mo</span>
+          </div>
+          <div class="pp-price-orig" id="price-pro-orig" style="display:none;font-size:12px;color:var(--muted);text-decoration:line-through;margin-bottom:2px">$39/mo</div>
+          <div class="pp-price-desc">Full automation for serious professionals.</div>
           <div class="pp-divider"></div>
           <ul class="pp-feats">
-            <li><span class="chk chk-yes">✓</span><span>Everything in Essential</span></li>
-            <li><span class="chk chk-yes">✓</span><span>All instruments</span></li>
-            <li><span class="chk chk-yes">✓</span><span>8 daily trade ideas</span></li>
-            <li><span class="chk chk-yes">✓</span><span>OANDA live account integration</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Priority signal alerts</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Advanced analytics</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Priority support</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>25 instruments</strong> — Forex, Crypto, Indices &amp; Commodities</span></li>
+            <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
+            <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas — all markets</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Priority high-confidence alerts (85%+)</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Risk-adjusted position sizing</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Full performance export (CSV/PDF)</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Priority support + community access</span></li>
           </ul>
-          <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Start Pro</button>
+          <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Go Pro →</button>
+          <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">7-day free trial · cancel anytime</div>
         </div>
+      </div>
+      <!-- Trust bar -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:28px;margin-top:28px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">🔒 Secure checkout</span>
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">↩ 30-day money-back guarantee</span>
+        <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">✕ Cancel anytime, no contracts</span>
       </div>
     </div>
   </div>
@@ -2022,67 +2052,70 @@ textarea{resize:vertical;min-height:56px}
     <div class="pricing-page-hdr">
       <div class="lp-tag">Pricing</div>
       <h1>Simple, transparent pricing</h1>
-      <p>Start free. Upgrade when you're ready. Cancel anytime.</p>
+      <p>Start free. Upgrade when you're ready. Cancel anytime.<br><span style="font-size:14px">All paid plans include a <strong>7-day free trial</strong> and <strong>30-day money-back guarantee</strong>.</span></p>
     </div>
     <div class="pricing-page-cards">
       <div class="pp-card">
-        <div class="pp-name">Free</div>
+        <div class="pp-name">Starter</div>
         <div class="pp-price"><span class="pp-price-amt">$0</span><span class="pp-price-per">/mo</span></div>
-        <div class="pp-price-desc">Perfect for getting started</div>
+        <div class="pp-price-desc">Build the habit. No card needed.</div>
         <div class="pp-divider"></div>
         <ul class="pp-feats">
-          <li><span class="chk chk-yes">✓</span><span>Up to 10 trades in journal</span></li>
-          <li><span class="chk chk-yes">✓</span><span>2 instruments (EUR/USD, GBP/USD)</span></li>
+          <li><span class="chk chk-yes">✓</span><span>50 trades in journal</span></li>
+          <li><span class="chk chk-yes">✓</span><span>3 instruments (EUR/USD, GBP/USD, USD/JPY)</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Full trade simulator &amp; learning center</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Portfolio dashboard &amp; equity chart</span></li>
           <li><span class="chk chk-yes">✓</span><span>1 daily trade idea</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Portfolio dashboard &amp; charts</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Trade simulator</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Learning center</span></li>
-          <li><span class="chk chk-no">✗</span><span>Auto signals scanner</span></li>
-          <li><span class="chk chk-no">✗</span><span>Market news feed</span></li>
-          <li><span class="chk chk-no">✗</span><span>Auto trade logging</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Demo signals preview</span></li>
+          <li><span class="chk chk-no">✗</span><span>Live signal scanner</span></li>
+          <li><span class="chk chk-no">✗</span><span>Market news &amp; sentiment</span></li>
           <li><span class="chk chk-no">✗</span><span>OANDA integration</span></li>
         </ul>
-        <button class="pp-btn pp-btn-free" onclick="openAuthModal('signup')">Get Started Free</button>
+        <button class="pp-btn pp-btn-free" onclick="openAuthModal('signup')">Start for Free →</button>
       </div>
       <div class="pp-card pp-featured">
-        <div class="pp-popular">MOST POPULAR</div>
-        <div class="pp-name">Essential</div>
-        <div class="pp-price"><span class="pp-price-amt">$19</span><span class="pp-price-per">/mo</span></div>
-        <div class="pp-price-desc">For serious active traders</div>
+        <div class="pp-popular">BEST VALUE</div>
+        <div class="pp-name">Trader</div>
+        <div class="pp-price"><span class="pp-price-amt">$15</span><span class="pp-price-per">/mo</span></div>
+        <div class="pp-price-desc">Everything you need to trade consistently.</div>
         <div class="pp-divider"></div>
         <ul class="pp-feats">
-          <li><span class="chk chk-yes">✓</span><span>Unlimited trades in journal</span></li>
-          <li><span class="chk chk-yes">✓</span><span>5 instruments (+ USD/JPY, AUD/USD, XAU/USD)</span></li>
-          <li><span class="chk chk-yes">✓</span><span>3 daily trade ideas</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Portfolio dashboard &amp; charts</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Auto signals scanner (live)</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Market news with sentiment</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Auto trade logging from signals</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Trade simulator</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Learning center</span></li>
-          <li><span class="chk chk-no">✗</span><span>OANDA live account integration</span></li>
+          <li><span class="chk chk-yes">✓</span><span><strong>Unlimited</strong> trades in journal</span></li>
+          <li><span class="chk chk-yes">✓</span><span><strong>14 instruments</strong> — Forex majors, crosses, Gold &amp; Silver</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Live signal scanner — Daily &amp; 4H timeframes</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Auto-log signals to journal</span></li>
+          <li><span class="chk chk-yes">✓</span><span>5 daily trade ideas with full analysis</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Market news with AI sentiment scoring</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Advanced performance analytics</span></li>
+          <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
         </ul>
-        <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Essential — $19/mo</button>
+        <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading — 7 days free →</button>
+        <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">No credit card required to trial</div>
       </div>
       <div class="pp-card pp-pro">
         <div class="pp-name">Pro</div>
-        <div class="pp-price"><span class="pp-price-amt">$49</span><span class="pp-price-per">/mo</span></div>
-        <div class="pp-price-desc">For professional traders</div>
+        <div class="pp-price"><span class="pp-price-amt">$39</span><span class="pp-price-per">/mo</span></div>
+        <div class="pp-price-desc">Full automation for serious professionals.</div>
         <div class="pp-divider"></div>
         <ul class="pp-feats">
-          <li><span class="chk chk-yes">✓</span><span>Everything in Essential</span></li>
-          <li><span class="chk chk-yes">✓</span><span>All instruments (unlimited)</span></li>
-          <li><span class="chk chk-yes">✓</span><span>8 daily trade ideas</span></li>
-          <li><span class="chk chk-yes">✓</span><span>OANDA live account integration</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Priority signal alerts</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Advanced portfolio analytics</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Export trades to CSV</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Priority support</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Early access to new features</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Custom risk parameters</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
+          <li><span class="chk chk-yes">✓</span><span><strong>25 instruments</strong> — Forex, Crypto, Indices &amp; Commodities</span></li>
+          <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
+          <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas across all markets</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence signals only</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Risk-adjusted position sizing</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Export reports (CSV / PDF)</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Priority support + community access</span></li>
         </ul>
-        <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Start Pro — $49/mo</button>
+        <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Go Pro — 7 days free →</button>
+        <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">No credit card required to trial</div>
       </div>
+    </div>
+    <!-- Trust bar -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:32px;margin-top:32px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font-size:13px;color:var(--muted)">🔒 Secure checkout</span>
+      <span style="font-size:13px;color:var(--muted)">↩ 30-day money-back guarantee</span>
+      <span style="font-size:13px;color:var(--muted)">✕ Cancel anytime</span>
     </div>
     <div class="pp-faq">
       <h2>Frequently Asked Questions</h2>
@@ -2304,52 +2337,52 @@ textarea{resize:vertical;min-height:56px}
     <p style="font-size:12px;color:var(--muted);margin-bottom:4px" id="pricing-gate-msg"></p>
     <div class="pricing-grid">
       <div class="price-card">
-        <div class="price-name">Free</div>
+        <div class="price-name">Starter</div>
         <div class="price-amt">$0</div>
-        <div class="price-per">forever</div>
+        <div class="price-per">forever free</div>
         <ul class="price-feats">
-          <li>2 instruments (EUR/USD, GBP/USD)</li>
-          <li>Trade journal (10 trades)</li>
-          <li>Learning Center</li>
+          <li>3 instruments (EUR/USD, GBP/USD, USD/JPY)</li>
+          <li>50 trades in journal</li>
+          <li>Full simulator &amp; learning center</li>
           <li>1 trade idea/day</li>
-          <li class="no">Live prices</li>
-          <li class="no">Auto Signals</li>
-          <li class="no">News feed</li>
+          <li>Demo signals preview</li>
+          <li class="no">Live signal scanner</li>
+          <li class="no">Market news</li>
           <li class="no">OANDA execution</li>
         </ul>
         <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="closePricingModal()">Current plan</button>
       </div>
       <div class="price-card featured">
-        <div class="price-name" style="color:var(--blue)">Essential</div>
-        <div class="price-amt">$19</div>
-        <div class="price-per">/month</div>
+        <div class="price-name" style="color:var(--blue)">Trader — $15/mo</div>
+        <div class="price-amt">$15</div>
+        <div class="price-per">/month · 7-day trial</div>
         <ul class="price-feats">
-          <li>5 instruments (Forex + Gold)</li>
-          <li>Unlimited trade journal</li>
-          <li>Learning Center</li>
-          <li>3 trade ideas/day + full analysis</li>
-          <li>Live prices (pooled key)</li>
-          <li>Daily auto signals</li>
-          <li>News + sentiment</li>
-          <li class="no">OANDA execution</li>
+          <li>14 instruments (Forex majors, crosses, Gold, Silver)</li>
+          <li>Unlimited trades in journal</li>
+          <li>Live signals — Daily &amp; 4H</li>
+          <li>Auto-log to journal</li>
+          <li>5 trade ideas/day</li>
+          <li>News + sentiment scoring</li>
+          <li>Advanced analytics</li>
+          <li class="no">OANDA auto-execution</li>
         </ul>
-        <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="goUpgrade('essential')">Get Essential</button>
+        <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="goUpgrade('essential')">Start Trader — 7 days free</button>
       </div>
       <div class="price-card">
-        <div class="price-name" style="color:var(--purple)">Pro</div>
-        <div class="price-amt">$49</div>
-        <div class="price-per">/month</div>
+        <div class="price-name" style="color:var(--purple)">Pro — $39/mo</div>
+        <div class="price-amt">$39</div>
+        <div class="price-per">/month · 7-day trial</div>
         <ul class="price-feats">
-          <li>All instruments (Forex, ETF, Crypto)</li>
-          <li>Unlimited trade journal</li>
-          <li>Learning Center</li>
-          <li>8 trade ideas/day — all markets</li>
-          <li>Live prices (pooled key)</li>
-          <li>Daily + 4H auto signals</li>
-          <li>News + sentiment</li>
-          <li>OANDA auto-execution</li>
+          <li>25 instruments — Forex, Crypto, Indices</li>
+          <li>Everything in Trader</li>
+          <li>OANDA live auto-execution</li>
+          <li>10 trade ideas/day — all markets</li>
+          <li>Priority alerts (85%+ confidence)</li>
+          <li>Risk-adjusted position sizing</li>
+          <li>Export CSV/PDF</li>
+          <li>Priority support</li>
         </ul>
-        <button class="btn btn-primary" style="width:100%;font-size:12px;background:var(--purple)" onclick="goUpgrade('pro')">Get Pro</button>
+        <button class="btn btn-primary" style="width:100%;font-size:12px;background:var(--purple)" onclick="goUpgrade('pro')">Start Pro — 7 days free</button>
       </div>
     </div>
   </div>
@@ -3324,6 +3357,7 @@ function showToast(msg, cls='ti'){
 // ── SIGNALS ENGINE ────────────────────────────────────────────
 
 const INSTRUMENTS = [
+  // Forex — Major
   {symbol:'EUR/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.0870},
   {symbol:'GBP/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.2720},
   {symbol:'USD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:151.40},
@@ -3331,7 +3365,27 @@ const INSTRUMENTS = [
   {symbol:'USD/CAD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.3580},
   {symbol:'NZD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.5960},
   {symbol:'USD/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8960},
+  // Forex — Crosses
+  {symbol:'EUR/GBP', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8560},
+  {symbol:'EUR/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:163.20},
+  {symbol:'GBP/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:192.40},
+  {symbol:'EUR/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.9710},
+  {symbol:'AUD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:97.20},
+  // Commodities
   {symbol:'XAU/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:3280.0},
+  {symbol:'XAG/USD', type:'Commodity', mult:100,   dec:4, unit:'pts',  base:32.50},
+  {symbol:'WTI/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:78.50,  tdOnly:true},
+  // Crypto (Twelve Data only)
+  {symbol:'BTC/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:67000,  tdOnly:true},
+  {symbol:'ETH/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:3200,   tdOnly:true},
+  {symbol:'SOL/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:155,    tdOnly:true},
+  {symbol:'XRP/USD', type:'Crypto',    mult:1,     dec:4, unit:'pts',  base:0.58,   tdOnly:true},
+  // Indices (Twelve Data only)
+  {symbol:'SPX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:5250,   tdOnly:true},
+  {symbol:'IXIC',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:16400,  tdOnly:true},
+  {symbol:'DJI',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:39000,  tdOnly:true},
+  {symbol:'DAX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:18200,  tdOnly:true},
+  {symbol:'FTSE',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:7900,   tdOnly:true},
 ];
 
 let sigApiKey = localStorage.getItem('te_apikey') || '';
@@ -3791,10 +3845,16 @@ async function runScan(){
   const isTd=!!sigApiKey;
   const isAv=!sigApiKey&&!!sigAvKey;
   const delay=isTd?8000:isAv?13000:0;
+  const planInstr = planLimits().instruments;
+  const scanList = INSTRUMENTS.filter(i => {
+    if(i.tdOnly && isAv) return false;
+    if(planInstr === 'all') return true;
+    return planInstr.includes(i.symbol);
+  });
+  const estSecs=delay>0?Math.ceil(scanList.length*delay/1000):0;
   const provLabel=isTd?'Twelve Data':isAv?'Alpha Vantage (daily only)':'Demo';
-  const estSecs=delay>0?Math.ceil(INSTRUMENTS.length*delay/1000):0;
 
-  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${INSTRUMENTS.length} instruments via ${provLabel}…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Rate limit: ~${estSecs}s total — one request every ${delay/1000}s</span>`:''}</div>`;
+  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${scanList.length} instruments via ${provLabel}…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Rate limit: ~${estSecs}s total — one request every ${delay/1000}s</span>`:''}</div>`;
   document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Fetching market data…</div>';
 
   const today=new Date();
@@ -3802,18 +3862,18 @@ async function runScan(){
 
   try{
     const results=[];
-    for(let i=0;i<INSTRUMENTS.length;i++){
-      const inst=INSTRUMENTS[i];
+    for(let i=0;i<scanList.length;i++){
+      const inst=scanList[i];
       try{
         let candles;
         if(isDemo){
           candles=buildDemoCandles(inst, daySeed*(i+1), i);
         } else if(isTd){
           candles=await fetchTd(inst.symbol);
-          if(i<INSTRUMENTS.length-1) await new Promise(r=>setTimeout(r,delay));
+          if(i<scanList.length-1) await new Promise(r=>setTimeout(r,delay));
         } else {
           candles=await fetchAv(inst.symbol);
-          if(i<INSTRUMENTS.length-1) await new Promise(r=>setTimeout(r,delay));
+          if(i<scanList.length-1) await new Promise(r=>setTimeout(r,delay));
         }
         const result=analyseCandles(candles, inst);
         if(result) results.push(result);
@@ -3827,7 +3887,7 @@ async function runScan(){
     if(autoLog||(!isDemo&&autoExecute)) processAutoActions(results, isDemo);
     const now=new Date();
     document.getElementById('lastScanLbl').textContent=
-      `Last scan: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} · ${INSTRUMENTS.length} instruments · ${results.filter(r=>r.signal).length} signal(s)${isDemo?' · DEMO':''}`;
+      `Last scan: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} · ${scanList.length} instruments · ${results.filter(r=>r.signal).length} signal(s)${isDemo?' · DEMO':''}`;
     setApiStatus(isDemo?'demo':'ok');
   } catch(err){
     document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg" style="color:var(--red)">Scan failed: ${err.message}</div>`;
@@ -4188,9 +4248,9 @@ let sbUser = null;   // current auth user
 let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
 
 const PLAN_LIMITS = {
-  free:      { maxTrades:10, instruments:['EUR/USD','GBP/USD'], liveData:false, signals:false, ideasCount:1, news:false, autoLog:false, oanda:false },
-  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','XAU/USD'], liveData:true, signals:true, ideasCount:3, news:true, autoLog:true, oanda:false },
-  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:8, news:true, autoLog:true, oanda:true }
+  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:false, autoLog:false, oanda:false },
+  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false },
+  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true }
 };
 
 function planLimits(){ return PLAN_LIMITS[sbPlan] || PLAN_LIMITS.free; }
@@ -4228,6 +4288,30 @@ function openAuthModal(mode){
 
 function closeAuthModal(){ document.getElementById('authOverlay').classList.remove('open'); }
 function closePricingModal(){ document.getElementById('pricingOverlay').classList.remove('open'); }
+let billingAnnual = false;
+function toggleBilling(){
+  billingAnnual = !billingAnnual;
+  const monthPrices = {free:'$0', essential:'$15', pro:'$39'};
+  const annualPrices = {free:'$0', essential:'$12', pro:'$31'};
+  const p = billingAnnual ? annualPrices : monthPrices;
+  const toggle = document.getElementById('billToggle');
+  if(toggle) toggle.checked = billingAnnual;
+  const monthLbl = document.getElementById('billMonthLbl');
+  const annualLbl = document.getElementById('billAnnualLbl');
+  if(monthLbl) monthLbl.style.color = billingAnnual ? 'var(--muted)' : 'var(--text)';
+  if(monthLbl) monthLbl.style.fontWeight = billingAnnual ? '400' : '700';
+  if(annualLbl) annualLbl.style.color = billingAnnual ? 'var(--text)' : 'var(--muted)';
+  if(annualLbl) annualLbl.style.fontWeight = billingAnnual ? '700' : '400';
+  ['free','essential','pro'].forEach(k => {
+    const el = document.getElementById('price-'+k);
+    const orig = document.getElementById('price-'+k+'-orig');
+    if(el) el.textContent = billingAnnual ? annualPrices[k] : monthPrices[k];
+    if(orig) {
+      orig.style.display = (billingAnnual && k !== 'free') ? 'block' : 'none';
+      orig.textContent = monthPrices[k]+'/mo';
+    }
+  });
+}
 function goUpgrade(plan){ closePricingModal(); showToast('Stripe payments coming soon — contact us at hello@sharpe.io to upgrade.','info'); }
 
 function switchAuthTab(mode){
