@@ -140,7 +140,10 @@ textarea{resize:vertical;min-height:56px}
 .settings-pane{display:none}.settings-pane.active{display:block;animation:lcFadeIn .18s ease}
 .stab{padding:9px 20px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;font-family:'Inter',sans-serif;transition:color .15s,border-color .15s}
 .stab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
-.sig-quick-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:10px;flex-wrap:wrap}
+.sig-ctrl-bar{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:18px;flex-wrap:wrap}
+.sig-fresh{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sig-fresh-sep{width:1px;height:12px;background:var(--border)}
+.sig-ctrl-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
 .sig-quick-lbl{font-size:12px;color:var(--muted)}
 .sig-quick-conf{width:48px;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);text-align:center}
 .sig-quick-conf:disabled{opacity:.5}
@@ -192,8 +195,8 @@ textarea{resize:vertical;min-height:56px}
 .usr-notes{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:11px;font-family:'Inter',sans-serif;color:var(--text);background:var(--card);resize:vertical;min-height:58px}
 .usr-danger{border-top:1px solid rgba(248,81,73,.2);padding-top:12px;margin-top:4px;display:flex;align-items:center;gap:10px}
 .usr-danger-lbl{font-size:11px;color:var(--muted);flex:1}
-.sig-status-bar{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--card);border:1px solid var(--border);border-radius:9px;margin-bottom:14px;flex-wrap:wrap}
-.sig-status-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
+.sig-status-bar{display:none}
+.sig-status-sep{display:none}
 /* LEARNING */
 .learn-tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap}
 .ltab{padding:7px 16px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;transition:background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease;font-family:'Inter',sans-serif}
@@ -254,7 +257,7 @@ textarea{resize:vertical;min-height:56px}
 .sig-sym{font-size:16px;font-weight:700}
 .sig-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .sig-pattern{font-size:19px;font-weight:700;margin-bottom:3px}
-.sig-dir-line{font-size:12px;color:var(--muted);margin-bottom:14px}
+.sig-dir-line{display:none}
 .sig-prices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .spbox{background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px}
 .spbox-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
@@ -272,7 +275,7 @@ textarea{resize:vertical;min-height:56px}
 .sig-actions{display:flex;gap:8px}
 .sig-actions .btn{flex:1;font-size:12px;padding:7px}
 .demo-badge{font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(210,153,34,.15);color:var(--yellow);font-weight:700;border:1px solid rgba(210,153,34,.3)}
-.no-sig-msg{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:48px;text-align:center;color:var(--muted);font-size:13px}
+.no-sig-msg{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:56px 32px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
 .sig-spinner{text-align:center;padding:60px;color:var(--muted);font-size:13px}
 .spin-icon{display:inline-block;font-size:28px;animation:spin 1s linear infinite;margin-bottom:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1741,7 +1744,7 @@ textarea{resize:vertical;min-height:56px}
     <div class="howto-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
     <div class="howto-bar-text">
       <span class="howto-bar-title">How to use Auto Signals</span>
-      <span class="howto-bar-sub">Connect a data source, scan markets and act on high-confidence setups</span>
+      <span class="howto-bar-sub">Understand timeframes, confidence scores, and how to act on signals</span>
     </div>
     <svg class="howto-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
@@ -1780,34 +1783,29 @@ textarea{resize:vertical;min-height:56px}
     </div>
   </div>
 
-  <!-- Status + Scan Controls -->
-  <div class="sig-status-bar">
-    <span class="api-dot demo" id="sigStatusDot"></span>
-    <span style="font-size:12px;color:var(--muted)" id="sigStatusLbl">Demo Signals</span>
-    <span class="sig-status-sep"></span>
-    <span style="font-size:11px;color:var(--muted)" id="sigAutoLogStatus">Auto-log: off</span>
-    <span style="margin-left:auto"><a href="#" onclick="nav('settings',null);return false" style="font-size:11px;color:var(--blue)">⚙ Settings</a></span>
-  </div>
-  <!-- Quick Auto-log Controls -->
-  <div class="sig-quick-bar">
-    <label class="sig-quick-lbl" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:500;color:var(--text)">
-      <label class="toggle-sw" style="cursor:pointer"><input type="checkbox" id="sigAutoLogQuick" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
-      Auto-log signals to journal
-    </label>
-    <span class="sig-quick-lbl">Min. confidence to show:</span>
-    <input type="number" id="sigAutoConfQuick" class="sig-quick-conf" value="75" min="40" max="99" onchange="quickAutoConf()">
-    <span class="sig-quick-lbl">%</span>
-    <span style="font-size:11px;color:var(--muted);margin-left:auto">OANDA auto-execute &amp; more in <a href="#" onclick="nav('settings',null);return false" style="color:var(--blue)">Settings →</a></span>
-  </div>
-  <div class="scan-bar">
+  <!-- Unified Signal Controls -->
+  <div class="sig-ctrl-bar">
     <div class="tf-toggle">
       <button class="tf-btn active" id="tfDay" onclick="setTf('1day',this)">Daily</button>
       <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
       <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly signals — Pro only">1W</button>
     </div>
-    <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
-    <span class="last-scan" id="lastScanLbl">Loading signals…</span>
+    <div class="sig-fresh">
+      <span class="api-dot ok" id="sigStatusDot"></span>
+      <span id="lastScanLbl">Loading…</span>
+      <span class="sig-fresh-sep"></span>
+      <span id="sigStatusLbl" style="color:var(--muted)"></span>
+    </div>
+    <div class="sig-ctrl-right">
+      <span class="sig-quick-lbl">Min. confidence</span>
+      <input type="number" id="sigAutoConfQuick" class="sig-quick-conf" value="75" min="40" max="99" onchange="quickAutoConf()">
+      <span class="sig-quick-lbl">%</span>
+      <label class="toggle-sw" style="cursor:pointer"><input type="checkbox" id="sigAutoLogQuick" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
+      <span class="sig-quick-lbl" id="sigAutoLogStatus">Auto-log</span>
+      <a href="#" onclick="nav('settings',null);return false" style="font-size:11px;color:var(--blue);white-space:nowrap">⚙ Settings</a>
+    </div>
   </div>
+  <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
 
   <!-- Market Overview Pills -->
   <div class="ovw-label">Market Overview</div>
@@ -3959,9 +3957,9 @@ function sigCard(s, isDemo){
       <div class="conf-track"><div class="conf-fill ${confCls}" style="width:${s.conf}%"></div></div>
     </div>
     <div class="sig-meta-row">
-      <span>📊 RSI: ${s.rsi}</span>
-      <span>📈 ${s.trend}</span>
-      <span>⚡ Min win rate: ${(1/(1+s.rr)*100).toFixed(0)}%</span>
+      <span>RSI <strong style="color:var(--text)">${s.rsi}</strong></span>
+      <span style="text-transform:capitalize">${s.trend} trend</span>
+      <span>Break-even ≥ <strong style="color:var(--text)">${(1/(1+s.rr)*100).toFixed(0)}%</strong> win rate</span>
     </div>
     ${reasonsHtml}
     <div class="sig-actions">
@@ -4017,8 +4015,8 @@ async function loadSignals(){
 
     if(e1||!latest){
       document.getElementById('sigContainer').innerHTML=
-        '<div class="no-sig-msg">No signals available yet — the scheduled scan runs every 4 hours. Check back shortly.</div>';
-      document.getElementById('lastScanLbl').textContent='No scan data yet';
+        '<div class="no-sig-msg"><div style="font-size:28px;margin-bottom:12px">📡</div><strong>No signals yet</strong><br>The first scan runs automatically every 4 hours.<br><span style="font-size:11px">Check back shortly or ask an admin to trigger a manual run.</span></div>';
+      updateSigStatusBar();
       return;
     }
 
@@ -4062,10 +4060,9 @@ async function loadSignals(){
     renderMktStrip(results);
     renderSignals(results, false);
     if(autoLog) processAutoActions(results, false);
-
-    const t=new Date(latest.scanned_at);
-    document.getElementById('lastScanLbl').textContent=
-      `Updated: ${t.toLocaleDateString()} ${t.toLocaleTimeString()} · ${filtered.length} instruments · ${results.filter(r=>r.signal).length} signal(s)`;
+    updateSigStatusBar(latest.scanned_at);
+    const sigCount = results.filter(r=>r.signal).length;
+    document.getElementById('sigStatusLbl').textContent=`${filtered.length} instruments · ${sigCount} signal${sigCount!==1?'s':''}`;
 
   } catch(err){
     document.getElementById('sigContainer').innerHTML=
@@ -4305,14 +4302,24 @@ function initSignals(){
   if(sbUser) loadSignals();
 }
 
-function updateSigStatusBar(){
+function updateSigStatusBar(scannedAt){
   const dot = document.getElementById('sigStatusDot');
-  const lbl = document.getElementById('sigStatusLbl');
+  const freshLbl = document.getElementById('lastScanLbl');
   const alStatus = document.getElementById('sigAutoLogStatus');
   if(!dot) return;
   dot.className = 'api-dot ok';
-  lbl.textContent = 'Server-side · updates every 4h';
-  if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}`;
+  if(freshLbl){
+    if(scannedAt){
+      const agoMs = Date.now() - new Date(scannedAt);
+      const agoMin = Math.round(agoMs / 60000);
+      const nextMin = Math.max(0, 240 - agoMin);
+      const fmt = m => m < 60 ? `${m}m` : `${Math.floor(m/60)}h${m%60?' '+(m%60)+'m':''}`;
+      freshLbl.textContent = `Updated ${fmt(agoMin)} ago · Next ~${fmt(nextMin)}`;
+    } else {
+      freshLbl.textContent = 'Updates every 4h';
+    }
+  }
+  if(alStatus) alStatus.textContent = autoLog ? `Auto-log ≥${autoLogConf}%` : 'Auto-log';
 }
 
 // ── NEWS ───────────────────────────────────────────────────────
