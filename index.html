@@ -1478,12 +1478,14 @@ textarea{resize:vertical;min-height:56px}
           <div class="pp-divider"></div>
           <ul class="pp-feats">
             <li><span class="chk chk-yes">✓</span><span><strong>Unlimited</strong> trades in journal</span></li>
-            <li><span class="chk chk-yes">✓</span><span><strong>14 instruments</strong> — Forex majors, crosses &amp; Gold/Silver</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Live signal scanner — Daily &amp; 4H</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>14 instruments</strong> — Forex majors, crosses, Gold &amp; Silver</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Live signal scanner — Daily &amp; 4H timeframes</span></li>
             <li><span class="chk chk-yes">✓</span><span>Auto-log signals to journal</span></li>
             <li><span class="chk chk-yes">✓</span><span>5 daily trade ideas with full analysis</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Market news with sentiment scoring</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Advanced performance analytics</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Market news with AI sentiment scoring</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Performance analytics (win rate, equity curve)</span></li>
+            <li><span class="chk chk-no">✗</span><span>Weekly timeframe signals</span></li>
+            <li><span class="chk chk-no">✗</span><span>Crypto, ETF &amp; Index instruments</span></li>
             <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
           </ul>
           <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading →</button>
@@ -1497,16 +1499,18 @@ textarea{resize:vertical;min-height:56px}
             <span class="pp-price-per">/mo</span>
           </div>
           <div class="pp-price-orig" id="price-pro-orig" style="display:none;font-size:12px;color:var(--muted);text-decoration:line-through;margin-bottom:2px">$39/mo</div>
-          <div class="pp-price-desc">Full automation for serious professionals.</div>
+          <div class="pp-price-desc">Full automation. Every market. Every edge.</div>
           <div class="pp-divider"></div>
           <ul class="pp-feats">
             <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
-            <li><span class="chk chk-yes">✓</span><span><strong>25 instruments</strong> — Forex, Crypto, Indices &amp; Commodities</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>32 instruments</strong> — Forex, Crypto, Indices, Commodities &amp; ETFs</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Weekly timeframe signals (1W)</span></li>
             <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
             <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas — all markets</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Priority high-confidence alerts (85%+)</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Risk-adjusted position sizing</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Full performance export (CSV/PDF)</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence only</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Journal export — CSV &amp; PDF</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Webhook &amp; email signal alerts</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Risk-adjusted OANDA position sizing</span></li>
             <li><span class="chk chk-yes">✓</span><span>Priority support + community access</span></li>
           </ul>
           <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Go Pro →</button>
@@ -1772,6 +1776,7 @@ textarea{resize:vertical;min-height:56px}
     <div class="tf-toggle">
       <button class="tf-btn active" id="tfDay" onclick="setTf('1day',this)">Daily</button>
       <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
+      <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly signals — Pro only">1W</button>
     </div>
     <button class="btn btn-primary" id="scanBtn" onclick="runScan()">⟳ Scan Markets</button>
     <span class="last-scan" id="lastScanLbl">No scan run yet — click to generate today's signals</span>
@@ -2086,8 +2091,10 @@ textarea{resize:vertical;min-height:56px}
           <li><span class="chk chk-yes">✓</span><span>Auto-log signals to journal</span></li>
           <li><span class="chk chk-yes">✓</span><span>5 daily trade ideas with full analysis</span></li>
           <li><span class="chk chk-yes">✓</span><span>Market news with AI sentiment scoring</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Advanced performance analytics</span></li>
-          <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Performance analytics (win rate, equity curve)</span></li>
+          <li><span class="chk chk-no">✗</span><span>Weekly timeframe signals (1W)</span></li>
+          <li><span class="chk chk-no">✗</span><span>Crypto, ETF &amp; Index instruments</span></li>
+          <li><span class="chk chk-no">✗</span><span>OANDA auto-execution &amp; export</span></li>
         </ul>
         <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading — 7 days free →</button>
         <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">No credit card required to trial</div>
@@ -2095,16 +2102,17 @@ textarea{resize:vertical;min-height:56px}
       <div class="pp-card pp-pro">
         <div class="pp-name">Pro</div>
         <div class="pp-price"><span class="pp-price-amt">$39</span><span class="pp-price-per">/mo</span></div>
-        <div class="pp-price-desc">Full automation for serious professionals.</div>
+        <div class="pp-price-desc">Full automation. Every market. Every edge.</div>
         <div class="pp-divider"></div>
         <ul class="pp-feats">
           <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
-          <li><span class="chk chk-yes">✓</span><span><strong>25 instruments</strong> — Forex, Crypto, Indices &amp; Commodities</span></li>
-          <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
-          <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas across all markets</span></li>
+          <li><span class="chk chk-yes">✓</span><span><strong>32 instruments</strong> — Forex, Crypto, Indices, Commodities &amp; ETFs</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Weekly timeframe signals (1W) — swing &amp; position trades</span></li>
+          <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution with position sizing</span></li>
+          <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas — all markets</span></li>
           <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence signals only</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Risk-adjusted position sizing</span></li>
-          <li><span class="chk chk-yes">✓</span><span>Export reports (CSV / PDF)</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Webhook &amp; email signal delivery</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Journal export — CSV &amp; PDF</span></li>
           <li><span class="chk chk-yes">✓</span><span>Priority support + community access</span></li>
         </ul>
         <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Go Pro — 7 days free →</button>
@@ -2361,10 +2369,11 @@ textarea{resize:vertical;min-height:56px}
           <li>Unlimited trades in journal</li>
           <li>Live signals — Daily &amp; 4H</li>
           <li>Auto-log to journal</li>
-          <li>5 trade ideas/day</li>
-          <li>News + sentiment scoring</li>
-          <li>Advanced analytics</li>
-          <li class="no">OANDA auto-execution</li>
+          <li>5 trade ideas/day + news &amp; sentiment</li>
+          <li>Performance analytics</li>
+          <li class="no">Weekly timeframe (1W)</li>
+          <li class="no">Crypto, ETFs &amp; Indices</li>
+          <li class="no">OANDA execution &amp; export</li>
         </ul>
         <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="goUpgrade('essential')">Start Trader — 7 days free</button>
       </div>
@@ -2373,14 +2382,14 @@ textarea{resize:vertical;min-height:56px}
         <div class="price-amt">$39</div>
         <div class="price-per">/month · 7-day trial</div>
         <ul class="price-feats">
-          <li>25 instruments — Forex, Crypto, Indices</li>
           <li>Everything in Trader</li>
+          <li>32 instruments — Forex, Crypto, Indices &amp; ETFs</li>
+          <li>Weekly signals (1W)</li>
           <li>OANDA live auto-execution</li>
           <li>10 trade ideas/day — all markets</li>
           <li>Priority alerts (85%+ confidence)</li>
-          <li>Risk-adjusted position sizing</li>
-          <li>Export CSV/PDF</li>
-          <li>Priority support</li>
+          <li>Webhooks &amp; email alerts</li>
+          <li>Export CSV/PDF + priority support</li>
         </ul>
         <button class="btn btn-primary" style="width:100%;font-size:12px;background:var(--purple)" onclick="goUpgrade('pro')">Start Pro — 7 days free</button>
       </div>
@@ -3386,6 +3395,14 @@ const INSTRUMENTS = [
   {symbol:'DJI',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:39000,  tdOnly:true},
   {symbol:'DAX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:18200,  tdOnly:true},
   {symbol:'FTSE',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:7900,   tdOnly:true},
+  // ETFs (Twelve Data only)
+  {symbol:'SPY',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:524,    tdOnly:true, proOnly:true},
+  {symbol:'QQQ',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:445,    tdOnly:true, proOnly:true},
+  {symbol:'IWM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:208,    tdOnly:true, proOnly:true},
+  {symbol:'TLT',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:92,     tdOnly:true, proOnly:true},
+  {symbol:'GLD',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:240,    tdOnly:true, proOnly:true},
+  {symbol:'USO',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:74,     tdOnly:true, proOnly:true},
+  {symbol:'EEM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:43,     tdOnly:true, proOnly:true},
 ];
 
 let sigApiKey = localStorage.getItem('te_apikey') || '';
@@ -3755,7 +3772,7 @@ function sigCard(s, isDemo){
       </div>
       <div class="sig-badges">
         <span class="badge ${isLong?'badge-long':'badge-short'}">${s.dir}</span>
-        <span class="badge" style="background:rgba(88,166,255,.1);color:var(--blue);font-size:10px">${sigTf==='1day'?'Daily':'4H'}</span>
+        <span class="badge" style="background:rgba(88,166,255,.1);color:var(--blue);font-size:10px">${sigTf==='1day'?'Daily':sigTf==='4h'?'4H':'Weekly'}</span>
       </div>
     </div>
     <div class="sig-pattern" style="color:${isLong?'var(--green)':'var(--red)'}">${s.pat}</div>
@@ -3811,7 +3828,7 @@ function addSigToJournal(s, silent=false){
   const t={
     id:Date.now(), date:today, market:s.symbol, direction:s.dir, status:'open',
     entry:s.entry, sl:s.stop, tp:s.t1, exit:null, pips:0,
-    entryReason:`${s.pat} on ${sigTf==='1day'?'daily':'4H'} chart. ${s.trend}. RSI: ${s.rsi}. ATR: ${s.atrPips} ${s.unit}.`,
+    entryReason:`${s.pat} on ${sigTf==='1day'?'daily':sigTf==='4h'?'4H':'weekly'} chart. ${s.trend}. RSI: ${s.rsi}. ATR: ${s.atrPips} ${s.unit}.`,
     exitReason:''
   };
   trades.push(t); persist();
@@ -3848,6 +3865,7 @@ async function runScan(){
   const planInstr = planLimits().instruments;
   const scanList = INSTRUMENTS.filter(i => {
     if(i.tdOnly && isAv) return false;
+    if(i.proOnly && sbPlan !== 'pro') return false;
     if(planInstr === 'all') return true;
     return planInstr.includes(i.symbol);
   });
@@ -4048,6 +4066,10 @@ function setApiStatus(s){
 }
 function setTf(tf, btn){
   if(tf==='4h'&&sigProvider==='av') return;
+  if(tf==='1week'&&!planLimits().weeklyTf){
+    requirePlan('weeklyTf','Weekly signals are available on the Pro plan.');
+    return;
+  }
   sigTf=tf;
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
@@ -4248,9 +4270,9 @@ let sbUser = null;   // current auth user
 let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
 
 const PLAN_LIMITS = {
-  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:false, autoLog:false, oanda:false },
-  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false },
-  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true }
+  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:true, autoLog:false, oanda:false, weeklyTf:false, export:false, webhooks:false },
+  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false, weeklyTf:false, export:false, webhooks:false },
+  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true, weeklyTf:true, export:true, webhooks:true }
 };
 
 function planLimits(){ return PLAN_LIMITS[sbPlan] || PLAN_LIMITS.free; }
@@ -4262,6 +4284,9 @@ function canAccess(feature){
   if(feature === 'news')       return p.news;
   if(feature === 'autoLog')    return p.autoLog;
   if(feature === 'oanda')      return p.oanda;
+  if(feature === 'weeklyTf')   return p.weeklyTf;
+  if(feature === 'export')     return p.export;
+  if(feature === 'webhooks')   return p.webhooks;
   if(feature === 'moreTrades') return p.maxTrades === Infinity || trades.length < p.maxTrades;
   return true;
 }
