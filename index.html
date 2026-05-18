@@ -137,6 +137,13 @@ textarea{resize:vertical;min-height:56px}
 .atab:hover{color:var(--text)}
 .atab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
 .admin-pane{display:none}.admin-pane.active{display:block;animation:lcFadeIn .18s ease}
+.settings-pane{display:none}.settings-pane.active{display:block;animation:lcFadeIn .18s ease}
+.stab{padding:9px 20px;border:none;background:none;color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;font-family:'Inter',sans-serif;transition:color .15s,border-color .15s}
+.stab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.sig-quick-bar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;margin-bottom:10px;flex-wrap:wrap}
+.sig-quick-lbl{font-size:12px;color:var(--muted)}
+.sig-quick-conf{width:48px;font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);text-align:center}
+.sig-quick-conf:disabled{opacity:.5}
 .cfg-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:16px}
 .cfg-card-hdr{font-size:13px;font-weight:700;color:var(--text);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
 .cfg-card-hdr svg{color:var(--blue);flex-shrink:0}
@@ -672,6 +679,7 @@ textarea{resize:vertical;min-height:56px}
     <button onclick="nav('ideas',this)">Trade Ideas</button>
     <button onclick="nav('news',this)">News</button>
     <button onclick="nav('learning',this)">Learning Center</button>
+    <button id="settingsNavBtn" onclick="nav('settings',this)">Settings</button>
     <button id="adminNavBtn" style="display:none;color:#f85149" onclick="nav('admin',this)">Admin</button>
   </nav>
   <nav id="landingNav">
@@ -1771,7 +1779,18 @@ textarea{resize:vertical;min-height:56px}
     <span style="font-size:12px;color:var(--muted)" id="sigStatusLbl">Demo Mode</span>
     <span class="sig-status-sep"></span>
     <span style="font-size:11px;color:var(--muted)" id="sigAutoLogStatus">Auto-log: off</span>
-    <span id="sigAdminLink" style="display:none;margin-left:auto"><a href="#" onclick="nav('admin',null);switchAdminTab('signals',document.querySelector('.atab:nth-child(3)'));return false" style="font-size:11px;color:var(--blue)">⚙ Configure in Admin</a></span>
+    <span style="margin-left:auto"><a href="#" onclick="nav('settings',null);return false" style="font-size:11px;color:var(--blue)">⚙ Settings</a></span>
+  </div>
+  <!-- Quick Auto-log Controls -->
+  <div class="sig-quick-bar">
+    <label class="sig-quick-lbl" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:500;color:var(--text)">
+      <label class="toggle-sw" style="cursor:pointer"><input type="checkbox" id="sigAutoLogQuick" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
+      Auto-log signals to journal
+    </label>
+    <span class="sig-quick-lbl">Minimum confidence:</span>
+    <input type="number" id="sigAutoConfQuick" class="sig-quick-conf" value="75" min="50" max="93" disabled onchange="quickAutoConf()">
+    <span class="sig-quick-lbl">%</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto">OANDA auto-execute &amp; more in <a href="#" onclick="nav('settings',null);return false" style="color:var(--blue)">Settings →</a></span>
   </div>
   <div class="scan-bar">
     <div class="tf-toggle">
@@ -1840,13 +1859,165 @@ textarea{resize:vertical;min-height:56px}
   </div>
 </section>
 
+<!-- SETTINGS -->
+<section class="section" id="settings">
+  <div class="section-title">My Settings</div>
+
+  <!-- Data Source -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+      Data Source
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Select your signal data provider. Twelve Data gives the best coverage — get a free API key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a>.</div>
+    <div class="prov-tabs" style="margin-bottom:12px">
+      <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
+      <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
+      <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
+    </div>
+    <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <input id="apiKeyInput" type="password" placeholder="" style="flex:1;min-width:240px">
+      <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="api-dot demo" id="apiDot"></span>
+      <span class="api-lbl" id="apiLbl">Demo Mode</span>
+    </div>
+  </div>
+
+  <!-- Auto Trading -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Auto Trading
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Auto-log signals to journal</div>
+        <div class="cfg-row-desc">Signals at or above the confidence threshold are automatically saved to your Trade Journal after each scan.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <label class="toggle-sw"><input type="checkbox" id="autoLogChk" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="autoLogConf" class="auto-conf" value="75" min="50" max="93" disabled onchange="updateAutoConf()" style="width:52px">
+          <span style="font-size:11px;color:var(--muted)">%</span>
+        </div>
+      </div>
+    </div>
+    <div class="cfg-row" id="autoExecWrap" style="display:none">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Auto-execute via OANDA <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span></div>
+        <div class="cfg-row-desc">Place market orders on OANDA automatically when qualifying signals fire. Requires OANDA connection below.</div>
+      </div>
+      <label class="toggle-sw"><input type="checkbox" id="autoExecChk" onchange="setAutoExec(this.checked)"><span class="toggle-sl"></span></label>
+    </div>
+  </div>
+
+  <!-- OANDA Integration -->
+  <div class="cfg-card" id="oandaCfgCard">
+    <div class="cfg-card-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      OANDA Integration <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Connect your OANDA account to enable live auto-execution. Use a practice account first. <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">Get a free practice account →</a></div>
+    <div class="oanda-grid">
+      <div class="fg">
+        <label>API Token</label>
+        <input type="password" id="oandaTokenInput" placeholder="Personal access token from OANDA">
+      </div>
+      <div class="fg">
+        <label>Account ID</label>
+        <input type="text" id="oandaAccountInput" placeholder="001-001-XXXXXXX-001">
+      </div>
+      <div class="fg">
+        <label>Risk per trade</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="oandaRiskInput" value="1" min="0.1" max="5" step="0.1" style="width:60px">
+          <span style="font-size:12px;color:var(--muted)">% of account balance</span>
+        </div>
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <label class="auto-chk" style="margin-bottom:2px">
+          <input type="checkbox" id="oandaPracticeChk" checked onchange="setOandaPractice(this.checked)">
+          Practice account
+        </label>
+        <button class="btn btn-primary" onclick="connectOanda()">Connect</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <span class="api-dot demo" id="oandaDot"></span>
+      <span class="api-lbl" id="oandaLbl">Not connected — free practice account at <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">oanda.com</a></span>
+    </div>
+  </div>
+
+  <!-- Webhook & Email Alerts -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      Webhook &amp; Email Alerts <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Webhook URL</div>
+        <div class="cfg-row-desc">Signals are POSTed as JSON when they fire. Use with Zapier, Make, n8n or your own endpoint. <a href="https://zapier.com" target="_blank" style="color:var(--blue)">Zapier →</a></div>
+      </div>
+      <div style="display:flex;gap:6px;flex:1;max-width:400px">
+        <input type="url" id="webhookUrlInput" placeholder="https://hooks.zapier.com/…" style="flex:1">
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;white-space:nowrap" onclick="testWebhook()">Test</button>
+      </div>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Minimum confidence to fire</div>
+        <div class="cfg-row-desc">Only signals at or above this threshold trigger the webhook and email.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <input type="number" id="webhookConfInput" value="75" min="50" max="93" style="width:56px">
+        <span style="font-size:11px;color:var(--muted)">%</span>
+      </div>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Email alerts via Resend</div>
+        <div class="cfg-row-desc">Get signal emails directly. Requires a free <a href="https://resend.com" target="_blank" style="color:var(--blue)">Resend</a> API key. The key is stored in your browser only.</div>
+      </div>
+      <label class="toggle-sw"><input type="checkbox" id="emailAlertsChk" onchange="saveAlertSettings()"><span class="toggle-sl"></span></label>
+    </div>
+    <div id="emailAlertFields" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        <div class="fg">
+          <label>Resend API Key</label>
+          <input type="password" id="resendKeyInput" placeholder="re_xxxxxx…">
+        </div>
+        <div class="fg">
+          <label>Send alerts to</label>
+          <input type="email" id="alertEmailInput" placeholder="you@example.com">
+        </div>
+        <div class="fg">
+          <label>From name</label>
+          <input type="text" id="alertFromName" placeholder="Sharpe Signals" value="Sharpe Signals">
+        </div>
+        <div class="fg">
+          <label>From address <span style="font-size:10px;color:var(--muted)">(verified Resend domain)</span></label>
+          <input type="email" id="alertFromEmail" placeholder="signals@yourdomain.com">
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;margin-top:8px" onclick="testEmailAlert()">Send Test Email</button>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" onclick="saveAlertSettings()">Save Alert Settings</button>
+      <span id="alertSaveStatus" style="font-size:11px;color:var(--muted);margin-left:10px"></span>
+    </div>
+  </div>
+
+</section>
+
 <!-- ADMIN -->
 <section class="section" id="admin">
   <div class="section-title">Admin Panel</div>
   <div class="admin-tabs">
     <button class="atab active" onclick="switchAdminTab('overview',this)">Overview</button>
     <button class="atab" onclick="switchAdminTab('users',this)">Users</button>
-    <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
 
@@ -1881,154 +2052,6 @@ textarea{resize:vertical;min-height:56px}
         </tr></thead>
         <tbody id="admin-users"></tbody>
       </table>
-    </div>
-  </div>
-
-  <!-- Signals Config -->
-  <div class="admin-pane" id="apane-signals">
-    <!-- Data Provider -->
-    <div class="cfg-card">
-      <div class="cfg-card-hdr">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-        Data Provider
-      </div>
-      <div class="prov-tabs" style="margin-bottom:12px">
-        <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
-        <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
-        <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
-      </div>
-      <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-        <input id="apiKeyInput" type="password" placeholder="" style="flex:1;min-width:240px">
-        <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="api-dot demo" id="apiDot"></span>
-        <span class="api-lbl" id="apiLbl">Demo Mode</span>
-      </div>
-    </div>
-
-    <!-- Auto-log Settings -->
-    <div class="cfg-card">
-      <div class="cfg-card-hdr">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        Auto-log &amp; Execution
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-row-info">
-          <div class="cfg-row-label">Auto-log signals to journal</div>
-          <div class="cfg-row-desc">Signals at or above the confidence threshold are automatically saved to your Trade Journal after each scan.</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          <label class="toggle-sw"><input type="checkbox" id="autoLogChk" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
-          <div style="display:flex;align-items:center;gap:4px">
-            <input type="number" id="autoLogConf" class="auto-conf" value="75" min="50" max="93" disabled onchange="updateAutoConf()" style="width:52px">
-            <span style="font-size:11px;color:var(--muted)">%</span>
-          </div>
-        </div>
-      </div>
-      <div class="cfg-row" id="autoExecWrap" style="display:none">
-        <div class="cfg-row-info">
-          <div class="cfg-row-label">Auto-execute via OANDA</div>
-          <div class="cfg-row-desc">Place market orders on OANDA automatically when qualifying signals fire. Requires OANDA connection below.</div>
-        </div>
-        <label class="toggle-sw"><input type="checkbox" id="autoExecChk" onchange="setAutoExec(this.checked)"><span class="toggle-sl"></span></label>
-      </div>
-    </div>
-
-    <!-- OANDA Integration -->
-    <div class="cfg-card">
-      <div class="cfg-card-hdr">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-        OANDA Integration
-      </div>
-      <div class="oanda-grid">
-        <div class="fg">
-          <label>API Token</label>
-          <input type="password" id="oandaTokenInput" placeholder="Personal access token from OANDA">
-        </div>
-        <div class="fg">
-          <label>Account ID</label>
-          <input type="text" id="oandaAccountInput" placeholder="001-001-XXXXXXX-001">
-        </div>
-        <div class="fg">
-          <label>Risk per trade</label>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input type="number" id="oandaRiskInput" value="1" min="0.1" max="5" step="0.1" style="width:60px">
-            <span style="font-size:12px;color:var(--muted)">% of account balance</span>
-          </div>
-        </div>
-        <div class="fg" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-          <label class="auto-chk" style="margin-bottom:2px">
-            <input type="checkbox" id="oandaPracticeChk" checked onchange="setOandaPractice(this.checked)">
-            Practice account
-          </label>
-          <button class="btn btn-primary" onclick="connectOanda()">Connect</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
-        <span class="api-dot demo" id="oandaDot"></span>
-        <span class="api-lbl" id="oandaLbl">Not connected — free practice account at <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">oanda.com</a></span>
-      </div>
-    </div>
-
-    <!-- Webhook & Alerts -->
-    <div class="cfg-card">
-      <div class="cfg-card-hdr">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-        Webhook &amp; Email Alerts <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-row-info">
-          <div class="cfg-row-label">Webhook URL</div>
-          <div class="cfg-row-desc">Signals are POSTed as JSON when they fire. Use with Zapier, Make, n8n or your own endpoint. <a href="https://zapier.com" target="_blank" style="color:var(--blue)">Zapier →</a></div>
-        </div>
-        <div style="display:flex;gap:6px;flex:1;max-width:400px">
-          <input type="url" id="webhookUrlInput" placeholder="https://hooks.zapier.com/…" style="flex:1">
-          <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;white-space:nowrap" onclick="testWebhook()">Test</button>
-        </div>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-row-info">
-          <div class="cfg-row-label">Minimum confidence to fire</div>
-          <div class="cfg-row-desc">Only signals at or above this threshold trigger the webhook and email.</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          <input type="number" id="webhookConfInput" value="75" min="50" max="93" style="width:56px">
-          <span style="font-size:11px;color:var(--muted)">%</span>
-        </div>
-      </div>
-      <div class="cfg-row">
-        <div class="cfg-row-info">
-          <div class="cfg-row-label">Email alerts via Resend</div>
-          <div class="cfg-row-desc">Get signal emails directly. Requires a free <a href="https://resend.com" target="_blank" style="color:var(--blue)">Resend</a> API key. The key is stored in your browser only.</div>
-        </div>
-        <label class="toggle-sw"><input type="checkbox" id="emailAlertsChk" onchange="saveAlertSettings()"><span class="toggle-sl"></span></label>
-      </div>
-      <div id="emailAlertFields" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-          <div class="fg">
-            <label>Resend API Key</label>
-            <input type="password" id="resendKeyInput" placeholder="re_xxxxxx…">
-          </div>
-          <div class="fg">
-            <label>Send alerts to</label>
-            <input type="email" id="alertEmailInput" placeholder="you@example.com">
-          </div>
-          <div class="fg">
-            <label>From name</label>
-            <input type="text" id="alertFromName" placeholder="Sharpe Signals" value="Sharpe Signals">
-          </div>
-          <div class="fg">
-            <label>From address <span style="font-size:10px;color:var(--muted)">(verified Resend domain)</span></label>
-            <input type="email" id="alertFromEmail" placeholder="signals@yourdomain.com">
-          </div>
-        </div>
-        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;margin-top:8px" onclick="testEmailAlert()">Send Test Email</button>
-      </div>
-      <div style="margin-top:14px">
-        <button class="btn btn-primary" onclick="saveAlertSettings()">Save Alert Settings</button>
-        <span id="alertSaveStatus" style="font-size:11px;color:var(--muted);margin-left:10px"></span>
-      </div>
     </div>
   </div>
 
@@ -2568,6 +2591,7 @@ function nav(id, btn){
   if(id==='signals') initSignals();
   if(id==='news') initNews();
   if(id==='ideas') renderIdeas();
+  if(id==='settings') initSettings();
   if(id==='admin') loadAdminPanel();
   window.scrollTo(0,0);
 }
@@ -4073,11 +4097,21 @@ async function processAutoActions(results, isDemo=false){
 function setAutoLog(v){
   if(v && !canAccess('autoLog')){
     requirePlan('autoLog','Auto-log is available on the Trader plan and above.');
-    document.getElementById('autoLogChk').checked=false;
+    const chk=document.getElementById('autoLogChk');
+    const qChk=document.getElementById('sigAutoLogQuick');
+    if(chk) chk.checked=false;
+    if(qChk) qChk.checked=false;
     return;
   }
   autoLog=v; localStorage.setItem('auto_log',v);
-  document.getElementById('autoLogConf').disabled=!v;
+  const conf=document.getElementById('autoLogConf');
+  const qConf=document.getElementById('sigAutoConfQuick');
+  if(conf) conf.disabled=!v;
+  if(qConf) qConf.disabled=!v;
+  const chk=document.getElementById('autoLogChk');
+  const qChk=document.getElementById('sigAutoLogQuick');
+  if(chk) chk.checked=v;
+  if(qChk) qChk.checked=v;
 }
 function setAutoExec(v){
   if(v && !canAccess('oanda')){
@@ -4091,6 +4125,14 @@ function setOandaPractice(v){ oandaPractice=v; localStorage.setItem('oanda_pract
 function updateAutoConf(){
   autoLogConf=parseInt(document.getElementById('autoLogConf').value)||75;
   localStorage.setItem('auto_log_conf',autoLogConf);
+  const qConf=document.getElementById('sigAutoConfQuick');
+  if(qConf) qConf.value=autoLogConf;
+}
+function quickAutoConf(){
+  autoLogConf=parseInt(document.getElementById('sigAutoConfQuick').value)||75;
+  localStorage.setItem('auto_log_conf',autoLogConf);
+  const conf=document.getElementById('autoLogConf');
+  if(conf) conf.value=autoLogConf;
 }
 // ── API Provider management ──
 function setProvider(p, btn){
@@ -4158,9 +4200,14 @@ function initSignals(){
   const tabMap={td:'provTabTd',av:'provTabAv',demo:'provTabDemo'};
   const tabEl=document.getElementById(tabMap[saved]||'provTabDemo');
   setProvider(saved, tabEl);
-  document.getElementById('autoLogChk').checked=autoLog;
-  document.getElementById('autoLogConf').value=autoLogConf;
-  document.getElementById('autoLogConf').disabled=!autoLog;
+  const alChk=document.getElementById('autoLogChk');
+  const alConf=document.getElementById('autoLogConf');
+  const qChk=document.getElementById('sigAutoLogQuick');
+  const qConf=document.getElementById('sigAutoConfQuick');
+  if(alChk) alChk.checked=autoLog;
+  if(alConf){ alConf.value=autoLogConf; alConf.disabled=!autoLog; }
+  if(qChk) qChk.checked=autoLog;
+  if(qConf){ qConf.value=autoLogConf; qConf.disabled=!autoLog; }
   if(oandaToken&&oandaAccount){
     document.getElementById('oandaRiskInput').value=oandaRisk;
     document.getElementById('oandaPracticeChk').checked=oandaPractice;
@@ -4177,7 +4224,6 @@ function updateSigStatusBar(){
   const dot = document.getElementById('sigStatusDot');
   const lbl = document.getElementById('sigStatusLbl');
   const alStatus = document.getElementById('sigAutoLogStatus');
-  const adminLink = document.getElementById('sigAdminLink');
   if(!dot) return;
   const connected = sigProvider!=='demo' && (sigProvider==='td'?!!sigApiKey:!!sigAvKey);
   dot.className = 'api-dot ' + (connected?'ok':'demo');
@@ -4185,7 +4231,6 @@ function updateSigStatusBar(){
   else if(sigProvider==='av'&&connected) lbl.textContent='Alpha Vantage · Daily';
   else lbl.textContent='Demo Mode';
   if(alStatus) alStatus.textContent = autoLog ? `Auto-log ≥ ${autoLogConf}%` : 'Auto-log: off';
-  if(adminLink) adminLink.style.display = sbIsAdmin ? 'inline' : 'none';
 }
 
 // ── NEWS ───────────────────────────────────────────────────────
@@ -5174,6 +5219,7 @@ async function adminSetPlan(userId, plan, el){
 function showAdminNav(){
   const btn = document.getElementById('adminNavBtn');
   if(btn) btn.style.display = sbIsAdmin ? 'inline-block' : 'none';
+  document.getElementById('settingsNavBtn').style.display = sbUser ? '' : 'none';
 }
 
 // ── CSV Export ──────────────────────────────────────────────────
@@ -5319,6 +5365,32 @@ function loadAlertSettings(){
   if(document.getElementById('alertEmailInput')&&email) document.getElementById('alertEmailInput').value=email;
   if(document.getElementById('alertFromName')&&fromName) document.getElementById('alertFromName').value=fromName;
   if(document.getElementById('alertFromEmail')&&fromEmail) document.getElementById('alertFromEmail').value=fromEmail;
+}
+
+function initSettings(){
+  const saved=localStorage.getItem('sig_provider')||(sigApiKey?'td':sigAvKey?'av':'demo');
+  const tabMap={td:'provTabTd',av:'provTabAv',demo:'provTabDemo'};
+  const tabEl=document.getElementById(tabMap[saved]||'provTabDemo');
+  setProvider(saved, tabEl);
+  const alChk=document.getElementById('autoLogChk');
+  const alConf=document.getElementById('autoLogConf');
+  if(alChk) alChk.checked=autoLog;
+  if(alConf){ alConf.value=autoLogConf; alConf.disabled=!autoLog; }
+  if(oandaToken&&oandaAccount){
+    const ri=document.getElementById('oandaRiskInput');
+    const pi=document.getElementById('oandaPracticeChk');
+    const ai=document.getElementById('oandaAccountInput');
+    const ew=document.getElementById('autoExecWrap');
+    const ec=document.getElementById('autoExecChk');
+    if(ri) ri.value=oandaRisk;
+    if(pi) pi.checked=oandaPractice;
+    if(ai) ai.placeholder=oandaAccount;
+    if(ew) ew.style.display='flex';
+    if(ec) ec.checked=autoExecute;
+    const lbl=document.getElementById('oandaLbl');
+    if(lbl) lbl.textContent=`${oandaPractice?'Practice':'Live'} account saved · click Connect to verify · Risk ${oandaRisk}%`;
+  }
+  loadAlertSettings();
 }
 
 // ── INIT ───────────────────────────────────────────────────────
