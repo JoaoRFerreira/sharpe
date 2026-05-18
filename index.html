@@ -37,15 +37,33 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 #landing{width:100vw;margin-left:calc(-50vw + 50%);margin-bottom:-28px;overflow-x:hidden;background:linear-gradient(170deg,#eef2ff 0%,#dbeafe 18%,#e0f2fe 38%,#eff6ff 58%,#ecfdf5 78%,#eef2ff 100%)}
 .section-title{font-size:22px;font-weight:800;margin-bottom:22px;letter-spacing:-.3px}
 /* STAT CARDS */
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.stats-grid{margin-bottom:22px}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;transition:all .2s;box-shadow:0 2px 8px rgba(37,99,235,.05)}
 .stat-card:hover{border-color:var(--blue-border);transform:translateY(-2px);box-shadow:0 6px 24px rgba(37,99,235,.1)}
 .stat-card .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:600}
 .stat-card .val{font-size:28px;font-weight:800;line-height:1;letter-spacing:-.5px}
 .stat-card .sub{font-size:11px;color:var(--muted);margin-top:6px}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+.dash-title{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.dash-subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.dash-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:10px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-left:3px solid transparent;border-radius:14px;padding:20px 22px;transition:all .2s}
+.kpi-card.kpi-green{border-left-color:var(--green)}.kpi-card.kpi-red{border-left-color:var(--red)}.kpi-card.kpi-blue{border-left-color:var(--blue)}.kpi-card.kpi-yellow{border-left-color:var(--gold)}
+.kpi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:600}
+.kpi-val{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.5px;margin-bottom:6px}
+.kpi-sub{font-size:11px;color:var(--muted);line-height:1.5}
+.dash-sec-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.sec-pill{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;flex:1;min-width:110px}
+.sec-pill-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:5px}
+.sec-pill-val{font-size:18px;font-weight:700}
+.dash-analytics{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:0}
+.dash-analytics-right{display:flex;flex-direction:column;gap:14px}
+.recent-list{display:flex;flex-direction:column;gap:6px}
+.recent-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.recent-row:last-child{border-bottom:none;padding-bottom:0}
 .green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.yellow{color:var(--gold)}.purple{color:var(--purple)}
 /* CHARTS */
-.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px}
+.charts-row{display:none}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 2px 8px rgba(37,99,235,.05)}
 .chart-card h3{font-size:11px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
 /* TABLE */
@@ -415,7 +433,7 @@ textarea{resize:vertical;min-height:56px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--blue)}
-@media(max-width:800px){.charts-row,.sim-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row,.dash-analytics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 /* AUTH */
 .auth-area{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .plan-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
@@ -1561,8 +1579,14 @@ textarea{resize:vertical;min-height:56px}
 
 <!-- DASHBOARD -->
 <section class="section" id="dashboard">
-  <div class="section-title">Portfolio Dashboard</div>
-  <div class="stats-grid" id="statsGrid"></div>
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Dashboard</div>
+      <div class="dash-subtitle" id="dashSubtitle">Portfolio overview</div>
+    </div>
+    <button class="btn btn-primary" style="font-size:13px" onclick="openModal()">+ New Trade</button>
+  </div>
+  <div id="statsGrid"></div>
 
   <!-- Live Open Positions -->
   <div class="lpos-section-hdr">
@@ -1576,11 +1600,13 @@ textarea{resize:vertical;min-height:56px}
   </div>
   <div id="livePosGrid"></div>
 
-  <div class="charts-row">
-    <div class="chart-card"><h3>Equity Curve — Cumulative Pips</h3><canvas id="eqChart"></canvas></div>
-    <div class="chart-card"><h3>Win / Loss Split</h3><canvas id="wlChart"></canvas></div>
+  <div class="dash-analytics">
+    <div class="chart-card"><h3>Equity Curve</h3><canvas id="eqChart"></canvas></div>
+    <div class="dash-analytics-right">
+      <div class="chart-card"><h3>Win / Loss Split</h3><canvas id="wlChart"></canvas></div>
+      <div class="chart-card"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
+    </div>
   </div>
-  <div class="chart-card"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
 </section>
 
 <!-- JOURNAL -->
@@ -2668,23 +2694,45 @@ function stats(){
 // ── DASHBOARD ─────────────────────────────────────────────────
 function renderDashboard(){
   const s = stats();
-  const cards = [
-    {l:'Total Trades', v:s.total, c:'blue', sub:`${s.wins}W · ${s.losses}L · ${s.open} Open`},
-    {l:'Win Rate', v:s.wr.toFixed(1)+'%', c:s.wr>=50?'green':'red', sub:`${s.wins} of ${s.closed} closed`},
-    {l:'Total Pips', v:(s.totalPips>=0?'+':'')+s.totalPips, c:s.totalPips>=0?'green':'red', sub:'Net pips / points'},
-    {l:'Profit Factor', v:isFinite(s.pf)?s.pf.toFixed(2):'∞', c:s.pf>=1.5?'green':s.pf>=1?'yellow':'red', sub:'Wins ÷ Losses'},
-    {l:'Avg Win', v:'+'+s.avgW.toFixed(0), c:'green', sub:'Pips per winning trade'},
-    {l:'Avg Loss', v:'-'+s.avgL.toFixed(0), c:'red', sub:'Pips per losing trade'},
-    {l:'Best Trade', v:'+'+s.best, c:'green', sub:'Highest single trade'},
-    {l:'Worst Trade', v:s.worst, c:'red', sub:'Lowest single trade'},
-    {l:'Streak', v:s.streak+(s.sType==='win'?' W':s.sType==='loss'?' L':''), c:s.sType==='win'?'green':s.sType==='loss'?'red':'blue', sub:'Current consecutive run'},
+  const pfC = s.pf>=1.5?'green':s.pf>=1?'yellow':'red';
+  const pfNote = s.pf>=2?'Excellent':s.pf>=1.5?'Strong':s.pf>=1?'Positive':'Below 1.0';
+  const kpis = [
+    {l:'Win Rate', v:s.wr.toFixed(1)+'%', c:s.wr>=50?'green':'red',
+      sub:`${s.wins} wins · ${s.losses} losses · ${s.closed} closed trades`},
+    {l:'Net P&amp;L', v:(s.totalPips>=0?'+':'')+s.totalPips+' <small style="font-size:14px;font-weight:600">pips</small>',
+      c:s.totalPips>=0?'green':'red',
+      sub:`Avg win +${s.avgW.toFixed(0)} · Avg loss −${s.avgL.toFixed(0)} pips`},
+    {l:'Profit Factor', v:isFinite(s.pf)?s.pf.toFixed(2):'∞', c:pfC,
+      sub:`${pfNote} — gross wins ÷ gross losses`},
   ];
-  document.getElementById('statsGrid').innerHTML = cards.map(c=>`
-    <div class="stat-card">
-      <div class="lbl">${c.l}</div>
-      <div class="val ${c.c}">${c.v}</div>
-      <div class="sub">${c.sub}</div>
-    </div>`).join('');
+  const pills = [
+    {l:'Total Trades', v:s.total, c:'blue'},
+    {l:'Open Now', v:s.open, c:'blue'},
+    {l:'Best Trade', v:'+'+(s.best||0), c:'green'},
+    {l:'Worst Trade', v:(s.worst||0), c:'red'},
+    {l:'Streak', v:(s.streak||0)+(s.sType==='win'?' W':s.sType==='loss'?' L':''), c:s.sType==='win'?'green':s.sType==='loss'?'red':'blue'},
+  ];
+
+  // Update subtitle
+  const sub = document.getElementById('dashSubtitle');
+  if(sub){
+    const now = new Date();
+    sub.textContent = now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }
+
+  document.getElementById('statsGrid').innerHTML =
+    `<div class="dash-kpi-row">${kpis.map(c=>`
+      <div class="kpi-card kpi-${c.c}">
+        <div class="kpi-lbl">${c.l}</div>
+        <div class="kpi-val ${c.c}">${c.v}</div>
+        <div class="kpi-sub">${c.sub}</div>
+      </div>`).join('')}</div>
+    <div class="dash-sec-row">${pills.map(c=>`
+      <div class="sec-pill">
+        <div class="sec-pill-lbl">${c.l}</div>
+        <div class="sec-pill-val ${c.c}">${c.v}</div>
+      </div>`).join('')}</div>`;
+
   renderEquity(s);
   renderWL(s);
   renderRecent();
@@ -2735,18 +2783,19 @@ function renderWL(s){
 }
 
 function renderRecent(){
-  const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
-  if(!recent.length){document.getElementById('recentDiv').innerHTML='<p class="empty">No trades yet.</p>';return;}
-  document.getElementById('recentDiv').innerHTML=`<table>
-    <thead><tr><th>Date</th><th>Market</th><th>Dir</th><th>Entry Reason</th><th>Pips/Pts</th><th>Status</th></tr></thead>
-    <tbody>${recent.map(t=>`<tr>
-      <td>${t.date}</td>
-      <td><strong>${t.market}</strong></td>
-      <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
-      <td><span style="font-size:11px;color:var(--muted)">${(t.entryReason||'').slice(0,70)}…</span></td>
-      <td><span class="pips ${(t.pips||0)>=0?'pos':'neg'}">${(t.pips||0)>=0?'+':''}${t.pips||0}</span></td>
-      <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
-    </tr>`).join('')}</tbody></table>`;
+  const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+  if(!recent.length){document.getElementById('recentDiv').innerHTML='<p class="empty" style="font-size:12px;color:var(--muted);margin:12px 0">No trades yet.</p>';return;}
+  document.getElementById('recentDiv').innerHTML=`<div class="recent-list">${recent.map(t=>{
+    const pips=t.pips||0; const isOpen=t.status==='open';
+    return `<div class="recent-row">
+      <span class="badge badge-${t.direction.toLowerCase()}" style="min-width:44px;text-align:center">${t.direction}</span>
+      <strong style="min-width:80px">${t.market}</strong>
+      <span style="color:var(--muted);flex:1;font-size:11px">${t.date}</span>
+      ${isOpen
+        ? `<span class="badge badge-open" style="font-size:10px">OPEN</span>`
+        : `<span class="pips ${pips>=0?'pos':'neg'}" style="font-size:12px;font-weight:600">${pips>=0?'+':''}${pips} <span style="font-size:10px;font-weight:400">pips</span></span>`}
+    </div>`;
+  }).join('')}</div>`;
 }
 
 // ── JOURNAL ────────────────────────────────────────────────────
