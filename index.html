@@ -1787,8 +1787,8 @@ textarea{resize:vertical;min-height:56px}
       <label class="toggle-sw" style="cursor:pointer"><input type="checkbox" id="sigAutoLogQuick" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
       Auto-log signals to journal
     </label>
-    <span class="sig-quick-lbl">Minimum confidence:</span>
-    <input type="number" id="sigAutoConfQuick" class="sig-quick-conf" value="75" min="50" max="93" disabled onchange="quickAutoConf()">
+    <span class="sig-quick-lbl">Min. confidence to show:</span>
+    <input type="number" id="sigAutoConfQuick" class="sig-quick-conf" value="75" min="40" max="99" onchange="quickAutoConf()">
     <span class="sig-quick-lbl">%</span>
     <span style="font-size:11px;color:var(--muted);margin-left:auto">OANDA auto-execute &amp; more in <a href="#" onclick="nav('settings',null);return false" style="color:var(--blue)">Settings →</a></span>
   </div>
@@ -1893,13 +1893,13 @@ textarea{resize:vertical;min-height:56px}
     </div>
     <div class="cfg-row">
       <div class="cfg-row-info">
-        <div class="cfg-row-label">Auto-log signals to journal</div>
-        <div class="cfg-row-desc">Signals at or above the confidence threshold are automatically saved to your Trade Journal after each scan.</div>
+        <div class="cfg-row-label">Confidence threshold &amp; auto-log</div>
+        <div class="cfg-row-desc">Sets the minimum confidence to <strong>display</strong> signals. When the toggle is on, signals at or above this value are also <strong>saved to your journal</strong> automatically after each scan.</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
         <label class="toggle-sw"><input type="checkbox" id="autoLogChk" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
         <div style="display:flex;align-items:center;gap:4px">
-          <input type="number" id="autoLogConf" class="auto-conf" value="75" min="50" max="93" disabled onchange="updateAutoConf()" style="width:52px">
+          <input type="number" id="autoLogConf" class="auto-conf" value="75" min="40" max="99" onchange="updateAutoConf()" style="width:52px">
           <span style="font-size:11px;color:var(--muted)">%</span>
         </div>
       </div>
@@ -1972,7 +1972,7 @@ textarea{resize:vertical;min-height:56px}
         <div class="cfg-row-desc">Only signals at or above this threshold trigger the webhook and email.</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-        <input type="number" id="webhookConfInput" value="75" min="50" max="93" style="width:56px">
+        <input type="number" id="webhookConfInput" value="75" min="40" max="99" style="width:56px">
         <span style="font-size:11px;color:var(--muted)">%</span>
       </div>
     </div>
@@ -3500,6 +3500,8 @@ let erRates = null, erLastFetch = 0;
 // Auto-log & OANDA
 let autoLog      = localStorage.getItem('auto_log') === 'true';
 let autoLogConf  = parseInt(localStorage.getItem('auto_log_conf')) || 75;
+let lastScanResults = null;
+let lastScanIsDemo  = false;
 let autoExecute  = localStorage.getItem('auto_execute') === 'true';
 let oandaToken   = localStorage.getItem('oanda_token')   || '';
 let oandaAccount = localStorage.getItem('oanda_account') || '';
@@ -3823,15 +3825,20 @@ function renderMktStrip(results){
 
 // ── Render Signal Cards ──
 function renderSignals(results, isDemo){
-  const sigs=results.filter(r=>r.signal);
+  lastScanResults = results;
+  lastScanIsDemo  = isDemo;
+  const allSigs = results.filter(r=>r.signal);
+  const sigs    = allSigs.filter(r=>r.signal.conf >= autoLogConf);
+  const filtered = allSigs.length - sigs.length;
   if(!sigs.length){
-    document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg">
-      No actionable signals found in current market conditions for the selected timeframe.<br>
-      <span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">This is normal — waiting for high-probability setups is itself part of the edge.</span>
-    </div>`;
+    const msg = allSigs.length
+      ? `All ${allSigs.length} signal(s) found are below your confidence threshold (${autoLogConf}%). Lower the threshold to see them.`
+      : 'No actionable signals found in current market conditions for the selected timeframe.<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">This is normal — waiting for high-probability setups is itself part of the edge.</span>';
+    document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg">${msg}</div>`;
     return;
   }
-  document.getElementById('sigContainer').innerHTML=`<div class="sig-grid">${sigs.map(r=>sigCard(r.signal,isDemo)).join('')}</div>`;
+  const filteredNote = filtered ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered} signal(s) hidden below ${autoLogConf}% confidence threshold.</div>` : '';
+  document.getElementById('sigContainer').innerHTML=filteredNote+`<div class="sig-grid">${sigs.map(r=>sigCard(r.signal,isDemo)).join('')}</div>`;
 }
 
 function sigCard(s, isDemo){
@@ -4104,10 +4111,6 @@ function setAutoLog(v){
     return;
   }
   autoLog=v; localStorage.setItem('auto_log',v);
-  const conf=document.getElementById('autoLogConf');
-  const qConf=document.getElementById('sigAutoConfQuick');
-  if(conf) conf.disabled=!v;
-  if(qConf) qConf.disabled=!v;
   const chk=document.getElementById('autoLogChk');
   const qChk=document.getElementById('sigAutoLogQuick');
   if(chk) chk.checked=v;
@@ -4127,12 +4130,16 @@ function updateAutoConf(){
   localStorage.setItem('auto_log_conf',autoLogConf);
   const qConf=document.getElementById('sigAutoConfQuick');
   if(qConf) qConf.value=autoLogConf;
+  if(lastScanResults) renderSignals(lastScanResults, lastScanIsDemo);
+  updateSigStatusBar();
 }
 function quickAutoConf(){
   autoLogConf=parseInt(document.getElementById('sigAutoConfQuick').value)||75;
   localStorage.setItem('auto_log_conf',autoLogConf);
   const conf=document.getElementById('autoLogConf');
   if(conf) conf.value=autoLogConf;
+  if(lastScanResults) renderSignals(lastScanResults, lastScanIsDemo);
+  updateSigStatusBar();
 }
 // ── API Provider management ──
 function setProvider(p, btn){
@@ -4205,9 +4212,9 @@ function initSignals(){
   const qChk=document.getElementById('sigAutoLogQuick');
   const qConf=document.getElementById('sigAutoConfQuick');
   if(alChk) alChk.checked=autoLog;
-  if(alConf){ alConf.value=autoLogConf; alConf.disabled=!autoLog; }
+  if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
   if(qChk) qChk.checked=autoLog;
-  if(qConf){ qConf.value=autoLogConf; qConf.disabled=!autoLog; }
+  if(qConf){ qConf.value=autoLogConf; qConf.disabled=false; }
   if(oandaToken&&oandaAccount){
     document.getElementById('oandaRiskInput').value=oandaRisk;
     document.getElementById('oandaPracticeChk').checked=oandaPractice;
@@ -4230,7 +4237,7 @@ function updateSigStatusBar(){
   if(sigProvider==='td'&&connected) lbl.textContent='Twelve Data · Daily + 4H';
   else if(sigProvider==='av'&&connected) lbl.textContent='Alpha Vantage · Daily';
   else lbl.textContent='Demo Mode';
-  if(alStatus) alStatus.textContent = autoLog ? `Auto-log ≥ ${autoLogConf}%` : 'Auto-log: off';
+  if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}` ;
 }
 
 // ── NEWS ───────────────────────────────────────────────────────
@@ -5375,7 +5382,7 @@ function initSettings(){
   const alChk=document.getElementById('autoLogChk');
   const alConf=document.getElementById('autoLogConf');
   if(alChk) alChk.checked=autoLog;
-  if(alConf){ alConf.value=autoLogConf; alConf.disabled=!autoLog; }
+  if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
   if(oandaToken&&oandaAccount){
     const ri=document.getElementById('oandaRiskInput');
     const pi=document.getElementById('oandaPracticeChk');
