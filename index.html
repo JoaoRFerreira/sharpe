@@ -1739,7 +1739,7 @@ textarea{resize:vertical;min-height:56px}
       </div>
       <div class="howto-step">
         <div class="howto-num">2</div>
-        <div><div class="howto-step-title">Load the latest signals</div><div class="howto-step-desc">Click <strong>Refresh Signals</strong>. Sharpe runs a full market scan server-side every 4 hours covering all instruments — signals are always fresh when you arrive.</div></div>
+        <div><div class="howto-step-title">View the latest signals</div><div class="howto-step-desc">Sharpe runs a full market scan server-side every 4 hours covering all instruments — signals load automatically and are always fresh when you arrive.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">3</div>
@@ -1791,8 +1791,8 @@ textarea{resize:vertical;min-height:56px}
       <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
       <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly signals — Pro only">1W</button>
     </div>
-    <button class="btn btn-primary" id="scanBtn" onclick="loadSignals()">⟳ Refresh Signals</button>
-    <span class="last-scan" id="lastScanLbl">No scan run yet — click to generate today's signals</span>
+    <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
+    <span class="last-scan" id="lastScanLbl">Loading signals…</span>
   </div>
 
   <!-- Market Overview Pills -->
@@ -1804,7 +1804,7 @@ textarea{resize:vertical;min-height:56px}
   <!-- Signal Cards -->
   <div class="ovw-label" style="margin-top:8px">Active Signals</div>
   <div id="sigContainer">
-    <div class="no-sig-msg">Click <strong>Refresh Signals</strong> to load the latest pre-computed signals. Scans run automatically every 4 hours — no waiting.</div>
+    <div class="no-sig-msg">Loading signals…</div>
   </div>
 </section>
 
@@ -3835,7 +3835,15 @@ function renderSignals(results, isDemo){
     return;
   }
   const filteredNote = filtered ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered} signal(s) hidden below ${autoLogConf}% confidence threshold.</div>` : '';
-  document.getElementById('sigContainer').innerHTML=filteredNote+`<div class="sig-grid">${sigs.map(r=>sigCard(r.signal,isDemo)).join('')}</div>`;
+  const typeOrder = ['Forex','Crypto','Index','ETF','Commodity'];
+  const groups = {};
+  sigs.forEach(r => { const t=r.signal.type||'Other'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
+  const groupHtml = typeOrder.filter(t=>groups[t]?.length).map(t=>`
+    <div style="margin-bottom:28px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">${t}</div>
+      <div class="sig-grid">${groups[t].map(r=>sigCard(r.signal,isDemo)).join('')}</div>
+    </div>`).join('');
+  document.getElementById('sigContainer').innerHTML=filteredNote+groupHtml;
 }
 
 function sigCard(s, isDemo){
