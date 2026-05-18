@@ -1735,35 +1735,28 @@ textarea{resize:vertical;min-height:56px}
     <div class="howto-steps">
       <div class="howto-step">
         <div class="howto-num">1</div>
-        <div><div class="howto-step-title">Connect a data source</div><div class="howto-step-desc">Select <strong>Twelve Data</strong> or <strong>Alpha Vantage</strong>, paste your free API key and click Connect. Or choose <strong>Demo</strong> to explore simulated signals with no key required.</div></div>
+        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing trading signals (1–5 day holds). Use <strong>4H</strong> for shorter intraday setups resolving within hours to 2 days. <strong>1W</strong> (Pro) for weekly swing and position trades.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">2</div>
-        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing trading signals (1–5 day holds). Use <strong>4H</strong> for shorter intraday setups that resolve within hours to 2 days.</div></div>
-      </div>
-      <div class="howto-step">
-        <div class="howto-num">3</div>
         <div><div class="howto-step-title">Run the market scan</div><div class="howto-step-desc">Click <strong>Scan Markets</strong>. Sharpe analyses all monitored instruments using EMA trend alignment, RSI momentum, ATR-based SL/TP and price action pattern recognition.</div></div>
       </div>
       <div class="howto-step">
-        <div class="howto-num">4</div>
+        <div class="howto-num">3</div>
         <div><div class="howto-step-title">Review signal cards</div><div class="howto-step-desc">Each card shows the instrument, direction (LONG/SHORT), <strong>confidence %</strong>, entry zone, stop loss, take profit, R:R ratio and the specific pattern that triggered the signal.</div></div>
       </div>
       <div class="howto-step">
-        <div class="howto-num">5</div>
+        <div class="howto-num">4</div>
         <div><div class="howto-step-title">Enable auto-log</div><div class="howto-step-desc">Tick <strong>Auto-log signals ≥ X%</strong> to automatically save qualifying signals to your Trade Journal. Set the threshold to 75%+ to avoid low-quality noise.</div></div>
       </div>
       <div class="howto-step">
-        <div class="howto-num">6</div>
+        <div class="howto-num">5</div>
         <div><div class="howto-step-title">Auto-execute via OANDA</div><div class="howto-step-desc">Connect your OANDA API token and account ID to place orders automatically when signals fire. Start on a <strong>practice account</strong> before switching to live trading.</div></div>
       </div>
     </div>
     <div class="howto-opts">
       <div class="howto-opts-hdr">Options &amp; settings reference</div>
       <div class="howto-opt-grid">
-        <div class="howto-opt"><span class="howto-opt-key">Twelve Data</span><span class="howto-opt-val">Best market coverage. 800 free API requests/day — sufficient for full daily scans across all instruments.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Alpha Vantage</span><span class="howto-opt-val">25 free requests/day. Works well for smaller watchlists. Upgrade their plan for full scans.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Demo Mode</span><span class="howto-opt-val">Generates realistic simulated signals — no API key needed. Ideal for exploring the feature before connecting live data.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">Confidence 65–74%</span><span class="howto-opt-val">Possible setup with partial factor alignment. Treat as a watchlist candidate — wait for additional confirmation before acting.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid signal. Most key factors aligned (trend, momentum, pattern). Standard actionable threshold for most traders.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">Confidence 85–93%</span><span class="howto-opt-val">High-conviction setup. All major factors confirm. Rare — treat as a priority signal when it appears.</span></div>
@@ -1776,7 +1769,7 @@ textarea{resize:vertical;min-height:56px}
   <!-- Status + Scan Controls -->
   <div class="sig-status-bar">
     <span class="api-dot demo" id="sigStatusDot"></span>
-    <span style="font-size:12px;color:var(--muted)" id="sigStatusLbl">Demo Mode</span>
+    <span style="font-size:12px;color:var(--muted)" id="sigStatusLbl">Demo Signals</span>
     <span class="sig-status-sep"></span>
     <span style="font-size:11px;color:var(--muted)" id="sigAutoLogStatus">Auto-log: off</span>
     <span style="margin-left:auto"><a href="#" onclick="nav('settings',null);return false" style="font-size:11px;color:var(--blue)">⚙ Settings</a></span>
@@ -1862,28 +1855,6 @@ textarea{resize:vertical;min-height:56px}
 <!-- SETTINGS -->
 <section class="section" id="settings">
   <div class="section-title">My Settings</div>
-
-  <!-- Data Source -->
-  <div class="cfg-card">
-    <div class="cfg-card-hdr">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-      Data Source
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Select your signal data provider. Twelve Data gives the best coverage — get a free API key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a>.</div>
-    <div class="prov-tabs" style="margin-bottom:12px">
-      <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
-      <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
-      <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
-    </div>
-    <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-      <input id="apiKeyInput" type="password" placeholder="" style="flex:1;min-width:240px">
-      <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="api-dot demo" id="apiDot"></span>
-      <span class="api-lbl" id="apiLbl">Demo Mode</span>
-    </div>
-  </div>
 
   <!-- Auto Trading -->
   <div class="cfg-card">
@@ -2018,6 +1989,7 @@ textarea{resize:vertical;min-height:56px}
   <div class="admin-tabs">
     <button class="atab active" onclick="switchAdminTab('overview',this)">Overview</button>
     <button class="atab" onclick="switchAdminTab('users',this)">Users</button>
+    <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
 
@@ -2052,6 +2024,30 @@ textarea{resize:vertical;min-height:56px}
         </tr></thead>
         <tbody id="admin-users"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Signals Config -->
+  <div class="admin-pane" id="apane-signals">
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+        Data Provider
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Select the data source for signal scanning. Twelve Data provides the best instrument coverage. Alpha Vantage is forex-only and daily-only. Demo uses synthetic data — useful for testing but never for live users.</div>
+      <div class="prov-tabs" style="margin-bottom:12px">
+        <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
+        <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
+        <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
+      </div>
+      <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <input id="apiKeyInput" type="password" placeholder="" style="flex:1;min-width:240px">
+        <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="api-dot demo" id="apiDot"></span>
+        <span class="api-lbl" id="apiLbl">Demo Mode</span>
+      </div>
     </div>
   </div>
 
@@ -3962,9 +3958,7 @@ async function runScan(){
     return planInstr.includes(i.symbol);
   });
   const estSecs=delay>0?Math.ceil(scanList.length*delay/1000):0;
-  const provLabel=isTd?'Twelve Data':isAv?'Alpha Vantage (daily only)':'Demo';
-
-  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${scanList.length} instruments via ${provLabel}…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Rate limit: ~${estSecs}s total — one request every ${delay/1000}s</span>`:''}</div>`;
+  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${scanList.length} instruments…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Fetching live market data — ~${estSecs}s</span>`:''}</div>`;
   document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Fetching market data…</div>';
 
   const today=new Date();
@@ -4234,10 +4228,8 @@ function updateSigStatusBar(){
   if(!dot) return;
   const connected = sigProvider!=='demo' && (sigProvider==='td'?!!sigApiKey:!!sigAvKey);
   dot.className = 'api-dot ' + (connected?'ok':'demo');
-  if(sigProvider==='td'&&connected) lbl.textContent='Twelve Data · Daily + 4H';
-  else if(sigProvider==='av'&&connected) lbl.textContent='Alpha Vantage · Daily';
-  else lbl.textContent='Demo Mode';
-  if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}` ;
+  lbl.textContent = connected ? 'Live · Markets Connected' : 'Demo Signals';
+  if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}`;
 }
 
 // ── NEWS ───────────────────────────────────────────────────────
@@ -5375,10 +5367,6 @@ function loadAlertSettings(){
 }
 
 function initSettings(){
-  const saved=localStorage.getItem('sig_provider')||(sigApiKey?'td':sigAvKey?'av':'demo');
-  const tabMap={td:'provTabTd',av:'provTabAv',demo:'provTabDemo'};
-  const tabEl=document.getElementById(tabMap[saved]||'provTabDemo');
-  setProvider(saved, tabEl);
   const alChk=document.getElementById('autoLogChk');
   const alConf=document.getElementById('autoLogConf');
   if(alChk) alChk.checked=autoLog;
