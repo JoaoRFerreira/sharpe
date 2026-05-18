@@ -2036,7 +2036,7 @@ textarea{resize:vertical;min-height:56px}
         Automated Scan Status
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
-        Scans run automatically every <strong>4 hours</strong> via GitHub Actions using your <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">TWELVE_DATA_KEY</code> secret. Results are stored in Supabase and served to users instantly — no API calls from the browser.
+        Scans run automatically <strong>6× per day</strong> (every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC) via GitHub Actions. Results are stored in Supabase and served to users instantly — no API calls from the browser.
       </div>
       <div id="adminScanStatus" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
         <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
@@ -2054,6 +2054,7 @@ textarea{resize:vertical;min-height:56px}
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="loadAdminScanStatus()">↻ Refresh status</button>
+        <button id="runNowBtn" class="btn btn-primary" style="font-size:12px;padding:5px 14px" onclick="triggerScan()">▶ Run Now</button>
         <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="runScan()" title="Generate synthetic demo signals to test the UI">▶ Run demo scan</button>
         <a href="https://github.com/JoaoRFerreira/sharpe/actions" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:5px 14px;text-decoration:none">⬡ GitHub Actions →</a>
       </div>
@@ -4982,6 +4983,23 @@ async function loadAdminScanStatus(){
     }
   }
 }
+async function triggerScan(){
+  const btn=document.getElementById('runNowBtn');
+  btn.disabled=true; btn.textContent='Triggering…';
+  try{
+    const {data,error}=await sb.from('site_config').select('value').eq('key','github_pat').single();
+    if(error||!data){ showToast('GitHub PAT not configured in site_config.','tl'); return; }
+    const res=await fetch('https://api.github.com/repos/JoaoRFerreira/sharpe/actions/workflows/signal-scan.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${data.value}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({ref:'main'})
+    });
+    if(res.status===204){ showToast('Scan triggered — check GitHub Actions for progress.','tl'); }
+    else { const t=await res.text(); showToast(`GitHub API error ${res.status}: ${t}`,'tl'); }
+  } catch(e){ showToast('Failed to trigger scan: '+e.message,'tl'); }
+  finally{ btn.disabled=false; btn.textContent='▶ Run Now'; }
+}
+
 async function loadAdminPanel(){
   if(!sbIsAdmin){ showToast('Access denied.','tl'); return; }
   loadSiteSettings();
