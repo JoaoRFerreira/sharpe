@@ -1,0 +1,35 @@
+name: Signal Scanner
+
+on:
+  schedule:
+    # Every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
+    # ~96 Twelve Data credits/run × 6 runs = 576 credits/day (of 800 free)
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # manual trigger from GitHub Actions UI
+
+jobs:
+  scan:
+    name: Fetch & analyse signals
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: scripts
+
+      - name: Run signal scan
+        run: node scan.js
+        working-directory: scripts
+        env:
+          TWELVE_DATA_KEY:      ${{ secrets.TWELVE_DATA_KEY }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

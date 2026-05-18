@@ -1739,7 +1739,7 @@ textarea{resize:vertical;min-height:56px}
       </div>
       <div class="howto-step">
         <div class="howto-num">2</div>
-        <div><div class="howto-step-title">Run the market scan</div><div class="howto-step-desc">Click <strong>Scan Markets</strong>. Sharpe analyses all monitored instruments using EMA trend alignment, RSI momentum, ATR-based SL/TP and price action pattern recognition.</div></div>
+        <div><div class="howto-step-title">Load the latest signals</div><div class="howto-step-desc">Click <strong>Refresh Signals</strong>. Sharpe runs a full market scan server-side every 4 hours covering all instruments — signals are always fresh when you arrive.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">3</div>
@@ -1791,7 +1791,7 @@ textarea{resize:vertical;min-height:56px}
       <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
       <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly signals — Pro only">1W</button>
     </div>
-    <button class="btn btn-primary" id="scanBtn" onclick="runScan()">⟳ Scan Markets</button>
+    <button class="btn btn-primary" id="scanBtn" onclick="loadSignals()">⟳ Refresh Signals</button>
     <span class="last-scan" id="lastScanLbl">No scan run yet — click to generate today's signals</span>
   </div>
 
@@ -1804,7 +1804,7 @@ textarea{resize:vertical;min-height:56px}
   <!-- Signal Cards -->
   <div class="ovw-label" style="margin-top:8px">Active Signals</div>
   <div id="sigContainer">
-    <div class="no-sig-msg">Click <strong>Scan Markets</strong> to analyse the market and generate today's trade signals based on price action, EMA trend, RSI and ATR.</div>
+    <div class="no-sig-msg">Click <strong>Refresh Signals</strong> to load the latest pre-computed signals. Scans run automatically every 4 hours — no waiting.</div>
   </div>
 </section>
 
@@ -2029,24 +2029,51 @@ textarea{resize:vertical;min-height:56px}
 
   <!-- Signals Config -->
   <div class="admin-pane" id="apane-signals">
+    <!-- Scan Status -->
     <div class="cfg-card">
       <div class="cfg-card-hdr">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-        Data Provider
+        Automated Scan Status
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Twelve Data is the live data source — covers all 32 instruments across Daily, 4H and Weekly timeframes. Demo uses synthetic data for testing. <strong>Do not leave on Demo for live users.</strong> Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> (800 credits/day).</div>
-      <div class="prov-tabs" style="margin-bottom:12px">
-        <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
-        <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
+        Scans run automatically every <strong>4 hours</strong> via GitHub Actions using your <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">TWELVE_DATA_KEY</code> secret. Results are stored in Supabase and served to users instantly — no API calls from the browser.
       </div>
-      <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-        <input id="apiKeyInput" type="password" placeholder="" style="flex:1;min-width:240px">
-        <button class="btn btn-primary" onclick="saveApiKey()">Connect</button>
+      <div id="adminScanStatus" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Daily (1D)</div>
+          <div id="scanStatus1d" style="font-size:12px;color:var(--text)">—</div>
+        </div>
+        <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">4-Hour (4H)</div>
+          <div id="scanStatus4h" style="font-size:12px;color:var(--text)">—</div>
+        </div>
+        <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Weekly (1W)</div>
+          <div id="scanStatus1w" style="font-size:12px;color:var(--text)">—</div>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="api-dot demo" id="apiDot"></span>
-        <span class="api-lbl" id="apiLbl">Demo Mode</span>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="loadAdminScanStatus()">↻ Refresh status</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="runScan()" title="Generate synthetic demo signals to test the UI">▶ Run demo scan</button>
+        <a href="https://github.com/JoaoRFerreira/sharpe/actions" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:5px 14px;text-decoration:none">⬡ GitHub Actions →</a>
       </div>
+    </div>
+    <!-- Setup Guide -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Setup Checklist
+      </div>
+      <ol style="font-size:12px;color:var(--muted);line-height:2;padding-left:18px;margin:0">
+        <li>Run the SQL in <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">scripts/scan.js</code> header to create the <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">signals</code> table in Supabase</li>
+        <li>Add 3 secrets in <strong>GitHub → Settings → Secrets → Actions</strong>:<br>
+          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">TWELVE_DATA_KEY</code> &nbsp;
+          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">SUPABASE_URL</code> &nbsp;
+          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">SUPABASE_SERVICE_KEY</code>
+        </li>
+        <li>Push to <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">main</code> — the workflow activates automatically</li>
+        <li>Trigger a first manual run: <strong>GitHub → Actions → Signal Scanner → Run workflow</strong></li>
+      </ol>
     </div>
   </div>
 
@@ -3915,57 +3942,107 @@ function sendToSim(s){
 }
 
 // ── Main scan function ──
-async function runScan(){
+async function loadSignals(){
   const btn=document.getElementById('scanBtn');
-  btn.disabled=true; btn.textContent='Scanning…';
-
-  const isDemo=!sigApiKey;
-  const isTd=!!sigApiKey;
-  const delay=isTd?8000:0;
-  const planInstr = planLimits().instruments;
-  const scanList = INSTRUMENTS.filter(i => {
-    if(i.proOnly && sbPlan !== 'pro') return false;
-    if(planInstr === 'all') return true;
-    return planInstr.includes(i.symbol);
-  });
-  const estSecs=delay>0?Math.ceil(scanList.length*delay/1000):0;
-  document.getElementById('sigContainer').innerHTML=`<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Analysing ${scanList.length} instruments…${estSecs?`<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">Fetching live market data — ~${estSecs}s</span>`:''}</div>`;
-  document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Fetching market data…</div>';
-
-  const today=new Date();
-  const daySeed=today.getFullYear()*10000+((today.getMonth()+1)*100)+today.getDate();
+  btn.disabled=true; btn.textContent='Loading…';
+  document.getElementById('sigContainer').innerHTML='<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Loading latest signals…</div>';
+  document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Loading…</div>';
 
   try{
-    const results=[];
-    for(let i=0;i<scanList.length;i++){
-      const inst=scanList[i];
-      try{
-        let candles;
-        if(isDemo){
-          candles=buildDemoCandles(inst, daySeed*(i+1), i);
-        } else {
-          candles=await fetchTd(inst.symbol);
-          if(i<scanList.length-1) await new Promise(r=>setTimeout(r,delay));
-        }
-        const result=analyseCandles(candles, inst);
-        if(result) results.push(result);
-      } catch(e){
-        console.warn(`Failed ${inst.symbol}:`, e.message);
-      }
+    // Find the most recent batch for the selected timeframe
+    const {data:latest, error:e1}=await sb.from('signals')
+      .select('batch_id,scanned_at').eq('timeframe',sigTf)
+      .order('scanned_at',{ascending:false}).limit(1).single();
+
+    if(e1||!latest){
+      document.getElementById('sigContainer').innerHTML=
+        '<div class="no-sig-msg">No signals available yet — the scheduled scan runs every 4 hours. Check back shortly.</div>';
+      document.getElementById('lastScanLbl').textContent='No scan data yet';
+      return;
     }
+
+    // Fetch all instruments from that batch
+    const {data:rows, error:e2}=await sb.from('signals').select('*')
+      .eq('batch_id',latest.batch_id)
+      .order('confidence',{ascending:false,nullsFirst:false});
+
+    if(e2||!rows?.length) throw new Error(e2?.message||'Empty result set');
+
+    // Filter to instruments the user's plan can access
+    const planInstr=planLimits().instruments;
+    const filtered=rows.filter(r=>{
+      if(r.proOnly && sbPlan!=='pro') return false;
+      if(planInstr==='all') return true;
+      return planInstr.includes(r.symbol);
+    });
+
+    // Map DB rows → renderSignals format
+    const results=filtered.map(row=>({
+      overview:{
+        symbol:row.symbol, type:row.inst_type,
+        price:row.price, change:row.price_change,
+        trend:row.trend, rsi:row.rsi, atrPips:row.atr_pips
+      },
+      signal:row.direction?{
+        symbol:row.symbol, type:row.inst_type,
+        dir:row.direction, pat:row.pattern,
+        entry:row.entry, stop:row.stop_loss,
+        t1:row.tp1, t2:row.tp2, rr:row.rr,
+        riskPips:row.risk_pips, conf:row.confidence,
+        rsi:row.rsi, trend:row.trend, atrPips:row.atr_pips,
+        structure:row.structure, atKeyLevel:row.at_key_level,
+        nearestLevel:row.nearest_level, volRatio:row.vol_ratio,
+        volDeclining:row.vol_declining, reasons:row.reasons,
+        unit:row.inst_unit, mult:row.inst_mult, dec:row.inst_dec, isDemo:false
+      }:null
+    }));
+
     sigResults=results;
     renderMktStrip(results);
-    renderSignals(results, isDemo);
-    if(autoLog||(!isDemo&&autoExecute)) processAutoActions(results, isDemo);
-    const now=new Date();
+    renderSignals(results, false);
+    if(autoLog) processAutoActions(results, false);
+
+    const t=new Date(latest.scanned_at);
     document.getElementById('lastScanLbl').textContent=
-      `Last scan: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} · ${scanList.length} instruments · ${results.filter(r=>r.signal).length} signal(s)${isDemo?' · DEMO':''}`;
-    setApiStatus(isDemo?'demo':'ok');
+      `Updated: ${t.toLocaleDateString()} ${t.toLocaleTimeString()} · ${filtered.length} instruments · ${results.filter(r=>r.signal).length} signal(s)`;
+
   } catch(err){
-    document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg" style="color:var(--red)">Scan failed: ${err.message}</div>`;
-    setApiStatus('err');
+    document.getElementById('sigContainer').innerHTML=
+      `<div class="no-sig-msg" style="color:var(--red)">Failed to load signals: ${err.message}</div>`;
+  } finally {
+    btn.disabled=false; btn.textContent='⟳ Refresh Signals';
   }
-  btn.disabled=false; btn.textContent='⟳ Scan Markets';
+}
+// kept for demo/admin use only
+async function runScan(){
+  const btn=document.getElementById('scanBtn');
+  btn.disabled=true; btn.textContent='Scanning (demo)…';
+  const planInstr=planLimits().instruments;
+  const today=new Date();
+  const daySeed=today.getFullYear()*10000+((today.getMonth()+1)*100)+today.getDate();
+  const scanList=INSTRUMENTS.filter(i=>{
+    if(i.proOnly && sbPlan!=='pro') return false;
+    if(planInstr==='all') return true;
+    return planInstr.includes(i.symbol);
+  });
+  document.getElementById('sigContainer').innerHTML='<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Generating demo signals…</div>';
+  document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Loading…</div>';
+  const results=[];
+  for(let i=0;i<scanList.length;i++){
+    try{
+      const candles=buildDemoCandles(scanList[i],daySeed*(i+1),i);
+      const r=analyseCandles(candles,scanList[i]);
+      if(r) results.push(r);
+    } catch(e){ console.warn(scanList[i].symbol,e.message); }
+  }
+  sigResults=results;
+  renderMktStrip(results);
+  renderSignals(results,true);
+  if(autoLog) processAutoActions(results,true);
+  const now=new Date();
+  document.getElementById('lastScanLbl').textContent=
+    `Demo: ${now.toLocaleDateString()} ${now.toLocaleTimeString()} · ${scanList.length} instruments · ${results.filter(r=>r.signal).length} signal(s) · DEMO`;
+  btn.disabled=false; btn.textContent='⟳ Scan Markets (demo)';
 }
 
 // ── OANDA Integration ──
@@ -4153,10 +4230,6 @@ function setTf(tf, btn){
   btn.classList.add('active');
 }
 function initSignals(){
-  const saved=localStorage.getItem('sig_provider')==='av'?'demo':localStorage.getItem('sig_provider')||(sigApiKey?'td':'demo');
-  sigProvider=saved;
-  const tabEl=document.getElementById(saved==='td'?'provTabTd':'provTabDemo');
-  setProvider(saved, tabEl);
   const alChk=document.getElementById('autoLogChk');
   const alConf=document.getElementById('autoLogConf');
   const qChk=document.getElementById('sigAutoLogQuick');
@@ -4165,16 +4238,10 @@ function initSignals(){
   if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
   if(qChk) qChk.checked=autoLog;
   if(qConf){ qConf.value=autoLogConf; qConf.disabled=false; }
-  if(oandaToken&&oandaAccount){
-    document.getElementById('oandaRiskInput').value=oandaRisk;
-    document.getElementById('oandaPracticeChk').checked=oandaPractice;
-    document.getElementById('oandaAccountInput').placeholder=oandaAccount;
-    document.getElementById('autoExecWrap').style.display='flex';
-    document.getElementById('autoExecChk').checked=autoExecute;
-    document.getElementById('oandaLbl').textContent=`${oandaPractice?'Practice':'Live'} account saved · click Connect to verify · Risk ${oandaRisk}%`;
-  }
   updateSigStatusBar();
   loadSiteSettings();
+  // Auto-load latest signals from Supabase when section opens
+  if(sbUser) loadSignals();
 }
 
 function updateSigStatusBar(){
@@ -4182,9 +4249,8 @@ function updateSigStatusBar(){
   const lbl = document.getElementById('sigStatusLbl');
   const alStatus = document.getElementById('sigAutoLogStatus');
   if(!dot) return;
-  const connected = sigProvider==='td' && !!sigApiKey;
-  dot.className = 'api-dot ' + (connected?'ok':'demo');
-  lbl.textContent = connected ? 'Live · Markets Connected' : 'Demo Signals';
+  dot.className = 'api-dot ok';
+  lbl.textContent = 'Server-side · updates every 4h';
   if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}`;
 }
 
@@ -4901,10 +4967,26 @@ let adminTradeMap   = {};
 let usrFilterStatus = 'all';
 let usrFilterPlan   = 'all';
 
+async function loadAdminScanStatus(){
+  const tfs=[{tf:'1day',el:'scanStatus1d'},{tf:'4h',el:'scanStatus4h'},{tf:'1week',el:'scanStatus1w'}];
+  for(const {tf,el} of tfs){
+    const el2=document.getElementById(el); if(!el2) continue;
+    el2.textContent='Loading…';
+    const {data}=await sb.from('signals').select('scanned_at,confidence')
+      .eq('timeframe',tf).order('scanned_at',{ascending:false}).limit(1).single();
+    if(data){
+      const ago=Math.round((Date.now()-new Date(data.scanned_at))/60000);
+      el2.innerHTML=`<span style="color:var(--green);font-weight:700">✓ Live</span><br><span style="font-size:11px;color:var(--muted)">${ago < 60 ? ago+'m ago' : Math.round(ago/60)+'h ago'}</span>`;
+    } else {
+      el2.innerHTML=`<span style="color:var(--muted)">No data</span>`;
+    }
+  }
+}
 async function loadAdminPanel(){
   if(!sbIsAdmin){ showToast('Access denied.','tl'); return; }
   loadSiteSettings();
   loadAlertSettings();
+  loadAdminScanStatus();
 
   const [{ data: users, error }, { data: tradeRows }] = await Promise.all([
     sb.from('profiles').select('id,email,plan,is_admin,created_at,status').order('created_at',{ascending:false}),
