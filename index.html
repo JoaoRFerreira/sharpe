@@ -2034,10 +2034,9 @@ textarea{resize:vertical;min-height:56px}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
         Data Provider
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Select the data source for signal scanning. Twelve Data provides the best instrument coverage. Alpha Vantage is forex-only and daily-only. Demo uses synthetic data — useful for testing but never for live users.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Twelve Data is the live data source — covers all 32 instruments across Daily, 4H and Weekly timeframes. Demo uses synthetic data for testing. <strong>Do not leave on Demo for live users.</strong> Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> (800 credits/day).</div>
       <div class="prov-tabs" style="margin-bottom:12px">
         <button class="prov-tab" id="provTabTd" onclick="setProvider('td',this)">Twelve Data</button>
-        <button class="prov-tab" id="provTabAv" onclick="setProvider('av',this)">Alpha Vantage</button>
         <button class="prov-tab" id="provTabDemo" onclick="setProvider('demo',this)">Demo</button>
       </div>
       <div id="apiKeyRow" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
@@ -3314,13 +3313,6 @@ async function fetchLivePrice(symbol){
     if(d.price) return parseFloat(d.price);
     throw new Error('no price');
   }
-  if(sigAvKey&&symbol!=='XAU/USD'){
-    try{
-      const rates=await fetchErRates();
-      const p=deriveErPrice(symbol,rates);
-      if(p) return p;
-    } catch(e){}
-  }
   // Demo: random-walk from trade entry price
   const trade = trades.find(t=>t.status==='open'&&t.market===symbol);
   const inst = getInst(symbol);
@@ -3385,7 +3377,7 @@ function renderLivePositions(){
     return;
   }
   if(dot) dot.style.display='inline-block';
-  if(lbl) lbl.textContent=sigApiKey?'· Live (Twelve Data)':sigAvKey?'· Live forex (open.er-api.com) · updates every 6s':'· Demo simulation · updates every 6s';
+  if(lbl) lbl.textContent=sigApiKey?'· Live prices · updates every 6s':'· Demo simulation · updates every 6s';
 
   const hasPrices=open.some(t=>livePrices[t.market]);
   if(!hasPrices){
@@ -3487,7 +3479,6 @@ const INSTRUMENTS = [
 ];
 
 let sigApiKey = localStorage.getItem('te_apikey') || '';
-let sigAvKey  = localStorage.getItem('av_apikey')  || '';
 let sigProvider = 'demo';
 let sigTf = '1day';
 let sigResults = [];
@@ -3767,24 +3758,6 @@ async function fetchTd(symbol){
   }));
 }
 
-// ── Fetch from Alpha Vantage (FX_DAILY) ──
-async function fetchAv(symbol){
-  const [from,to]=symbol.split('/');
-  if(!from||!to) throw new Error('Cannot parse symbol: '+symbol);
-  const url=`https://www.alphavantage.co/query?function=FX_DAILY&from_symbol=${from}&to_symbol=${to}&outputsize=full&apikey=${sigAvKey}`;
-  const r=await fetch(url); const d=await r.json();
-  if(d['Error Message']) throw new Error(d['Error Message']);
-  if(d['Note']||d['Information']) throw new Error('Alpha Vantage rate limit reached (5 req/min, 25/day)');
-  const series=d['Time Series FX (Daily)'];
-  if(!series) throw new Error('No FX data for '+symbol);
-  return Object.entries(series)
-    .sort((a,b)=>a[0].localeCompare(b[0]))
-    .slice(-220)
-    .map(([datetime,v])=>({
-      datetime, open:+v['1. open'], high:+v['2. high'],
-      low:+v['3. low'], close:+v['4. close'], volume:0
-    }));
-}
 
 // ── Free forex rates (open.er-api.com — no key required) ──
 async function fetchErRates(){
@@ -3946,13 +3919,11 @@ async function runScan(){
   const btn=document.getElementById('scanBtn');
   btn.disabled=true; btn.textContent='Scanning…';
 
-  const isDemo=!sigApiKey&&!sigAvKey;
+  const isDemo=!sigApiKey;
   const isTd=!!sigApiKey;
-  const isAv=!sigApiKey&&!!sigAvKey;
-  const delay=isTd?8000:isAv?13000:0;
+  const delay=isTd?8000:0;
   const planInstr = planLimits().instruments;
   const scanList = INSTRUMENTS.filter(i => {
-    if(i.tdOnly && isAv) return false;
     if(i.proOnly && sbPlan !== 'pro') return false;
     if(planInstr === 'all') return true;
     return planInstr.includes(i.symbol);
@@ -3972,11 +3943,8 @@ async function runScan(){
         let candles;
         if(isDemo){
           candles=buildDemoCandles(inst, daySeed*(i+1), i);
-        } else if(isTd){
-          candles=await fetchTd(inst.symbol);
-          if(i<scanList.length-1) await new Promise(r=>setTimeout(r,delay));
         } else {
-          candles=await fetchAv(inst.symbol);
+          candles=await fetchTd(inst.symbol);
           if(i<scanList.length-1) await new Promise(r=>setTimeout(r,delay));
         }
         const result=analyseCandles(candles, inst);
@@ -4150,43 +4118,32 @@ function setProvider(p, btn){
     tf4h.disabled=false; tf4h.title='';
   } else {
     keyRow.style.display='flex';
-    const hasSaved=p==='td'?!!sigApiKey:!!sigAvKey;
     input.value='';
-    input.placeholder=p==='td'
-      ?(hasSaved?'Twelve Data key saved — click Scan Markets':'Free key from twelvedata.com — 800 credits/day, Daily + 4H')
-      :(hasSaved?'Alpha Vantage key saved — click Scan Markets':'Free key from alphavantage.co — 25 req/day, Daily only');
-    if(p==='av'){
-      tf4h.disabled=true; tf4h.title='Alpha Vantage free: daily candles only';
-      if(sigTf==='4h'){ sigTf='1day'; document.getElementById('tfDay').classList.add('active'); tf4h.classList.remove('active'); }
-    } else {
-      tf4h.disabled=false; tf4h.title='';
-    }
-    setApiStatus(hasSaved?'ok':'demo');
+    input.placeholder=sigApiKey?'Twelve Data key saved — click Scan Markets':'Free key from twelvedata.com — 800 credits/day, Daily + 4H + 1W';
+    tf4h.disabled=false; tf4h.title='';
+    setApiStatus(sigApiKey?'ok':'demo');
   }
 }
 function saveApiKey(){
   const k=document.getElementById('apiKeyInput').value.trim();
   if(!k){alert('Please enter an API key first.');return;}
-  if(sigProvider==='td'){ sigApiKey=k; localStorage.setItem('te_apikey',k); }
-  else if(sigProvider==='av'){ sigAvKey=k; localStorage.setItem('av_apikey',k); }
+  sigApiKey=k; localStorage.setItem('te_apikey',k);
   setApiStatus('ok');
   document.getElementById('apiKeyInput').value='';
-  document.getElementById('apiKeyInput').placeholder=sigProvider==='td'?'Twelve Data key saved — click Scan Markets':'Alpha Vantage key saved — click Scan Markets';
+  document.getElementById('apiKeyInput').placeholder='Twelve Data key saved — click Scan Markets';
   runScan();
 }
 function setApiStatus(s){
   const dot=document.getElementById('apiDot'), lbl=document.getElementById('apiLbl');
   if(dot) dot.className='api-dot '+(s==='ok'?'ok':s==='demo'?'demo':'err');
   if(lbl){
-    if(s==='ok'&&sigProvider==='td') lbl.textContent='Twelve Data connected · Daily + 4H · 800 credits/day';
-    else if(s==='ok'&&sigProvider==='av') lbl.textContent='Alpha Vantage connected · Daily only · 25 req/day · live prices via open.er-api.com';
-    else if(s==='demo') lbl.innerHTML='Demo Mode — <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">Twelve Data</a> or <a href="https://alphavantage.co" target="_blank" style="color:var(--blue)">Alpha Vantage</a> (both free)';
+    if(s==='ok') lbl.textContent='Twelve Data connected · Daily + 4H + Weekly · 800 credits/day';
+    else if(s==='demo') lbl.innerHTML='Demo Mode — connect a <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">Twelve Data</a> key for live signals';
     else lbl.textContent='Connection error — check key and try again';
   }
   updateSigStatusBar();
 }
 function setTf(tf, btn){
-  if(tf==='4h'&&sigProvider==='av') return;
   if(tf==='1week'&&!planLimits().weeklyTf){
     requirePlan('weeklyTf','Weekly signals are available on the Pro plan.');
     return;
@@ -4196,10 +4153,9 @@ function setTf(tf, btn){
   btn.classList.add('active');
 }
 function initSignals(){
-  const saved=localStorage.getItem('sig_provider')||(sigApiKey?'td':sigAvKey?'av':'demo');
+  const saved=localStorage.getItem('sig_provider')==='av'?'demo':localStorage.getItem('sig_provider')||(sigApiKey?'td':'demo');
   sigProvider=saved;
-  const tabMap={td:'provTabTd',av:'provTabAv',demo:'provTabDemo'};
-  const tabEl=document.getElementById(tabMap[saved]||'provTabDemo');
+  const tabEl=document.getElementById(saved==='td'?'provTabTd':'provTabDemo');
   setProvider(saved, tabEl);
   const alChk=document.getElementById('autoLogChk');
   const alConf=document.getElementById('autoLogConf');
@@ -4226,7 +4182,7 @@ function updateSigStatusBar(){
   const lbl = document.getElementById('sigStatusLbl');
   const alStatus = document.getElementById('sigAutoLogStatus');
   if(!dot) return;
-  const connected = sigProvider!=='demo' && (sigProvider==='td'?!!sigApiKey:!!sigAvKey);
+  const connected = sigProvider==='td' && !!sigApiKey;
   dot.className = 'api-dot ' + (connected?'ok':'demo');
   lbl.textContent = connected ? 'Live · Markets Connected' : 'Demo Signals';
   if(alStatus) alStatus.textContent = `Showing signals ≥ ${autoLogConf}%${autoLog?' · auto-log on':''}`;
