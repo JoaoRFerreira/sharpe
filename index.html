@@ -1572,6 +1572,7 @@ textarea{resize:vertical;min-height:56px}
           <option value="open">Open</option>
         </select>
       </div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="exportJournalCSV()" title="Export journal to CSV (Pro)">↓ Export CSV</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Trade</button>
     </div>
   </div>
@@ -1967,6 +1968,66 @@ textarea{resize:vertical;min-height:56px}
       <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
         <span class="api-dot demo" id="oandaDot"></span>
         <span class="api-lbl" id="oandaLbl">Not connected — free practice account at <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">oanda.com</a></span>
+      </div>
+    </div>
+
+    <!-- Webhook & Alerts -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Webhook &amp; Email Alerts <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Webhook URL</div>
+          <div class="cfg-row-desc">Signals are POSTed as JSON when they fire. Use with Zapier, Make, n8n or your own endpoint. <a href="https://zapier.com" target="_blank" style="color:var(--blue)">Zapier →</a></div>
+        </div>
+        <div style="display:flex;gap:6px;flex:1;max-width:400px">
+          <input type="url" id="webhookUrlInput" placeholder="https://hooks.zapier.com/…" style="flex:1">
+          <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;white-space:nowrap" onclick="testWebhook()">Test</button>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Minimum confidence to fire</div>
+          <div class="cfg-row-desc">Only signals at or above this threshold trigger the webhook and email.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <input type="number" id="webhookConfInput" value="75" min="50" max="93" style="width:56px">
+          <span style="font-size:11px;color:var(--muted)">%</span>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Email alerts via Resend</div>
+          <div class="cfg-row-desc">Get signal emails directly. Requires a free <a href="https://resend.com" target="_blank" style="color:var(--blue)">Resend</a> API key. The key is stored in your browser only.</div>
+        </div>
+        <label class="toggle-sw"><input type="checkbox" id="emailAlertsChk" onchange="saveAlertSettings()"><span class="toggle-sl"></span></label>
+      </div>
+      <div id="emailAlertFields" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+          <div class="fg">
+            <label>Resend API Key</label>
+            <input type="password" id="resendKeyInput" placeholder="re_xxxxxx…">
+          </div>
+          <div class="fg">
+            <label>Send alerts to</label>
+            <input type="email" id="alertEmailInput" placeholder="you@example.com">
+          </div>
+          <div class="fg">
+            <label>From name</label>
+            <input type="text" id="alertFromName" placeholder="Sharpe Signals" value="Sharpe Signals">
+          </div>
+          <div class="fg">
+            <label>From address <span style="font-size:10px;color:var(--muted)">(verified Resend domain)</span></label>
+            <input type="email" id="alertFromEmail" placeholder="signals@yourdomain.com">
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;margin-top:8px" onclick="testEmailAlert()">Send Test Email</button>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="saveAlertSettings()">Save Alert Settings</button>
+        <span id="alertSaveStatus" style="font-size:11px;color:var(--muted);margin-left:10px"></span>
       </div>
     </div>
   </div>
@@ -3932,6 +3993,7 @@ function calcOandaUnits(signal){
 }
 
 async function connectOanda(){
+  if(!canAccess('oanda')){ requirePlan('oanda','OANDA integration is available on the Pro plan.'); return; }
   const token   = document.getElementById('oandaTokenInput').value.trim()  || oandaToken;
   const account = document.getElementById('oandaAccountInput').value.trim() || oandaAccount;
   const risk    = parseFloat(document.getElementById('oandaRiskInput').value) || 1;
@@ -3984,13 +4046,17 @@ async function oandaPlaceOrder(signal){
 
 async function processAutoActions(results, isDemo=false){
   const today=new Date().toISOString().split('T')[0];
+  const webhookConf = parseInt(localStorage.getItem('webhook_conf'))||75;
   const sigs=results.filter(r=>r.signal).map(r=>r.signal);
   for(const sig of sigs){
-    if(sig.conf<autoLogConf) continue;
     const alreadyLogged=trades.some(t=>t.market===sig.symbol&&t.date===today&&t.status==='open');
-    if(autoLog&&!alreadyLogged){
+    if(autoLog && sig.conf>=autoLogConf && !alreadyLogged){
       addSigToJournal(sig, true);
       showToast(`Auto-logged${isDemo?' (demo)':''}: ${sig.symbol} ${sig.dir} · ${sig.conf}% conf`,'tw');
+    }
+    if(!isDemo && sig.conf>=webhookConf && canAccess('webhooks')){
+      fireWebhook(sig);
+      sendEmailAlert(sig);
     }
     if(!isDemo&&autoExecute&&oandaToken&&oandaAccount&&!alreadyLogged){
       try{
@@ -4005,10 +4071,22 @@ async function processAutoActions(results, isDemo=false){
 }
 
 function setAutoLog(v){
+  if(v && !canAccess('autoLog')){
+    requirePlan('autoLog','Auto-log is available on the Trader plan and above.');
+    document.getElementById('autoLogChk').checked=false;
+    return;
+  }
   autoLog=v; localStorage.setItem('auto_log',v);
   document.getElementById('autoLogConf').disabled=!v;
 }
-function setAutoExec(v){ autoExecute=v; localStorage.setItem('auto_execute',v); }
+function setAutoExec(v){
+  if(v && !canAccess('oanda')){
+    requirePlan('oanda','OANDA auto-execution is available on the Pro plan.');
+    document.getElementById('autoExecChk').checked=false;
+    return;
+  }
+  autoExecute=v; localStorage.setItem('auto_execute',v);
+}
 function setOandaPractice(v){ oandaPractice=v; localStorage.setItem('oanda_practice',v); }
 function updateAutoConf(){
   autoLogConf=parseInt(document.getElementById('autoLogConf').value)||75;
@@ -4826,6 +4904,7 @@ let usrFilterPlan   = 'all';
 async function loadAdminPanel(){
   if(!sbIsAdmin){ showToast('Access denied.','tl'); return; }
   loadSiteSettings();
+  loadAlertSettings();
 
   const [{ data: users, error }, { data: tradeRows }] = await Promise.all([
     sb.from('profiles').select('id,email,plan,is_admin,created_at,status').order('created_at',{ascending:false}),
@@ -5095,6 +5174,151 @@ async function adminSetPlan(userId, plan, el){
 function showAdminNav(){
   const btn = document.getElementById('adminNavBtn');
   if(btn) btn.style.display = sbIsAdmin ? 'inline-block' : 'none';
+}
+
+// ── CSV Export ──────────────────────────────────────────────────
+function exportJournalCSV(){
+  if(!canAccess('export')){ requirePlan('export','Journal export is available on the Pro plan.'); return; }
+  if(!trades.length){ showToast('No trades to export.','tl'); return; }
+  const headers=['Date','Market','Direction','Status','Entry','Stop Loss','Take Profit','Exit','Pips','Entry Reason','Exit Reason'];
+  const esc=v=>'"'+(String(v??'').replace(/"/g,'""'))+'"';
+  const rows=trades.map(t=>[t.date,t.market,t.direction,t.status,t.entry,t.sl,t.tp??'',t.exit??'',t.pips??'',t.entry_reason??'',t.exit_reason??''].map(esc).join(','));
+  const csv=[headers.map(esc).join(','),...rows].join('\n');
+  const a=Object.assign(document.createElement('a'),{href:'data:text/csv;charset=utf-8,'+encodeURIComponent(csv),download:`sharpe_journal_${new Date().toISOString().slice(0,10)}.csv`});
+  a.click();
+  showToast(`Exported ${trades.length} trades to CSV`,'tw');
+}
+
+// ── Webhooks ─────────────────────────────────────────────────────
+function tfLabel(){ return sigTf==='1day'?'Daily':sigTf==='4h'?'4H':'Weekly'; }
+
+async function fireWebhook(sig){
+  const url=localStorage.getItem('webhook_url');
+  if(!url||!canAccess('webhooks')) return;
+  try{
+    await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event:'signal',timestamp:new Date().toISOString(),
+        symbol:sig.symbol,direction:sig.dir,confidence:sig.conf,
+        entry:sig.entry,stop:sig.stop,tp1:sig.t1,tp2:sig.t2,
+        rr:sig.rr?.toFixed(2),pattern:sig.pat,timeframe:tfLabel(),
+        trend:sig.trend,rsi:sig.rsi
+      })
+    });
+  } catch(e){ console.warn('Webhook error:',e.message); }
+}
+
+async function testWebhook(){
+  const url=document.getElementById('webhookUrlInput')?.value.trim();
+  if(!url){ showToast('Enter a webhook URL first.','tl'); return; }
+  try{
+    await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event:'test',timestamp:new Date().toISOString(),message:'Sharpe webhook test — connection successful'})});
+    showToast('Webhook test sent ✓','tw');
+  } catch(e){ showToast('Webhook failed: '+e.message,'tl'); }
+}
+
+// ── Email Alerts (Resend) ─────────────────────────────────────────
+async function sendEmailAlert(sig){
+  if(!localStorage.getItem('email_alerts_on')||!canAccess('webhooks')) return;
+  const apiKey=localStorage.getItem('resend_key');
+  const toEmail=localStorage.getItem('alert_email');
+  const fromName=localStorage.getItem('alert_from_name')||'Sharpe Signals';
+  const fromEmail=localStorage.getItem('alert_from_email');
+  if(!apiKey||!toEmail||!fromEmail) return;
+  const tf=tfLabel();
+  try{
+    await fetch('https://api.resend.com/emails',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        from:`${fromName} <${fromEmail}>`,
+        to:[toEmail],
+        subject:`🎯 ${sig.symbol} ${sig.dir} — ${sig.conf}% confidence (${tf})`,
+        html:`<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+          <h2 style="margin:0 0 4px;color:#1e293b">New Signal — ${sig.symbol}</h2>
+          <p style="margin:0 0 20px;color:#64748b;font-size:14px">${tf} · ${new Date().toLocaleDateString()}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr style="background:#eff6ff"><td style="padding:8px 12px;font-weight:600">Direction</td><td style="padding:8px 12px;color:${sig.dir==='LONG'?'#16a34a':'#dc2626'};font-weight:700">${sig.dir}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:600">Confidence</td><td style="padding:8px 12px">${sig.conf}%</td></tr>
+            <tr style="background:#eff6ff"><td style="padding:8px 12px;font-weight:600">Entry</td><td style="padding:8px 12px">${sig.entry}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:600">Stop Loss</td><td style="padding:8px 12px">${sig.stop}</td></tr>
+            <tr style="background:#eff6ff"><td style="padding:8px 12px;font-weight:600">Take Profit</td><td style="padding:8px 12px">${sig.t1}</td></tr>
+            <tr><td style="padding:8px 12px;font-weight:600">R:R</td><td style="padding:8px 12px">${sig.rr?.toFixed(1)}</td></tr>
+            <tr style="background:#eff6ff"><td style="padding:8px 12px;font-weight:600">Pattern</td><td style="padding:8px 12px">${sig.pat}</td></tr>
+          </table>
+          <p style="margin-top:20px;font-size:12px;color:#94a3b8">Generated by <strong>Sharpe</strong> · Auto-log threshold: ${autoLogConf}%</p>
+        </div>`
+      })
+    });
+  } catch(e){ console.warn('Email alert error:',e.message); }
+}
+
+async function testEmailAlert(){
+  const apiKey=document.getElementById('resendKeyInput')?.value.trim()||localStorage.getItem('resend_key');
+  const toEmail=document.getElementById('alertEmailInput')?.value.trim()||localStorage.getItem('alert_email');
+  const fromName=document.getElementById('alertFromName')?.value.trim()||'Sharpe Signals';
+  const fromEmail=document.getElementById('alertFromEmail')?.value.trim();
+  if(!apiKey||!toEmail||!fromEmail){ showToast('Fill in API key, from address and recipient first.','tl'); return; }
+  try{
+    const r=await fetch('https://api.resend.com/emails',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+apiKey,'Content-Type':'application/json'},
+      body:JSON.stringify({
+        from:`${fromName} <${fromEmail}>`,to:[toEmail],
+        subject:'Sharpe — Email alert test',
+        html:'<p style="font-family:sans-serif">✅ Your Sharpe email alerts are working correctly.</p>'
+      })
+    });
+    const d=await r.json();
+    if(d.id) showToast('Test email sent ✓ — check your inbox','tw');
+    else showToast('Resend error: '+(d.message||JSON.stringify(d)),'tl');
+  } catch(e){ showToast('Request failed: '+e.message,'tl'); }
+}
+
+function saveAlertSettings(){
+  const url=document.getElementById('webhookUrlInput')?.value.trim();
+  const conf=document.getElementById('webhookConfInput')?.value;
+  const emailOn=document.getElementById('emailAlertsChk')?.checked;
+  const key=document.getElementById('resendKeyInput')?.value.trim();
+  const email=document.getElementById('alertEmailInput')?.value.trim();
+  const fromName=document.getElementById('alertFromName')?.value.trim();
+  const fromEmail=document.getElementById('alertFromEmail')?.value.trim();
+  if(url!==undefined) localStorage.setItem('webhook_url',url);
+  if(conf) localStorage.setItem('webhook_conf',conf);
+  if(emailOn!==undefined){ localStorage.setItem('email_alerts_on',emailOn?'true':'');
+    const fields=document.getElementById('emailAlertFields');
+    if(fields) fields.style.display=emailOn?'block':'none';
+  }
+  if(key) localStorage.setItem('resend_key',key);
+  if(email) localStorage.setItem('alert_email',email);
+  if(fromName) localStorage.setItem('alert_from_name',fromName);
+  if(fromEmail) localStorage.setItem('alert_from_email',fromEmail);
+  const s=document.getElementById('alertSaveStatus');
+  if(s){ s.textContent='Saved ✓'; setTimeout(()=>s.textContent='',2000); }
+  showToast('Alert settings saved','tw');
+}
+
+function loadAlertSettings(){
+  const url=localStorage.getItem('webhook_url');
+  const conf=localStorage.getItem('webhook_conf');
+  const emailOn=localStorage.getItem('email_alerts_on')==='true';
+  const key=localStorage.getItem('resend_key');
+  const email=localStorage.getItem('alert_email');
+  const fromName=localStorage.getItem('alert_from_name');
+  const fromEmail=localStorage.getItem('alert_from_email');
+  if(document.getElementById('webhookUrlInput')&&url) document.getElementById('webhookUrlInput').value=url;
+  if(document.getElementById('webhookConfInput')&&conf) document.getElementById('webhookConfInput').value=conf;
+  if(document.getElementById('emailAlertsChk')){ document.getElementById('emailAlertsChk').checked=emailOn;
+    const fields=document.getElementById('emailAlertFields');
+    if(fields) fields.style.display=emailOn?'block':'none';
+  }
+  if(document.getElementById('resendKeyInput')&&key) document.getElementById('resendKeyInput').value='';
+  if(document.getElementById('alertEmailInput')&&email) document.getElementById('alertEmailInput').value=email;
+  if(document.getElementById('alertFromName')&&fromName) document.getElementById('alertFromName').value=fromName;
+  if(document.getElementById('alertFromEmail')&&fromEmail) document.getElementById('alertFromEmail').value=fromEmail;
 }
 
 // ── INIT ───────────────────────────────────────────────────────
