@@ -369,6 +369,16 @@ textarea{resize:vertical;min-height:56px}
 .lpos-section-hdr span{font-weight:600;font-size:14px}
 .lpos-section-hdr .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.4s ease infinite}
 .lpos-section-hdr .live-lbl{font-size:11px;color:var(--muted)}
+.view-toggle{background:transparent;border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s}
+.view-toggle.active{background:var(--card);border-color:var(--accent);color:var(--text)}
+.lpos-list{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.lpos-list-row{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:16px;font-size:13px;flex-wrap:wrap}
+.lpos-list-row.winning{border-color:rgba(63,185,80,.35)}.lpos-list-row.losing{border-color:rgba(248,81,73,.35)}.lpos-list-row.neutral{border-color:var(--border)}
+.lpos-list-cell{display:flex;flex-direction:column;min-width:70px}
+.lpos-list-lbl{font-size:10px;color:var(--muted);margin-bottom:2px;white-space:nowrap}
+.lpos-list-val{font-weight:600;white-space:nowrap}
+.lpos-close-sm{margin-left:auto;background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text);white-space:nowrap}
+.lpos-close-sm:hover{border-color:var(--red);color:var(--red)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .lpos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px}
 .lpos-card{background:var(--card);border-radius:10px;padding:16px}
@@ -1556,8 +1566,12 @@ textarea{resize:vertical;min-height:56px}
     <span>Open Positions</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
+    <div style="margin-left:auto;display:flex;gap:4px">
+      <button id="posListBtn" class="view-toggle active" onclick="setPosView('list')">☰ List</button>
+      <button id="posGridBtn" class="view-toggle" onclick="setPosView('grid')">⊞ Grid</button>
+    </div>
   </div>
-  <div id="livePosGrid" class="lpos-grid"></div>
+  <div id="livePosGrid"></div>
 
   <div class="charts-row">
     <div class="chart-card"><h3>Equity Curve — Cumulative Pips</h3><canvas id="eqChart"></canvas></div>
@@ -3391,6 +3405,13 @@ function manualClosePos(id, price){
   closeSimTrade(id, price, pips>=0?'win':'loss', `Manually closed at ${price.toFixed(inst.dec)}`);
 }
 
+function setPosView(v){
+  posView=v;
+  document.getElementById('posListBtn').classList.toggle('active',v==='list');
+  document.getElementById('posGridBtn').classList.toggle('active',v==='grid');
+  renderLivePositions();
+}
+
 function renderLivePositions(){
   const open=trades.filter(t=>t.status==='open');
   const dot=document.getElementById('priceDot');
@@ -3401,6 +3422,7 @@ function renderLivePositions(){
   if(!open.length){
     if(dot) dot.style.display='none';
     if(lbl) lbl.textContent='';
+    grid.className='';
     grid.innerHTML='<div class="no-open-msg">No open positions. Use the Signals tab or + Add Trade to open one.</div>';
     return;
   }
@@ -3409,24 +3431,44 @@ function renderLivePositions(){
 
   const hasPrices=open.some(t=>livePrices[t.market]);
   if(!hasPrices){
+    grid.className='';
     grid.innerHTML='<div class="no-open-msg"><span class="live-dot" style="margin-right:6px"></span>Fetching prices…</div>';
     return;
   }
 
-  grid.innerHTML=open.map(t=>{
+  const cards=open.map(t=>{
     const price=livePrices[t.market];
-    if(!price) return `<div class="lpos-card neutral"><div class="lpos-top"><span class="lpos-sym">${t.market}</span></div><div style="font-size:12px;color:var(--muted)">Awaiting price data…</div></div>`;
     const inst=getInst(t.market);
     const isLong=t.direction==='LONG';
     const pips=isLong?(price-t.entry)*inst.mult:(t.entry-price)*inst.mult;
     const isWin=pips>=0;
     const slPips=Math.abs(t.entry-t.sl)*inst.mult;
     const tpPips=t.tp?Math.abs(t.tp-t.entry)*inst.mult:null;
-    const pipsToSL=Math.max(0, isLong?(price-t.sl)*inst.mult:(t.sl-price)*inst.mult);
+    const pipsToSL=Math.max(0,isLong?(price-t.sl)*inst.mult:(t.sl-price)*inst.mult);
     const pipsToTP=tpPips?Math.max(0,(isLong?(t.tp-price)*inst.mult:(price-t.tp)*inst.mult)):null;
     let progPct=0, progCol=isWin?'var(--green)':'var(--red)';
     if(isWin&&tpPips) progPct=Math.min(100,pips/tpPips*100);
     else if(!isWin) progPct=Math.min(100,Math.abs(pips)/slPips*100);
+    if(!price) return posView==='list'
+      ? `<div class="lpos-list-row neutral"><span class="lpos-sym">${t.market}</span><span style="font-size:12px;color:var(--muted)">Awaiting price…</span></div>`
+      : `<div class="lpos-card neutral"><div class="lpos-top"><span class="lpos-sym">${t.market}</span></div><div style="font-size:12px;color:var(--muted)">Awaiting price data…</div></div>`;
+
+    if(posView==='list'){
+      return `<div class="lpos-list-row ${isWin?'winning':'losing'}">
+        <div class="lpos-list-cell" style="min-width:90px">
+          <span style="font-weight:700;font-size:14px">${t.market}</span>
+          <span class="badge badge-${t.direction.toLowerCase()}" style="margin-top:3px">${t.direction}</span>
+        </div>
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">Entry</div><div class="lpos-list-val">${t.entry}</div></div>
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">Current</div><div class="lpos-list-val" style="color:${isWin?'var(--green)':'var(--red)'}">${price.toFixed(inst.dec)} ${pips>=0?'▲':'▼'}</div></div>
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">P&amp;L</div><div class="lpos-list-val ${isWin?'pos':'neg'}">${pips>=0?'+':''}${pips.toFixed(1)} ${inst.unit}</div></div>
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">Stop Loss</div><div class="lpos-list-val" style="color:var(--red)">${t.sl} <span style="font-weight:400;color:var(--muted)">(${pipsToSL.toFixed(1)})</span></div></div>
+        ${t.tp?`<div class="lpos-list-cell"><div class="lpos-list-lbl">Take Profit</div><div class="lpos-list-val" style="color:var(--green)">${t.tp} <span style="font-weight:400;color:var(--muted)">(${pipsToTP!==null?pipsToTP.toFixed(1):'?'})</span></div></div>`:''}
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">Progress</div><div class="lpos-list-val" style="color:${progCol}">${isWin?'▲':'▼'} ${progPct.toFixed(0)}%</div></div>
+        <div class="lpos-list-cell"><div class="lpos-list-lbl">Since</div><div class="lpos-list-val" style="font-weight:400">${t.date}</div></div>
+        <button class="lpos-close-sm" onclick="manualClosePos(${t.id},${price})">Close at ${price.toFixed(inst.dec)}</button>
+      </div>`;
+    }
 
     return `<div class="lpos-card ${isWin?'winning':'losing'}">
       <div class="lpos-top">
@@ -3450,7 +3492,10 @@ function renderLivePositions(){
       </div>
       <button class="lpos-close" onclick="manualClosePos(${t.id},${price})">Close at ${price.toFixed(inst.dec)}</button>
     </div>`;
-  }).join('');
+  });
+
+  grid.className=posView==='list'?'lpos-list':'lpos-grid';
+  grid.innerHTML=cards.join('');
 }
 
 function showToast(msg, cls='ti'){
@@ -3517,6 +3562,7 @@ let autoLog      = localStorage.getItem('auto_log') === 'true';
 let autoLogConf  = parseInt(localStorage.getItem('auto_log_conf')) || 75;
 let lastScanResults = null;
 let lastScanIsDemo  = false;
+let posView = 'list';
 let autoExecute  = localStorage.getItem('auto_execute') === 'true';
 let oandaToken   = localStorage.getItem('oanda_token')   || '';
 let oandaAccount = localStorage.getItem('oanda_account') || '';
@@ -3805,19 +3851,25 @@ function deriveErPrice(symbol, rates){
 
 // ── Render Market Overview Strip ──
 function renderMktStrip(results){
-  document.getElementById('mktStrip').innerHTML=results.map(r=>{
-    const ov=r.overview;
-    const up=ov.change>=0;
-    const rsiCls=ov.rsi>70?'rsi-ob':ov.rsi<30?'rsi-os':'rsi-ok';
-    return `<div class="mkt-pill ${ov.trend}">
-      <div class="mp-sym">${ov.symbol}</div>
-      <div class="mp-price" style="color:${up?'var(--green)':'var(--red)'}">${ov.price} ${up?'▲':'▼'}</div>
-      <div class="mp-meta">
-        <span style="color:${ov.trend==='bull'?'var(--green)':'var(--red)'}">${ov.trend==='bull'?'BULL':'BEAR'}</span>
-        <span class="mp-rsi ${rsiCls}">RSI ${ov.rsi}</span>
-      </div>
-    </div>`;
-  }).join('');
+  const typeOrder=['Forex','Crypto','Index','ETF','Commodity'];
+  const groups={};
+  results.forEach(r=>{ const t=r.overview.type||'Other'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
+  document.getElementById('mktStrip').innerHTML=typeOrder.filter(t=>groups[t]?.length).map(t=>`
+    <div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">${t}</div>
+      <div class="market-strip" style="margin-bottom:0">${groups[t].map(r=>{
+        const ov=r.overview, up=ov.change>=0;
+        const rsiCls=ov.rsi>70?'rsi-ob':ov.rsi<30?'rsi-os':'rsi-ok';
+        return `<div class="mkt-pill ${ov.trend}">
+          <div class="mp-sym">${ov.symbol}</div>
+          <div class="mp-price" style="color:${up?'var(--green)':'var(--red)'}">${ov.price} ${up?'▲':'▼'}</div>
+          <div class="mp-meta">
+            <span style="color:${ov.trend==='bull'?'var(--green)':'var(--red)'}">${ov.trend==='bull'?'BULL':'BEAR'}</span>
+            <span class="mp-rsi ${rsiCls}">RSI ${ov.rsi}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>`).join('');
 }
 
 // ── Render Signal Cards ──
