@@ -3325,6 +3325,7 @@ function getInst(symbol){
 
 function startPricing(){
   if(priceInterval) return;
+  renderLivePositions(); // show cards immediately with loading state
   pollPrices();
   priceInterval = setInterval(pollPrices, 6000);
 }
@@ -3336,24 +3337,28 @@ async function pollPrices(){
   const open = trades.filter(t=>t.status==='open');
   if(!open.length){ stopPricing(); renderLivePositions(); return; }
   const symbols=[...new Set(open.map(t=>t.market))];
-  for(const sym of symbols){
-    try{ livePrices[sym] = await fetchLivePrice(sym); } catch(e){}
+
+  if(sigApiKey){
+    try{
+      // Batch all symbols in one request instead of N sequential calls
+      const url=`https://api.twelvedata.com/price?symbol=${symbols.map(encodeURIComponent).join(',')}&apikey=${sigApiKey}`;
+      const d=await fetch(url).then(r=>r.json());
+      if(symbols.length===1){
+        if(d.price) livePrices[symbols[0]]=parseFloat(d.price);
+      } else {
+        for(const sym of symbols){ if(d[sym]?.price) livePrices[sym]=parseFloat(d[sym].price); }
+      }
+    } catch(e){}
+  } else {
+    for(const sym of symbols){ livePrices[sym]=fetchDemoPrice(sym); }
   }
-  // Check SL/TP for each open trade
+
   open.forEach(t=>{ const p=livePrices[t.market]; if(p) checkSlTp(t,p); });
   renderLivePositions();
-  // refresh journal live column if visible
   if(document.getElementById('journal').classList.contains('active')) renderJournal();
 }
 
-async function fetchLivePrice(symbol){
-  if(sigApiKey){
-    const url=`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${sigApiKey}`;
-    const r=await fetch(url); const d=await r.json();
-    if(d.price) return parseFloat(d.price);
-    throw new Error('no price');
-  }
-  // Demo: random-walk from trade entry price
+function fetchDemoPrice(symbol){
   const trade = trades.find(t=>t.status==='open'&&t.market===symbol);
   const inst = getInst(symbol);
   if(!simPrices[symbol]){
@@ -3427,17 +3432,25 @@ function renderLivePositions(){
   if(dot) dot.style.display='inline-block';
   if(lbl) lbl.textContent=sigApiKey?'· Live prices · updates every 6s':'· Demo simulation · updates every 6s';
 
-  const hasPrices=open.some(t=>livePrices[t.market]);
-  if(!hasPrices){
-    grid.className='';
-    grid.innerHTML='<div class="no-open-msg"><span class="live-dot" style="margin-right:6px"></span>Fetching prices…</div>';
-    return;
-  }
-
   const cards=open.map(t=>{
     const price=livePrices[t.market];
     const inst=getInst(t.market);
     const isLong=t.direction==='LONG';
+    if(!price){
+      return posView==='list'
+        ? `<div class="lpos-list-row neutral">
+            <div class="lpos-list-cell" style="min-width:90px"><span style="font-weight:700;font-size:14px">${t.market}</span><span class="badge badge-${t.direction.toLowerCase()}" style="margin-top:3px">${t.direction}</span></div>
+            <div class="lpos-list-cell"><div class="lpos-list-lbl">Entry</div><div class="lpos-list-val">${t.entry}</div></div>
+            <div class="lpos-list-cell"><div class="lpos-list-lbl">Current</div><div class="lpos-list-val" style="color:var(--muted);animation:blink 1s infinite">Loading…</div></div>
+            <div class="lpos-list-cell"><div class="lpos-list-lbl">Stop Loss</div><div class="lpos-list-val" style="color:var(--red)">${t.sl}</div></div>
+            ${t.tp?`<div class="lpos-list-cell"><div class="lpos-list-lbl">Take Profit</div><div class="lpos-list-val" style="color:var(--green)">${t.tp}</div></div>`:''}
+          </div>`
+        : `<div class="lpos-card neutral">
+            <div class="lpos-top"><div class="lpos-left"><span class="lpos-sym">${t.market}</span><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></div></div>
+            <div class="lpos-row"><span class="lpos-lbl">Entry</span><span class="lpos-val">${t.entry}</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:6px"><span class="live-dot"></span>Fetching price…</div>
+          </div>`;
+    }
     const pips=isLong?(price-t.entry)*inst.mult:(t.entry-price)*inst.mult;
     const isWin=pips>=0;
     const slPips=Math.abs(t.entry-t.sl)*inst.mult;
@@ -3447,9 +3460,6 @@ function renderLivePositions(){
     let progPct=0, progCol=isWin?'var(--green)':'var(--red)';
     if(isWin&&tpPips) progPct=Math.min(100,pips/tpPips*100);
     else if(!isWin) progPct=Math.min(100,Math.abs(pips)/slPips*100);
-    if(!price) return posView==='list'
-      ? `<div class="lpos-list-row neutral"><span class="lpos-sym">${t.market}</span><span style="font-size:12px;color:var(--muted)">Awaiting price…</span></div>`
-      : `<div class="lpos-card neutral"><div class="lpos-top"><span class="lpos-sym">${t.market}</span></div><div style="font-size:12px;color:var(--muted)">Awaiting price data…</div></div>`;
 
     if(posView==='list'){
       return `<div class="lpos-list-row ${isWin?'winning':'losing'}">
