@@ -3423,7 +3423,7 @@ function startPricing(){
   if(priceInterval) return;
   renderLivePositions(); // show cards immediately with loading state
   pollPrices();
-  priceInterval = setInterval(pollPrices, 60000);
+  priceInterval = setInterval(pollPrices, 300000);
 }
 function stopPricing(){
   if(priceInterval){ clearInterval(priceInterval); priceInterval=null; }
@@ -3526,7 +3526,7 @@ function renderLivePositions(){
     return;
   }
   if(dot) dot.style.display='inline-block';
-  if(lbl) lbl.textContent=sigApiKey?'· Live prices · updates every 60s':'· Demo simulation';
+  if(lbl) lbl.textContent=sigApiKey?'· Live prices · updates every 5m':'· Demo simulation';
 
   const cards=open.map(t=>{
     const price=livePrices[t.market];
