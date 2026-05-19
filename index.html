@@ -436,6 +436,111 @@ textarea{resize:vertical;min-height:56px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--blue)}
 @media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row,.dash-analytics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+
+/* ── MOBILE NAV ─────────────────────────────────────────────── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:200;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.mob-nav-inner{display:flex;justify-content:space-around}
+.mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:10px;font-weight:500;padding:10px 4px 8px;cursor:pointer;font-family:'Inter',sans-serif;transition:color .15s;-webkit-tap-highlight-color:transparent}
+.mob-nav-btn svg{width:22px;height:22px;stroke-width:1.8;transition:stroke .15s}
+.mob-nav-btn.active,.mob-nav-btn.active svg{color:var(--blue);stroke:var(--blue)}
+
+/* ── RESPONSIVE 768px ───────────────────────────────────────── */
+@media(max-width:768px){
+  /* Show mobile nav for logged-in users */
+  .mob-nav.visible{display:block}
+
+  /* Header */
+  .header{padding:0 14px;height:54px;gap:8px}
+  #appNav{display:none!important}
+  .auth-email{display:none}
+  .plan-badge{font-size:9px;padding:3px 7px}
+
+  /* Main padding — room for bottom nav */
+  .main{padding:16px 14px 88px}
+
+  /* Dashboard */
+  .dash-header{margin-bottom:14px}
+  .dash-header .btn{font-size:12px;padding:6px 12px}
+  .dash-kpi-row{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi-card{padding:14px 16px}
+  .kpi-val{font-size:22px}
+  .kpi-sub{font-size:10px}
+  .dash-sec-row{gap:6px}
+  .sec-pill{min-width:0;flex:1;padding:10px 10px}
+  .sec-pill-lbl{font-size:9px}
+  .sec-pill-val{font-size:15px}
+  .dash-analytics{grid-template-columns:1fr}
+  #eqChart{height:180px}
+  #wlChart{height:160px}
+
+  /* Open positions list */
+  .lpos-list-row{flex-wrap:wrap;gap:8px;padding:12px}
+  .lpos-list-cell{min-width:calc(50% - 8px)}
+  .lpos-close-sm{width:100%;margin-left:0;margin-top:6px;padding:8px;text-align:center}
+  .lpos-grid{grid-template-columns:1fr}
+
+  /* Signals */
+  .sig-ctrl-bar{flex-direction:column;align-items:flex-start;gap:10px;padding:12px}
+  .sig-fresh{width:100%}
+  .sig-ctrl-right{margin-left:0;width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px}
+  .sig-grid{grid-template-columns:1fr}
+  .mkt-pill{min-width:100px}
+  .sig-prices{grid-template-columns:1fr 1fr}
+  .sig-actions{flex-direction:column}
+  .sig-actions .btn{flex:none}
+
+  /* Market strip group headers */
+  .ovw-label{font-size:10px}
+
+  /* Journal */
+  .table-controls{flex-direction:column;align-items:flex-start;gap:8px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:600px}
+
+  /* Learning */
+  .learn-tabs{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .learn-tabs::-webkit-scrollbar{display:none}
+  .ltab{white-space:nowrap;flex-shrink:0}
+
+  /* Simulator */
+  .sim-grid{grid-template-columns:1fr}
+
+  /* Admin */
+  #adminScanStatus{grid-template-columns:1fr!important}
+  .admin-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .admin-tabs::-webkit-scrollbar{display:none}
+  .atab{white-space:nowrap;flex-shrink:0}
+
+  /* Ideas */
+  .ideas-header{flex-direction:column;align-items:flex-start}
+  .idea-grid{grid-template-columns:1fr!important}
+
+  /* News */
+  .news-grid-inner{grid-template-columns:1fr!important}
+
+  /* Modal */
+  .modal{padding:20px 16px;width:calc(100vw - 24px)!important;max-width:none!important}
+  .form-grid{grid-template-columns:1fr}
+  .auth-modal{padding:24px 16px;width:calc(100vw - 32px)!important}
+
+  /* Config */
+  .cfg-row{flex-wrap:wrap;gap:8px}
+  .stats-grid{grid-template-columns:1fr 1fr!important}
+
+  /* Section title */
+  .section-title{font-size:17px}
+
+  /* Landing nav — horizontal scroll */
+  #landingNav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;gap:0}
+  #landingNav::-webkit-scrollbar{display:none}
+}
+
+@media(max-width:480px){
+  .dash-kpi-row{grid-template-columns:1fr}
+  .kpi-val{font-size:24px}
+  .sec-pill-val{font-size:14px}
+  .sig-prices{grid-template-columns:1fr 1fr}
+}
 /* AUTH */
 .auth-area{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .plan-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
@@ -2647,6 +2752,7 @@ function nav(id, btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn) btn.classList.add('active');
+  mobNavSync(id);
   if(id==='dashboard') renderDashboard();
   if(id==='journal') renderJournal();
   if(id==='signals') initSignals();
@@ -2655,6 +2761,9 @@ function nav(id, btn){
   if(id==='settings') initSettings();
   if(id==='admin') loadAdminPanel();
   window.scrollTo(0,0);
+}
+function mobNavSync(id){
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
 }
 function ltab(id, btn){
   document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
@@ -4713,6 +4822,7 @@ function updateAuthUI(){
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="signOut()">Sign Out</button>`;
     if(appNav) appNav.style.display = 'flex';
     if(landingNav) landingNav.style.display = 'none';
+    const mobNav=document.getElementById('mobNav'); if(mobNav) mobNav.classList.add('visible');
     // navigate to dashboard if on landing
     const active = document.querySelector('.section.active');
     if(active && (active.id === 'landing' || active.id === 'pricing-page')){
@@ -4729,6 +4839,7 @@ function updateAuthUI(){
       <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signup')">Sign Up Free</button>`;
     if(appNav) appNav.style.display = 'none';
     if(landingNav) landingNav.style.display = 'flex';
+    const mobNav2=document.getElementById('mobNav'); if(mobNav2) mobNav2.classList.remove('visible');
     // return to landing if on an app page
     const active = document.querySelector('.section.active');
     if(active && !['landing','pricing-page','news','learning','terms','privacy','cookies','risk'].includes(active.id)){
@@ -5683,5 +5794,31 @@ document.getElementById('s_date').value = new Date().toISOString().split('T')[0]
 </footer>
 <!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Mobile bottom navigation (logged-in only, visible via .visible class on mobile) -->
+<nav class="mob-nav" id="mobNav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-btn active" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Signals</span>
+    </button>
+    <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Journal</span>
+    </button>
+    <button class="mob-nav-btn" data-section="ideas" onclick="nav('ideas',null);mobNavSync('ideas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Ideas</span>
+    </button>
+    <button class="mob-nav-btn" data-section="settings" onclick="nav('settings',null);mobNavSync('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><circle cx="12" cy="12" r="10"/></svg>
+      <span>More</span>
+    </button>
+  </div>
+</nav>
 </body>
 </html>
