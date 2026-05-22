@@ -701,6 +701,8 @@ textarea{resize:vertical;min-height:56px}
 .tr-pips-pos{color:var(--green);font-weight:700;font-size:14px;font-family:'SF Mono','Fira Code',monospace}
 .tr-pips-neg{color:var(--red);font-weight:700;font-size:14px;font-family:'SF Mono','Fira Code',monospace}
 .tr-disclaimer{font-size:11px;color:var(--muted2);text-align:center;line-height:1.6}
+.tr-loading{padding:32px 0;text-align:center;color:var(--muted);font-size:13px}
+.tr-tab-panel-legacy{display:none!important}
 @media(max-width:760px){.tr-overview{grid-template-columns:1fr}}
 .tr-month-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(37,99,235,.05);margin-bottom:10px}
 .tr-month-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;cursor:pointer;user-select:none;transition:background .15s;gap:12px}
@@ -856,3 +858,19 @@ textarea{resize:vertical;min-height:56px}
 .ror-label{font-size:12px;color:var(--muted);margin-top:4px}
 .ror-bar-wrap{height:10px;border-radius:5px;background:var(--border);margin-top:14px;overflow:hidden}
 .ror-bar{height:100%;border-radius:5px;transition:width .5s}
+
+/* ── USER MENU ───────────────────────────────────────────────── */
+.um-avatar{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+.um-avatar:hover{opacity:.85}
+.um-dropdown{position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:200;overflow:hidden}
+.um-info{padding:12px 14px;display:flex;flex-direction:column;gap:5px}
+.um-email{font-size:12px;color:var(--muted);word-break:break-all}
+.um-divider{height:1px;background:var(--border)}
+.um-item{width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:13px;padding:10px 14px;cursor:pointer;display:block;transition:background .1s}
+.um-item:hover{background:rgba(255,255,255,.05)}
+.um-admin{color:#f85149}
+.um-signout{color:var(--muted)}
+.um-signout:hover{color:var(--text)}
+
+/* ── NAV PLAN TAG ─────────────────────────────────────────────── */
+.nav-plan-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:rgba(37,99,235,.18);color:var(--blue);border-radius:3px;padding:1px 5px;vertical-align:middle;margin-left:4px;pointer-events:none}

@@ -20,18 +20,30 @@
   <div class="logo">Sharpe<span>.</span></div>
   <nav id="appNav">
     <button onclick="nav('dashboard',this)">Dashboard</button>
-    <button onclick="nav('journal',this)">Trade Journal</button>
+    <button onclick="nav('journal',this)">Journal</button>
+    <button onclick="nav('signals',this)">Signals <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Essential</span></button>
+    <button onclick="nav('ideas',this)">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
     <button onclick="nav('simulator',this)">Simulator</button>
-    <button onclick="nav('signals',this)">Auto Signals</button>
-    <button onclick="nav('ideas',this)">Trade Ideas</button>
     <button onclick="nav('news',this)">News</button>
-    <button onclick="nav('learning',this)">Learning Center</button>
-    <button id="settingsNavBtn" onclick="nav('settings',this)">Settings</button>
-    <button id="adminNavBtn" style="display:none;color:#f85149" onclick="nav('admin',this)">Admin</button>
+    <button onclick="nav('learning',this)">Learning</button>
   </nav>
   <div class="auth-area" id="authArea">
     <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
     <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signup')">Sign Up Free</button>
+  </div>
+  <div id="userMenu" style="position:relative;display:none">
+    <button id="userMenuBtn" class="um-avatar" onclick="toggleUserMenu()" title="Account"></button>
+    <div id="userMenuDropdown" class="um-dropdown" style="display:none">
+      <div class="um-info">
+        <span id="umEmail" class="um-email"></span>
+        <span id="umBadge" class="plan-badge"></span>
+      </div>
+      <div class="um-divider"></div>
+      <button class="um-item" onclick="nav('settings',null);closeUserMenu()">⚙ Settings</button>
+      <button id="umAdminBtn" class="um-item um-admin" style="display:none" onclick="nav('admin',null);closeUserMenu()">★ Admin</button>
+      <div class="um-divider"></div>
+      <button class="um-item um-signout" onclick="signOut()">Sign Out</button>
+    </div>
   </div>
 </header>
 
@@ -79,29 +91,31 @@
     </div>
   </div>
 
-  <div class="chart-card" style="margin-top:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div>
-        <h3 style="margin:0 0 2px">Daily P&amp;L · <span id="calYearLabel"></span></h3>
-        <div style="font-size:11px;color:var(--muted)">Each square = one trading day. Colour = net pips.</div>
+  <div style="display:flex;gap:14px;margin-top:14px;align-items:flex-start;flex-wrap:wrap">
+    <div class="chart-card" style="flex:2 1 400px;min-width:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div>
+          <h3 style="margin:0 0 2px">Daily P&amp;L · <span id="calYearLabel"></span></h3>
+          <div style="font-size:11px;color:var(--muted)">Each square = one trading day. Colour = net pips.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);flex-shrink:0">
+          <span>Big loss</span>
+          <div style="width:10px;height:10px;border-radius:2px;background:#dc2626"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#f87171"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#fecaca"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#e2e8f0"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#bbf7d0"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#4ade80"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>
+          <span>Big win</span>
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);flex-shrink:0">
-        <span>Big loss</span>
-        <div style="width:10px;height:10px;border-radius:2px;background:#dc2626"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#f87171"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#fecaca"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#e2e8f0"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#bbf7d0"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#4ade80"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>
-        <span>Big win</span>
+      <div class="cal-wrap">
+        <div id="pnlCalendar"></div>
       </div>
     </div>
-    <div class="cal-wrap">
-      <div id="pnlCalendar"></div>
-    </div>
+    <div class="chart-card" style="flex:1 1 260px;min-width:0"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
   </div>
-  <div class="chart-card" style="margin-top:14px"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
 </section>
 
 <!-- JOURNAL -->
@@ -541,6 +555,7 @@
     <button class="atab" onclick="switchAdminTab('notifications',this)">Notifications</button>
     <button class="atab" onclick="switchAdminTab('analytics',this)">Analytics</button>
     <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
+    <button class="atab" onclick="switchAdminTab('trackrecord',this)">Track Record</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
 
@@ -795,6 +810,21 @@
 
   <!-- Signals Config -->
   <div class="admin-pane" id="apane-signals">
+    <!-- API Key -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        Twelve Data API Key
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+        Required for live price updates (every 5 min) and automated signal scans (every 4 h). Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> — 800 credits/day on the free tier.
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="adminTdKey" type="password" placeholder="Paste your Twelve Data key…" style="flex:1;min-width:220px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
+        <button class="btn btn-primary" style="font-size:12px;padding:6px 16px" onclick="saveAdminTdKey()">Save Key</button>
+        <span id="adminTdKeyStatus" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+    </div>
     <!-- Scan Status -->
     <div class="cfg-card">
       <div class="cfg-card-hdr">
@@ -802,7 +832,7 @@
         Automated Scan Status
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
-        Scans run automatically <strong>6× per day</strong> (every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC) via GitHub Actions. Results are stored in Supabase and served to users instantly — no API calls from the browser.
+        Scans run automatically via <strong>Supabase Edge Function + pg_cron</strong>: prices refresh every 5 minutes, full signal scan every 4 hours. All connected users receive updates via Realtime — no polling.
       </div>
       <div id="adminScanStatus" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
         <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
@@ -832,15 +862,35 @@
         Setup Checklist
       </div>
       <ol style="font-size:12px;color:var(--muted);line-height:2;padding-left:18px;margin:0">
-        <li>Run the SQL in <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">scripts/scan.js</code> header to create the <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">signals</code> table in Supabase</li>
-        <li>Add 3 secrets in <strong>GitHub → Settings → Secrets → Actions</strong>:<br>
-          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">TWELVE_DATA_KEY</code> &nbsp;
-          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">SUPABASE_URL</code> &nbsp;
-          <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">SUPABASE_SERVICE_KEY</code>
-        </li>
-        <li>Push to <code style="background:#f1f5f9;padding:1px 5px;border-radius:3px">main</code> — the workflow activates automatically</li>
-        <li>Trigger a first manual run: <strong>GitHub → Actions → Signal Scanner → Run workflow</strong></li>
+        <li>Paste your <strong>Twelve Data API key</strong> in the field above and click Save Key</li>
+        <li>Click <strong>▶ Run Now</strong> to trigger the first scan immediately</li>
+        <li>From that point the Edge Function runs automatically — prices every 5 min, full scan every 4 h via pg_cron</li>
+        <li>All users receive live updates via <strong>Supabase Realtime</strong> — no page refresh needed</li>
       </ol>
+    </div>
+    <!-- API Usage -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Twelve Data API Usage
+        </span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadApiUsage()">↻ Refresh</button>
+      </div>
+      <div id="apiUsagePanel">
+        <div style="font-size:12px;color:var(--muted)">Loading…</div>
+      </div>
+    </div>
+    <!-- Run Log -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Scanner Run Log
+        </span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadScanLog()">↻ Refresh</button>
+      </div>
+      <div id="scanLogTable" style="font-size:12px;color:var(--muted)">Loading…</div>
     </div>
   </div>
 
@@ -920,6 +970,76 @@
         </div>
         <label class="toggle-sw"><input type="checkbox" id="ffSimFree" onchange="saveSiteSettings()" checked><span class="toggle-sl"></span></label>
       </div>
+    </div>
+  </div>
+
+  <!-- Track Record -->
+  <div class="admin-pane" id="apane-trackrecord">
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Add Trade to Public Track Record
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="cfg-row-info" style="grid-column:1/-1">
+          <div class="cfg-row-desc">Trades added here appear on the public landing page. New months appear automatically when trades for a new month are saved.</div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Category</label>
+          <select id="trAdd-cat" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+            <option value="forex">Forex</option>
+            <option value="crypto">Crypto</option>
+            <option value="etf">ETF</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Date</label>
+          <input type="date" id="trAdd-date" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Market / Symbol</label>
+          <input type="text" id="trAdd-market" placeholder="e.g. EUR/USD, BTC/USD, QQQ" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Direction</label>
+          <select id="trAdd-dir" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+            <option value="LONG">LONG</option>
+            <option value="SHORT">SHORT</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Entry Price</label>
+          <input type="text" id="trAdd-entry" placeholder="e.g. 1.1280 or $72,800" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Exit Price</label>
+          <input type="text" id="trAdd-exit" placeholder="e.g. 1.1367 or $76,100" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Result Value <span id="trAdd-unit-hint" style="color:var(--blue)">(pips)</span></label>
+          <input type="number" id="trAdd-result" placeholder="e.g. 87 or -48" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Outcome</label>
+          <select id="trAdd-outcome" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+            <option value="WIN">WIN</option>
+            <option value="LOSS">LOSS</option>
+          </select>
+        </div>
+      </div>
+      <div id="trAdd-err" style="font-size:12px;color:var(--red);margin-bottom:8px;display:none"></div>
+      <button class="btn btn-primary" onclick="addTrackRecord()">Add Trade</button>
+    </div>
+
+    <div class="cfg-card">
+      <div class="cfg-card-hdr" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+          Recent Trades
+        </span>
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadTrAdminList()">↻ Refresh</button>
+      </div>
+      <div id="trAdmin-list" style="font-size:13px;color:var(--muted);padding:8px 0">Loading…</div>
     </div>
   </div>
 </section>
@@ -2305,6 +2425,36 @@ function stopPricing(){
   if(priceInterval){ clearInterval(priceInterval); priceInterval=null; }
 }
 
+// ── Supabase Realtime subscriptions ────────────────────────────
+let _rtChannel = null;
+function startRealtimeSubs(){
+  if(_rtChannel) return;
+  _rtChannel = sb.channel('sharpe-live')
+    .on('postgres_changes', { event:'*', schema:'public', table:'live_prices' }, payload => {
+      const row = payload.new;
+      if(row?.symbol && row?.price){
+        livePrices[row.symbol] = parseFloat(row.price);
+        renderLivePositions();
+        if(document.getElementById('journal').classList.contains('active')) renderJournal();
+      }
+    })
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'signals' }, () => {
+      if(document.getElementById('signals').classList.contains('active')) loadLatestSignals();
+    })
+    .subscribe(status => {
+      const lbl = document.getElementById('priceLbl');
+      if(status === 'SUBSCRIBED' && lbl){
+        lbl.textContent = '· Live · realtime';
+        const dot = document.getElementById('priceDot');
+        if(dot){ dot.style.background='#22c55e'; dot.style.animation='pulse 1.5s infinite'; }
+      }
+    });
+}
+
+function stopRealtimeSubs(){
+  if(_rtChannel){ sb.removeChannel(_rtChannel); _rtChannel = null; }
+}
+
 async function pollPrices(){
   const open = trades.filter(t=>t.status==='open');
   if(!open.length){ stopPricing(); renderLivePositions(); return; }
@@ -3012,7 +3162,7 @@ async function loadSignals(){
     // Filter to instruments the user's plan can access
     const planInstr=planLimits().instruments;
     const filtered=rows.filter(r=>{
-      if(r.proOnly && sbPlan!=='pro') return false;
+      if(r.pro_only && sbPlan!=='pro') return false;
       if(planInstr==='all') return true;
       return planInstr.includes(r.symbol);
     });
@@ -3646,21 +3796,27 @@ function hideAuthGate(){
 
 function updateAuthUI(){
   const area = document.getElementById('authArea');
+  const userMenu = document.getElementById('userMenu');
   const appNav = document.getElementById('appNav');
   const landingNav = document.getElementById('landingNav');
   if(!area) return;
   if(sbUser){
-    const planCls = 'plan-'+sbPlan;
-    area.innerHTML = `
-      <span class="plan-badge ${planCls}">${sbPlan.toUpperCase()}</span>
-      <span class="auth-email">${sbUser.email}</span>
-      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="signOut()">Sign Out</button>`;
+    area.style.display = 'none';
+    if(userMenu){
+      userMenu.style.display = 'flex';
+      const initials = (sbUser.email||'U').slice(0,2).toUpperCase();
+      document.getElementById('userMenuBtn').textContent = initials;
+      document.getElementById('umEmail').textContent = sbUser.email;
+      const badge = document.getElementById('umBadge');
+      badge.textContent = sbPlan.toUpperCase();
+      badge.className = 'plan-badge plan-'+sbPlan;
+    }
     if(appNav) appNav.style.display = 'flex';
     if(landingNav) landingNav.style.display = 'none';
     const mobNav=document.getElementById('mobNav'); if(mobNav) mobNav.classList.add('visible');
   } else {
-    area.innerHTML = `
-      <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>`;
+    area.style.display = 'flex';
+    if(userMenu) userMenu.style.display = 'none';
     if(appNav) appNav.style.display = 'none';
     const mobNav2=document.getElementById('mobNav'); if(mobNav2) mobNav2.classList.remove('visible');
   }
@@ -3669,8 +3825,24 @@ function updateAuthUI(){
 
 function applyPlanGates(){
   const lim = planLimits();
+
+  // Section gate banner inside signals section
   const sg = document.getElementById('signalsGate');
   if(sg) sg.style.display = lim.signals ? 'none' : 'flex';
+
+  // Nav badge: "Essential" on Signals for free users
+  const nb = document.getElementById('navSignalsBadge');
+  if(nb) nb.style.display = lim.signals ? 'none' : 'inline';
+
+  // Nav badge: "Limited" on Ideas for free users (only 1 idea)
+  const ib = document.getElementById('navIdeasBadge');
+  if(ib) ib.style.display = lim.ideasCount <= 1 ? 'inline' : 'none';
+
+  // Dim secondary nav items (News, Learning) for free users to nudge core features
+  document.querySelectorAll('#appNav button').forEach(btn => {
+    const sec = (btn.getAttribute('onclick')||'').match(/'(\w+)'/)?.[1];
+    if(sec === 'news' || sec === 'learning') btn.style.opacity = sbPlan === 'free' ? '0.55' : '';
+  });
 }
 
 async function loadProfile(){
@@ -3859,6 +4031,7 @@ sb.auth.onAuthStateChange((event, session) => {
     updateAuthUI();
     if(event === 'INITIAL_SESSION' || event === 'SIGNED_IN'){
       showDashboardSkeleton();
+      startRealtimeSubs();
       setTimeout(async () => {
         try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
         try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
@@ -3871,6 +4044,7 @@ sb.auth.onAuthStateChange((event, session) => {
     sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
     showAdminNav();
     updateAuthUI();
+    stopRealtimeSubs();
     if(event === 'SIGNED_OUT') { window.location.href = 'index.html'; return; }
     // Not logged in — show gate overlay instead of redirecting (prevents loops)
     if(event === 'INITIAL_SESSION') showAuthGate();
@@ -4091,19 +4265,116 @@ async function loadAdminScanStatus(){
 }
 async function triggerScan(){
   const btn=document.getElementById('runNowBtn');
-  btn.disabled=true; btn.textContent='Triggering…';
+  btn.disabled=true; btn.textContent='Scanning…';
   try{
-    const {data,error}=await sb.from('site_config').select('value').eq('key','github_pat').single();
-    if(error||!data){ showToast('GitHub PAT not configured in site_config.','tl'); return; }
-    const res=await fetch('https://api.github.com/repos/JoaoRFerreira/sharpe/actions/workflows/signal-scan.yml/dispatches',{
+    const res=await fetch(`${SUPA_URL}/functions/v1/price-scanner`,{
       method:'POST',
-      headers:{'Authorization':`Bearer ${data.value}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
-      body:JSON.stringify({ref:'main'})
+      headers:{'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
+      body:'{}'
     });
-    if(res.status===204){ showToast('Scan triggered — check GitHub Actions for progress.','tl'); }
-    else { const t=await res.text(); showToast(`GitHub API error ${res.status}: ${t}`,'tl'); }
-  } catch(e){ showToast('Failed to trigger scan: '+e.message,'tl'); }
+    const d=await res.json();
+    if(d.ok){ showToast(`Scan complete — ${d.signals} signals generated.`,'tw'); loadAdminScanStatus(); loadScanLog(); }
+    else{ showToast(d.error||'Scan failed — check Edge Function logs.','tl'); }
+  } catch(e){ showToast('Failed to invoke scanner: '+e.message,'tl'); }
   finally{ btn.disabled=false; btn.textContent='▶ Run Now'; }
+}
+
+async function saveAdminTdKey(){
+  const input=document.getElementById('adminTdKey');
+  const status=document.getElementById('adminTdKeyStatus');
+  const key=input.value.trim();
+  if(!key){ showToast('Enter a key first.','tl'); return; }
+  status.textContent='Saving…';
+  const {error}=await sb.from('site_config').upsert({key:'twelve_data_key',value:key},{onConflict:'key'});
+  if(error){ status.textContent='Error saving.'; showToast(error.message,'tl'); return; }
+  input.value='';
+  input.placeholder='Key saved ✓';
+  status.textContent='Saved — scanner will use this key on next run.';
+  sigApiKey=key; localStorage.setItem('te_apikey',key);
+}
+
+async function loadApiUsage(){
+  const el=document.getElementById('apiUsagePanel'); if(!el) return;
+  el.innerHTML='<div style="font-size:12px;color:var(--muted)">Loading…</div>';
+
+  // Get key from site_config (server-stored) or localStorage fallback
+  let apiKey=sigApiKey;
+  if(!apiKey){
+    const {data}=await sb.from('site_config').select('value').eq('key','twelve_data_key').single();
+    apiKey=data?.value||'';
+  }
+  if(!apiKey){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted)">No API key configured — save your Twelve Data key above first.</div>';
+    return;
+  }
+
+  try{
+    const r=await fetch(`https://api.twelvedata.com/api_usage?apikey=${apiKey}`);
+    const d=await r.json();
+    if(!r.ok||d.code){ el.innerHTML=`<div style="font-size:12px;color:var(--red)">Error: ${d.message||'Could not fetch usage'}</div>`; return; }
+
+    const used=d.current_usage??0, limit=d.plan_limit??800, pct=limit>0?Math.min(100,used/limit*100):0;
+    const remaining=limit-used;
+    const barColor=pct<60?'var(--green)':pct<85?'#f59e0b':'var(--red)';
+    const resetTime=d.timestamp?new Date(d.timestamp+'Z').toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
+
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:var(--text)">${used.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Credits used today</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:${barColor}">${remaining.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Credits remaining</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
+          <div style="font-size:22px;font-weight:800;color:var(--text)">${limit.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Daily limit · ${(d.plan_category||'free').toUpperCase()}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span>${pct.toFixed(1)}% used</span>
+        <span>Resets daily · last checked ${resetTime}</span>
+      </div>
+      <div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden">
+        <div style="height:100%;border-radius:4px;background:${barColor};width:${pct}%;transition:width .4s"></div>
+      </div>
+      ${pct>=85?`<div style="margin-top:10px;font-size:12px;color:#f59e0b;background:rgba(245,158,11,.08);border-radius:6px;padding:8px 10px">⚠ Running low — ${remaining} credits left. Each full scan uses ~${INSTRUMENTS?INSTRUMENTS.length*2:'32'} credits (${INSTRUMENTS?INSTRUMENTS.length:'16'} instruments × 2 timeframes).</div>`:''}
+    `;
+  }catch(e){
+    el.innerHTML=`<div style="font-size:12px;color:var(--red)">Failed to fetch usage: ${e.message}</div>`;
+  }
+}
+
+async function loadScanLog(){
+  const el=document.getElementById('scanLogTable'); if(!el) return;
+  el.textContent='Loading…';
+  const {data,error}=await sb.from('scan_log').select('*').order('ran_at',{ascending:false}).limit(40);
+  if(error||!data?.length){
+    el.textContent=error?`Error: ${error.message}`:'No runs recorded yet. Trigger a scan to see logs here.';
+    return;
+  }
+  const fmtDur=ms=>ms<1000?`${ms}ms`:ms<60000?`${(ms/1000).toFixed(1)}s`:`${Math.floor(ms/60000)}m ${Math.round((ms%60000)/1000)}s`;
+  const fmtAgo=ts=>{const d=Math.round((Date.now()-new Date(ts))/1000);return d<60?`${d}s ago`:d<3600?`${Math.floor(d/60)}m ago`:d<86400?`${Math.floor(d/3600)}h ago`:new Date(ts).toLocaleDateString();};
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">
+      <th style="padding:6px 8px;font-weight:600">When</th>
+      <th style="padding:6px 8px;font-weight:600">Type</th>
+      <th style="padding:6px 8px;font-weight:600">Status</th>
+      <th style="padding:6px 8px;font-weight:600">Signals</th>
+      <th style="padding:6px 8px;font-weight:600">Prices</th>
+      <th style="padding:6px 8px;font-weight:600">Duration</th>
+    </tr></thead>
+    <tbody>${data.map(r=>`<tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+      <td style="padding:6px 8px;color:var(--text)">${fmtAgo(r.ran_at)}</td>
+      <td style="padding:6px 8px"><span style="background:${r.run_type==='full'?'rgba(37,99,235,.15)':'rgba(20,184,166,.12)'};color:${r.run_type==='full'?'var(--blue)':'#14b8a6'};border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600">${r.run_type==='full'?'Full Scan':'Prices'}</span></td>
+      <td style="padding:6px 8px">${r.status==='ok'?'<span style="color:var(--green)">✓ OK</span>':`<span style="color:var(--red)" title="${r.error_msg||''}">✗ Error</span>`}</td>
+      <td style="padding:6px 8px">${r.run_type==='full'?(r.signals_generated??'—'):'—'}</td>
+      <td style="padding:6px 8px">${r.prices_updated??'—'}</td>
+      <td style="padding:6px 8px;color:var(--muted)">${r.duration_ms!=null?fmtDur(r.duration_ms):'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
 }
 
 async function loadAdminPanel(){
@@ -4111,6 +4382,14 @@ async function loadAdminPanel(){
   loadSiteSettings();
   loadAlertSettings();
   loadAdminScanStatus();
+  loadApiUsage();
+  loadScanLog();
+  // Wire category change to update unit hint in track record form
+  const trCat = document.getElementById('trAdd-cat');
+  if(trCat && !trCat._hinted){ trCat._hinted=true; trCat.addEventListener('change',()=>{ const u=trCat.value==='forex'?'pips':trCat.value==='crypto'?'%':'pts'; const h=document.getElementById('trAdd-unit-hint'); if(h) h.textContent='('+u+')'; }); }
+  // Pre-fill key indicator if already set
+  sb.from('site_config').select('value').eq('key','twelve_data_key').single()
+    .then(({data})=>{ if(data?.value){ const inp=document.getElementById('adminTdKey'); if(inp) inp.placeholder='Key saved — paste to replace'; }});
   // Reset per-tab caches so they reload from Supabase on next open
   adminPlanConfig = null;
   adminFeatureConfig = null;
@@ -4385,6 +4664,7 @@ function switchAdminTab(name, btn){
   if(name==='plans') loadAdminPlans();
   if(name==='features') loadAdminFeatures();
   if(name==='notifications') loadAdminNotifications();
+  if(name==='trackrecord') loadTrAdminList();
 }
 
 // ── ADMIN: Plans & Pricing ────────────────────────────────────────
@@ -4562,6 +4842,81 @@ async function saveAdminNotifications(){
   showToast('Notification settings saved','tw');
 }
 
+async function addTrackRecord() {
+  const cat    = document.getElementById('trAdd-cat').value;
+  const date   = document.getElementById('trAdd-date').value;
+  const market = document.getElementById('trAdd-market').value.trim();
+  const dir    = document.getElementById('trAdd-dir').value;
+  const entry  = document.getElementById('trAdd-entry').value.trim();
+  const exit   = document.getElementById('trAdd-exit').value.trim();
+  const resVal = parseFloat(document.getElementById('trAdd-result').value);
+  const outcome= document.getElementById('trAdd-outcome').value;
+  const errEl  = document.getElementById('trAdd-err');
+  errEl.style.display = 'none';
+  if (!date || !market || !entry || !exit || isNaN(resVal)) {
+    errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return;
+  }
+  const unit = cat === 'forex' ? 'pips' : cat === 'crypto' ? '%' : 'pts';
+  const sign = resVal >= 0 ? '+' : '−';
+  const absVal = Math.abs(cat === 'crypto' ? resVal : Math.round(resVal));
+  const resDisplay = cat === 'crypto'
+    ? sign + Math.abs(resVal).toFixed(1) + '%'
+    : sign + absVal + ' ' + unit;
+  const { error } = await sb.from('track_record').insert({
+    trade_date: date, category: cat, market, direction: dir,
+    entry_price: entry, exit_price: exit,
+    result_display: resDisplay, numeric_result: resVal,
+    is_win: outcome === 'WIN'
+  });
+  if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+  showToast('Trade added to track record', 'tw');
+  document.getElementById('trAdd-market').value = '';
+  document.getElementById('trAdd-entry').value = '';
+  document.getElementById('trAdd-exit').value = '';
+  document.getElementById('trAdd-result').value = '';
+  loadTrAdminList();
+}
+
+async function loadTrAdminList() {
+  const el = document.getElementById('trAdmin-list');
+  if (!el) return;
+  const { data, error } = await sb.from('track_record')
+    .select('id,trade_date,category,market,direction,result_display,is_win')
+    .order('trade_date', { ascending: false })
+    .limit(20);
+  if (error || !data) { el.innerHTML = '<span style="color:var(--red)">Failed to load.</span>'; return; }
+  if (!data.length) { el.innerHTML = 'No trades yet.'; return; }
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Date</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Cat</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Market</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Dir</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Result</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600">Outcome</th>
+      <th style="padding:6px 8px;text-align:left;font-weight:600"></th>
+    </tr></thead>
+    <tbody>${data.map(r => `<tr style="border-bottom:1px solid var(--border-light)">
+      <td style="padding:6px 8px;color:var(--muted)">${r.trade_date}</td>
+      <td style="padding:6px 8px;text-transform:capitalize">${r.category}</td>
+      <td style="padding:6px 8px;font-weight:600">${r.market}</td>
+      <td style="padding:6px 8px"><span class="badge badge-${r.direction.toLowerCase()}" style="font-size:10px;padding:1px 7px">${r.direction}</span></td>
+      <td style="padding:6px 8px;color:${r.is_win?'var(--green)':'var(--red)'};font-weight:600">${r.result_display}</td>
+      <td style="padding:6px 8px">${r.is_win?'<span style="color:var(--green);font-weight:700">WIN</span>':'<span style="color:var(--red);font-weight:700">LOSS</span>'}</td>
+      <td style="padding:6px 8px"><button onclick="deleteTrRow(${r.id},this)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:12px;padding:2px 6px;border-radius:4px" title="Delete">✕</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function deleteTrRow(id, btn) {
+  if (!confirm('Delete this trade from the track record?')) return;
+  btn.textContent = '…';
+  const { error } = await sb.from('track_record').delete().eq('id', id);
+  if (error) { showToast('Delete failed: ' + error.message, 'te'); btn.textContent = '✕'; return; }
+  showToast('Trade deleted', 'tw');
+  loadTrAdminList();
+}
+
 function saveSiteSettings(){
   const s = {
     name:        document.getElementById('siteNameInput')?.value    || '',
@@ -4619,9 +4974,28 @@ async function adminSetPlan(userId, plan, el){
 }
 
 function showAdminNav(){
-  const btn = document.getElementById('adminNavBtn');
-  if(btn) btn.style.display = sbIsAdmin ? 'inline-block' : 'none';
-  document.getElementById('settingsNavBtn').style.display = sbUser ? '' : 'none';
+  const btn = document.getElementById('umAdminBtn');
+  if(btn) btn.style.display = sbIsAdmin ? 'block' : 'none';
+}
+
+function toggleUserMenu(){
+  const dd = document.getElementById('userMenuDropdown');
+  if(!dd) return;
+  const open = dd.style.display !== 'none';
+  dd.style.display = open ? 'none' : 'block';
+  if(!open){
+    setTimeout(() => document.addEventListener('click', closeUserMenuOutside, {once:true}), 0);
+  }
+}
+
+function closeUserMenu(){
+  const dd = document.getElementById('userMenuDropdown');
+  if(dd) dd.style.display = 'none';
+}
+
+function closeUserMenuOutside(e){
+  const menu = document.getElementById('userMenu');
+  if(menu && !menu.contains(e.target)) closeUserMenu();
 }
 
 // ── CSV Export ──────────────────────────────────────────────────
@@ -4932,21 +5306,21 @@ if ('serviceWorker' in navigator) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Dashboard</span>
     </button>
-    <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Signals</span>
-    </button>
     <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Journal</span>
+    </button>
+    <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Signals</span>
     </button>
     <button class="mob-nav-btn" data-section="ideas" onclick="nav('ideas',null);mobNavSync('ideas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span>Ideas</span>
     </button>
-    <button class="mob-nav-btn" data-section="settings" onclick="nav('settings',null);mobNavSync('settings')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><circle cx="12" cy="12" r="10"/></svg>
-      <span>More</span>
+    <button class="mob-nav-btn" data-section="simulator" onclick="nav('simulator',null);mobNavSync('simulator')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Simulator</span>
     </button>
   </div>
 </nav>
