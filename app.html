@@ -821,6 +821,8 @@
 
   <!-- Signals Config -->
   <div class="admin-pane" id="apane-signals">
+    <!-- Data Sources group label -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:0 2px 6px">Data Sources</div>
     <!-- API Key -->
     <div class="cfg-card">
       <div class="cfg-card-hdr">
@@ -836,6 +838,21 @@
         <span id="adminTdKeyStatus" style="font-size:12px;color:var(--muted)"></span>
       </div>
     </div>
+    <!-- API Connection Status -->
+    <div class="cfg-card">
+      <div class="cfg-card-hdr" style="justify-content:space-between">
+        <span style="display:flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          API Connection Status
+        </span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadApiUsage()">↻ Test</button>
+      </div>
+      <div id="apiUsagePanel">
+        <div style="font-size:12px;color:var(--muted)">Loading…</div>
+      </div>
+    </div>
+    <!-- Scanner Operations group label -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:16px 2px 6px">Scanner Operations</div>
     <!-- Scan Status -->
     <div class="cfg-card">
       <div class="cfg-card-hdr">
@@ -874,25 +891,14 @@
         Setup Checklist
       </div>
       <ol style="font-size:12px;color:var(--muted);line-height:2;padding-left:18px;margin:0">
-        <li>Paste your <strong>Twelve Data API key</strong> in the field above and click Save Key</li>
-        <li>Click <strong>▶ Run Now</strong> to trigger the first scan immediately</li>
-        <li>From that point the Edge Function runs automatically — prices every 5 min, full scan every 4 h via pg_cron</li>
+        <li>Paste your <strong>Twelve Data API key</strong> above and click Save Key, then hit <strong>↻ Test</strong> to verify the connection</li>
+        <li>Click <strong>⬇ Seed Candles</strong> once to pre-load 250 candles of history for all instruments (~7,000 TD credits, one-time)</li>
+        <li>Click <strong>▶ Run Now</strong> to trigger the first signal scan — subsequent scans run automatically every 4 h via pg_cron</li>
         <li>All users receive live updates via <strong>Supabase Realtime</strong> — no page refresh needed</li>
       </ol>
     </div>
-    <!-- API Usage -->
-    <div class="cfg-card">
-      <div class="cfg-card-hdr" style="justify-content:space-between">
-        <span style="display:flex;align-items:center;gap:8px">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          API Connection Status
-        </span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadApiUsage()">↻ Test</button>
-      </div>
-      <div id="apiUsagePanel">
-        <div style="font-size:12px;color:var(--muted)">Loading…</div>
-      </div>
-    </div>
+    <!-- History group label -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:16px 2px 6px">History</div>
     <!-- Run Log -->
     <div class="cfg-card">
       <div class="cfg-card-hdr" style="justify-content:space-between">
