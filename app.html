@@ -80,12 +80,26 @@
   </div>
 
   <div class="chart-card" style="margin-top:14px">
-    <h3>Daily P&amp;L Heatmap <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px" id="calYearLabel"></span></h3>
-    <div class="cal-wrap"><div id="pnlCalendar" class="cal-grid"></div></div>
-    <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--muted);align-items:center">
-      <span>Loss</span>
-      <div style="display:flex;gap:2px">${['#fca5a5','#fcd34d','#86efac','#22c55e','#16a34a'].map(c=>`<div style="width:14px;height:14px;border-radius:3px;background:${c}"></div>`).join('')}</div>
-      <span>Best day</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="margin:0">Daily P&amp;L Heatmap</h3>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+        <span>Loss</span>
+        <div style="display:flex;gap:2px;align-items:center">
+          <div style="width:10px;height:10px;border-radius:2px;background:#fca5a5"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#fcd34d"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#86efac"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#22c55e"></div>
+          <div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>
+        </div>
+        <span>Best</span>
+      </div>
+    </div>
+    <div class="cal-wrap">
+      <div id="calMonthRow" class="cal-month-row"></div>
+      <div style="display:flex;gap:4px">
+        <div class="cal-dow-col" id="calDowCol"></div>
+        <div id="pnlCalendar" class="cal-grid"></div>
+      </div>
     </div>
   </div>
   <div class="chart-card" style="margin-top:14px"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
@@ -1497,8 +1511,6 @@ function renderCalendar(){
   if(!el) return;
   const now = new Date();
   const year = now.getFullYear();
-  const yrLbl = document.getElementById('calYearLabel');
-  if(yrLbl) yrLbl.textContent = year;
 
   // Build map: 'YYYY-MM-DD' -> total pips
   const dayMap = {};
@@ -1510,8 +1522,8 @@ function renderCalendar(){
   const maxAbs = vals.length ? Math.max(...vals.map(Math.abs), 1) : 1;
 
   function cellColor(v){
-    if(v===undefined) return 'transparent';
-    const r = v/maxAbs; // -1..1
+    if(v === undefined) return null; // no trade that day
+    const r = v / maxAbs;
     if(r < -0.4) return '#fca5a5';
     if(r < 0)    return '#fcd34d';
     if(r < 0.3)  return '#86efac';
@@ -1519,30 +1531,61 @@ function renderCalendar(){
     return '#16a34a';
   }
 
-  // Build a 7-column grid starting from Jan 1
+  // GitHub-style: columns = weeks, rows = day-of-week (Sun=0 … Sat=6)
+  // grid-auto-flow: column so we fill column by column
   const jan1 = new Date(year, 0, 1);
-  const startPad = jan1.getDay(); // 0=Sun
-  const daysInYear = (year%4===0&&(year%100!==0||year%400===0)) ? 366 : 365;
-  const totalCells = startPad + daysInYear;
+  const startDow = jan1.getDay(); // 0=Sun
+  const daysInYear = (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 366 : 365;
+  const totalCells = startDow + daysInYear;
+  const numWeeks = Math.ceil(totalCells / 7);
 
-  // Day-of-week headers
-  const headers = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-  let html = headers.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
-
-  // Empty pad cells
-  for(let i=0;i<startPad;i++) html+=`<div></div>`;
-
-  for(let d=0;d<daysInYear;d++){
-    const dt = new Date(year,0,1+d);
-    const key = dt.toISOString().split('T')[0];
-    const v = dayMap[key];
-    const col = cellColor(v);
-    const tip = v!==undefined ? `${key}: ${v>0?'+':''}${v} pips` : key;
-    html+=`<div class="cal-cell" style="background:${col===undefined?'var(--border)':col};border:1px solid var(--border)"><span class="cal-tip">${tip}</span></div>`;
+  // Month labels: one per column-start of that month
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const monthRow = document.getElementById('calMonthRow');
+  const cellPx = 11, gapPx = 2;
+  if(monthRow){
+    monthRow.innerHTML = '';
+    let prevMonth = -1;
+    for(let w = 0; w < numWeeks; w++){
+      const firstDayOfWeek = new Date(year, 0, 1 + w * 7 - startDow);
+      const m = firstDayOfWeek.getMonth();
+      const lbl = document.createElement('div');
+      lbl.style.cssText = `width:${cellPx}px;font-size:9px;color:var(--muted);flex-shrink:0`;
+      lbl.textContent = (m !== prevMonth && firstDayOfWeek.getFullYear() === year) ? MONTHS[m] : '';
+      monthRow.appendChild(lbl);
+      prevMonth = m;
+    }
   }
 
+  // Day-of-week labels
+  const dowCol = document.getElementById('calDowCol');
+  if(dowCol){
+    dowCol.innerHTML = ['S','M','T','W','T','F','S'].map((d,i)=>
+      `<div style="height:${cellPx}px;font-size:9px;color:var(--muted);line-height:${cellPx}px;${i%2===0?'visibility:hidden':''}">${d}</div>`
+    ).join('');
+  }
+
+  // Build grid cells (column-major: fill Sun→Sat for each week)
+  let html = '';
+  for(let w = 0; w < numWeeks; w++){
+    for(let dow = 0; dow < 7; dow++){
+      const dayIdx = w * 7 + dow - startDow;
+      if(dayIdx < 0 || dayIdx >= daysInYear){
+        html += `<div class="cal-cell cal-cell-empty"></div>`;
+        continue;
+      }
+      const dt = new Date(year, 0, 1 + dayIdx);
+      const key = dt.toISOString().split('T')[0];
+      const v = dayMap[key];
+      const bg = cellColor(v);
+      const tipTxt = v !== undefined ? `${key}: ${v > 0 ? '+' : ''}${v} pips` : key;
+      html += `<div class="cal-cell${bg ? '' : ' cal-cell-empty'}"${bg ? ` style="background:${bg}"` : ''}><span class="cal-tip">${tipTxt}</span></div>`;
+    }
+  }
+
+  el.style.gridTemplateColumns = `repeat(${numWeeks}, ${cellPx}px)`;
+  el.style.gridTemplateRows = `repeat(7, ${cellPx}px)`;
   el.innerHTML = html;
-  el.style.gridTemplateColumns = 'repeat(7,1fr)';
 }
 
 function renderRecent(){
