@@ -825,13 +825,13 @@
     <div class="cfg-card">
       <div class="cfg-card-hdr">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-        Twelve Data API Key
+        Finnhub API Key
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
-        Required for live price updates (every 5 min) and automated signal scans (every 4 h). Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> — 800 credits/day on the free tier.
+        Required for live forex &amp; commodity price updates and signal scans. Crypto data uses Binance (no key needed). Get a free key at <a href="https://finnhub.io" target="_blank" style="color:var(--blue)">finnhub.io</a> — generous free tier with 60 calls/min.
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input id="adminTdKey" type="password" placeholder="Paste your Twelve Data key…" style="flex:1;min-width:220px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
+        <input id="adminTdKey" type="password" placeholder="Paste your Finnhub key…" style="flex:1;min-width:220px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
         <button class="btn btn-primary" style="font-size:12px;padding:6px 16px" onclick="saveAdminTdKey()">Save Key</button>
         <span id="adminTdKeyStatus" style="font-size:12px;color:var(--muted)"></span>
       </div>
@@ -873,7 +873,7 @@
         Setup Checklist
       </div>
       <ol style="font-size:12px;color:var(--muted);line-height:2;padding-left:18px;margin:0">
-        <li>Paste your <strong>Twelve Data API key</strong> in the field above and click Save Key</li>
+        <li>Paste your <strong>Finnhub API key</strong> in the field above and click Save Key</li>
         <li>Click <strong>▶ Run Now</strong> to trigger the first scan immediately</li>
         <li>From that point the Edge Function runs automatically — prices every 5 min, full scan every 4 h via pg_cron</li>
         <li>All users receive live updates via <strong>Supabase Realtime</strong> — no page refresh needed</li>
@@ -884,9 +884,9 @@
       <div class="cfg-card-hdr" style="justify-content:space-between">
         <span style="display:flex;align-items:center;gap:8px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          Twelve Data API Usage
+          Finnhub Connection Status
         </span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadApiUsage()">↻ Refresh</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadApiUsage()">↻ Test</button>
       </div>
       <div id="apiUsagePanel">
         <div style="font-size:12px;color:var(--muted)">Loading…</div>
@@ -2523,14 +2523,22 @@ async function pollPrices(){
 
   if(sigApiKey){
     try{
-      // Batch all symbols in one request instead of N sequential calls
-      const url=`https://api.twelvedata.com/price?symbol=${symbols.map(encodeURIComponent).join(',')}&apikey=${sigApiKey}`;
-      const d=await fetch(url).then(r=>r.json());
-      if(symbols.length===1){
-        if(d.price) livePrices[symbols[0]]=parseFloat(d.price);
-      } else {
-        for(const sym of symbols){ if(d[sym]?.price) livePrices[sym]=parseFloat(d[sym].price); }
-      }
+      // Crypto symbols → Binance (no key); everything else → Finnhub quote
+      const cryptoSyms = symbols.filter(s=>INSTRUMENTS.find(i=>i.symbol===s&&i.bnSymbol));
+      const fxSyms = symbols.filter(s=>!INSTRUMENTS.find(i=>i.symbol===s&&i.bnSymbol));
+      await Promise.all([
+        ...cryptoSyms.map(async sym=>{
+          const inst=INSTRUMENTS.find(i=>i.symbol===sym); if(!inst?.bnSymbol) return;
+          const d=await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`).then(r=>r.json()).catch(()=>({}));
+          if(d.price) livePrices[sym]=parseFloat(d.price);
+        }),
+        ...fxSyms.map(async sym=>{
+          const inst=INSTRUMENTS.find(i=>i.symbol===sym);
+          const fhSym=inst?.fhSymbol||(sym.includes('/')?`OANDA:${sym.replace('/','_')}`:sym);
+          const d=await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(fhSym)}&token=${sigApiKey}`).then(r=>r.json()).catch(()=>({}));
+          if(d.c&&d.c>0) livePrices[sym]=d.c;
+        })
+      ]);
     } catch(e){}
   } else {
     for(const sym of symbols){ livePrices[sym]=fetchDemoPrice(sym); }
@@ -2703,43 +2711,41 @@ function showToast(msg, cls='ti'){
 // ── SIGNALS ENGINE ────────────────────────────────────────────
 
 const INSTRUMENTS = [
-  // Forex — Major
-  {symbol:'EUR/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.0870},
-  {symbol:'GBP/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.2720},
-  {symbol:'USD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:151.40},
-  {symbol:'AUD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.6430},
-  {symbol:'USD/CAD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.3580},
-  {symbol:'NZD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.5960},
-  {symbol:'USD/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8960},
+  // Forex — Major (Finnhub OANDA feed)
+  {symbol:'EUR/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.0870, fhSymbol:'OANDA:EUR_USD'},
+  {symbol:'GBP/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.2720, fhSymbol:'OANDA:GBP_USD'},
+  {symbol:'USD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:151.40, fhSymbol:'OANDA:USD_JPY'},
+  {symbol:'AUD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.6430, fhSymbol:'OANDA:AUD_USD'},
+  {symbol:'USD/CAD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:1.3580, fhSymbol:'OANDA:USD_CAD'},
+  {symbol:'NZD/USD', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.5960, fhSymbol:'OANDA:NZD_USD'},
+  {symbol:'USD/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8960, fhSymbol:'OANDA:USD_CHF'},
   // Forex — Crosses
-  {symbol:'EUR/GBP', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8560},
-  {symbol:'EUR/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:163.20},
-  {symbol:'GBP/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:192.40},
-  {symbol:'EUR/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.9710},
-  {symbol:'AUD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:97.20},
-  // Commodities
-  {symbol:'XAU/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:3280.0},
-  {symbol:'XAG/USD', type:'Commodity', mult:100,   dec:4, unit:'pts',  base:32.50},
-  {symbol:'WTI/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:78.50,  tdOnly:true},
-  // Crypto (Twelve Data only)
-  {symbol:'BTC/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:67000,  tdOnly:true},
-  {symbol:'ETH/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:3200,   tdOnly:true},
-  {symbol:'SOL/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:155,    tdOnly:true},
-  {symbol:'XRP/USD', type:'Crypto',    mult:1,     dec:4, unit:'pts',  base:0.58,   tdOnly:true},
-  // Indices (Twelve Data only)
-  {symbol:'SPX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:5250,   tdOnly:true},
-  {symbol:'IXIC',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:16400,  tdOnly:true},
-  {symbol:'DJI',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:39000,  tdOnly:true},
-  {symbol:'DAX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:18200,  tdOnly:true},
-  {symbol:'FTSE',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:7900,   tdOnly:true},
-  // ETFs (Twelve Data only)
-  {symbol:'SPY',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:524,    tdOnly:true, proOnly:true},
-  {symbol:'QQQ',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:445,    tdOnly:true, proOnly:true},
-  {symbol:'IWM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:208,    tdOnly:true, proOnly:true},
-  {symbol:'TLT',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:92,     tdOnly:true, proOnly:true},
-  {symbol:'GLD',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:240,    tdOnly:true, proOnly:true},
-  {symbol:'USO',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:74,     tdOnly:true, proOnly:true},
-  {symbol:'EEM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:43,     tdOnly:true, proOnly:true},
+  {symbol:'EUR/GBP', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.8560, fhSymbol:'OANDA:EUR_GBP'},
+  {symbol:'EUR/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:163.20, fhSymbol:'OANDA:EUR_JPY'},
+  {symbol:'GBP/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:192.40, fhSymbol:'OANDA:GBP_JPY'},
+  {symbol:'EUR/CHF', type:'Forex',     mult:10000, dec:5, unit:'pips', base:0.9710, fhSymbol:'OANDA:EUR_CHF'},
+  {symbol:'AUD/JPY', type:'Forex',     mult:100,   dec:3, unit:'pips', base:97.20,  fhSymbol:'OANDA:AUD_JPY'},
+  // Commodities (Finnhub OANDA feed)
+  {symbol:'XAU/USD', type:'Commodity', mult:1,     dec:2, unit:'pts',  base:3280.0, fhSymbol:'OANDA:XAU_USD'},
+  {symbol:'XAG/USD', type:'Commodity', mult:100,   dec:4, unit:'pts',  base:32.50,  fhSymbol:'OANDA:XAG_USD'},
+  // Crypto (Binance — no key required)
+  {symbol:'BTC/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:67000,  bnSymbol:'BTCUSDT'},
+  {symbol:'ETH/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:3200,   bnSymbol:'ETHUSDT'},
+  {symbol:'SOL/USD', type:'Crypto',    mult:1,     dec:2, unit:'pts',  base:155,    bnSymbol:'SOLUSDT'},
+  {symbol:'XRP/USD', type:'Crypto',    mult:1,     dec:4, unit:'pts',  base:0.58,   bnSymbol:'XRPUSDT'},
+  // Indices & ETFs (Finnhub stock feed — key required)
+  {symbol:'SPX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:5250,   fhSymbol:'^GSPC',  fhType:'stock'},
+  {symbol:'IXIC',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:16400,  fhSymbol:'^IXIC',  fhType:'stock'},
+  {symbol:'DJI',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:39000,  fhSymbol:'^DJI',   fhType:'stock'},
+  {symbol:'DAX',     type:'Index',     mult:1,     dec:2, unit:'pts',  base:18200,  fhSymbol:'^GDAXI', fhType:'stock'},
+  {symbol:'FTSE',    type:'Index',     mult:1,     dec:2, unit:'pts',  base:7900,   fhSymbol:'^FTSE',  fhType:'stock'},
+  {symbol:'SPY',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:524,    fhSymbol:'SPY',    fhType:'stock', proOnly:true},
+  {symbol:'QQQ',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:445,    fhSymbol:'QQQ',    fhType:'stock', proOnly:true},
+  {symbol:'IWM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:208,    fhSymbol:'IWM',    fhType:'stock', proOnly:true},
+  {symbol:'TLT',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:92,     fhSymbol:'TLT',    fhType:'stock', proOnly:true},
+  {symbol:'GLD',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:240,    fhSymbol:'GLD',    fhType:'stock', proOnly:true},
+  {symbol:'USO',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:74,     fhSymbol:'USO',    fhType:'stock', proOnly:true},
+  {symbol:'EEM',     type:'ETF',       mult:1,     dec:2, unit:'pts',  base:43,     fhSymbol:'EEM',    fhType:'stock', proOnly:true},
 ];
 
 let sigApiKey = localStorage.getItem('te_apikey') || '';
@@ -3010,17 +3016,31 @@ function buildDemoCandles(inst, seed, dayOffset){
   return candles;
 }
 
-// ── Fetch from Twelve Data API ──
+// ── Fetch candles from Finnhub (forex/commodity/stock) or Binance (crypto) ──
 async function fetchTd(symbol){
-  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${sigTf}&outputsize=220&apikey=${sigApiKey}`;
+  const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
+  // Binance for crypto
+  if(inst?.bnSymbol){
+    const bnInterval = sigTf==='1day'?'1d':sigTf==='4h'?'4h':sigTf==='1week'?'1w':'1d';
+    const r=await fetch(`https://api.binance.com/api/v3/klines?symbol=${inst.bnSymbol}&interval=${bnInterval}&limit=250`);
+    if(!r.ok) throw new Error('Binance error');
+    const data=await r.json();
+    if(!Array.isArray(data)) throw new Error('No data returned');
+    return data.map(k=>({datetime:new Date(k[0]).toISOString(),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
+  }
+  // Finnhub for forex/commodity/stock/ETF/index
+  const fhSym = inst?.fhSymbol || (symbol.includes('/')?`OANDA:${symbol.replace('/','_')}`:symbol);
+  const isStock = inst?.fhType==='stock';
+  const res = sigTf==='1day'?'D':sigTf==='4h'?'240':sigTf==='1week'?'W':'D';
+  const to = Math.floor(Date.now()/1000);
+  const lookback = res==='D'?400:res==='W'?2800:105;
+  const from = to - lookback*86400;
+  const endpoint = isStock ? 'stock/candle' : 'forex/candle';
+  const url=`https://finnhub.io/api/v1/${endpoint}?symbol=${encodeURIComponent(fhSym)}&resolution=${res}&from=${from}&to=${to}&token=${sigApiKey}`;
   const r=await fetch(url);
   const d=await r.json();
-  if(d.status==='error') throw new Error(d.message||'API error');
-  if(!d.values) throw new Error('No data returned');
-  return d.values.reverse().map(v=>({
-    datetime:v.datetime, open:+v.open, high:+v.high, low:+v.low, close:+v.close,
-    volume:v.volume?+v.volume:0
-  }));
+  if(d.s!=='ok'||!Array.isArray(d.c)) throw new Error(d.error||'No data returned');
+  return d.c.map((_,i)=>({datetime:new Date(d.t[i]*1000).toISOString(),open:d.o[i],high:d.h[i],low:d.l[i],close:d.c[i],volume:d.v?.[i]??0}));
 }
 
 
@@ -3447,7 +3467,7 @@ function setProvider(p, btn){
   } else {
     keyRow.style.display='flex';
     input.value='';
-    input.placeholder=sigApiKey?'Twelve Data key saved — click Scan Markets':'Free key from twelvedata.com — 800 credits/day, Daily + 4H + 1W';
+    input.placeholder=sigApiKey?'Finnhub key saved — click Scan Markets':'Free key from finnhub.io — Daily + 4H + Weekly';
     tf4h.disabled=false; tf4h.title='';
     setApiStatus(sigApiKey?'ok':'demo');
   }
@@ -3458,15 +3478,15 @@ function saveApiKey(){
   sigApiKey=k; localStorage.setItem('te_apikey',k);
   setApiStatus('ok');
   document.getElementById('apiKeyInput').value='';
-  document.getElementById('apiKeyInput').placeholder='Twelve Data key saved — click Scan Markets';
+  document.getElementById('apiKeyInput').placeholder='Finnhub key saved — click Scan Markets';
   runScan();
 }
 function setApiStatus(s){
   const dot=document.getElementById('apiDot'), lbl=document.getElementById('apiLbl');
   if(dot) dot.className='api-dot '+(s==='ok'?'ok':s==='demo'?'demo':'err');
   if(lbl){
-    if(s==='ok') lbl.textContent='Twelve Data connected · Daily + 4H + Weekly · 800 credits/day';
-    else if(s==='demo') lbl.innerHTML='Demo Mode — connect a <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">Twelve Data</a> key for live signals';
+    if(s==='ok') lbl.textContent='Finnhub connected · Daily + 4H + Weekly · Crypto via Binance';
+    else if(s==='demo') lbl.innerHTML='Demo Mode — connect a <a href="https://finnhub.io" target="_blank" style="color:var(--blue)">Finnhub</a> key for live signals';
     else lbl.textContent='Connection error — check key and try again';
   }
   updateSigStatusBar();
@@ -4346,7 +4366,7 @@ async function saveAdminTdKey(){
   const key=input.value.trim();
   if(!key){ showToast('Enter a key first.','tl'); return; }
   status.textContent='Saving…';
-  const {error}=await sb.from('site_config').upsert({key:'twelve_data_key',value:key},{onConflict:'key'});
+  const {error}=await sb.from('site_config').upsert({key:'finnhub_key',value:key},{onConflict:'key'});
   if(error){ status.textContent='Error saving.'; showToast(error.message,'tl'); return; }
   input.value='';
   input.placeholder='Key saved ✓';
@@ -4356,55 +4376,52 @@ async function saveAdminTdKey(){
 
 async function loadApiUsage(){
   const el=document.getElementById('apiUsagePanel'); if(!el) return;
-  el.innerHTML='<div style="font-size:12px;color:var(--muted)">Loading…</div>';
+  el.innerHTML='<div style="font-size:12px;color:var(--muted)">Testing connection…</div>';
 
   // Get key from site_config (server-stored) or localStorage fallback
   let apiKey=sigApiKey;
   if(!apiKey){
-    const {data}=await sb.from('site_config').select('value').eq('key','twelve_data_key').single();
+    const {data}=await sb.from('site_config').select('value').eq('key','finnhub_key').single();
     apiKey=data?.value||'';
   }
   if(!apiKey){
-    el.innerHTML='<div style="font-size:12px;color:var(--muted)">No API key configured — save your Twelve Data key above first.</div>';
+    el.innerHTML='<div style="font-size:12px;color:var(--muted)">No API key configured — save your Finnhub key above first.</div>';
     return;
   }
 
   try{
-    const r=await fetch(`https://api.twelvedata.com/api_usage?apikey=${apiKey}`);
+    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=OANDA:EUR_USD&token=${apiKey}`);
     const d=await r.json();
-    if(!r.ok||d.code){ el.innerHTML=`<div style="font-size:12px;color:var(--red)">Error: ${d.message||'Could not fetch usage'}</div>`; return; }
-
-    const used=d.current_usage??0, limit=d.plan_limit??800, pct=limit>0?Math.min(100,used/limit*100):0;
-    const remaining=limit-used;
-    const barColor=pct<60?'var(--green)':pct<85?'#f59e0b':'var(--red)';
-    const resetTime=d.timestamp?new Date(d.timestamp+'Z').toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
-
+    if(!r.ok||d.error){
+      el.innerHTML=`<div style="font-size:12px;color:var(--red)">Connection failed: ${d.error||'Invalid key or quota exceeded'}</div>`;
+      return;
+    }
+    const price=d.c?.toFixed(5)||'—';
+    const change=d.d?.toFixed(5)||'—';
+    const pct=d.dp?.toFixed(3)||'—';
     el.innerHTML=`
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="background:rgba(34,197,94,.12);color:var(--green);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600">✓ Connected</span>
+        <span style="font-size:12px;color:var(--muted)">Finnhub API key is valid</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:22px;font-weight:800;color:var(--text)">${used.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Credits used today</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${price}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">EUR/USD price</div>
         </div>
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:22px;font-weight:800;color:${barColor}">${remaining.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Credits remaining</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${change}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Change</div>
         </div>
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:22px;font-weight:800;color:var(--text)">${limit.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Daily limit · ${(d.plan_category||'free').toUpperCase()}</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${pct}%</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Change %</div>
         </div>
       </div>
-      <div style="margin-bottom:6px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
-        <span>${pct.toFixed(1)}% used</span>
-        <span>Resets daily · last checked ${resetTime}</span>
-      </div>
-      <div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden">
-        <div style="height:100%;border-radius:4px;background:${barColor};width:${pct}%;transition:width .4s"></div>
-      </div>
-      ${pct>=85?`<div style="margin-top:10px;font-size:12px;color:#f59e0b;background:rgba(245,158,11,.08);border-radius:6px;padding:8px 10px">⚠ Running low — ${remaining} credits left. Each full scan uses ~${INSTRUMENTS?INSTRUMENTS.length*2:'32'} credits (${INSTRUMENTS?INSTRUMENTS.length:'16'} instruments × 2 timeframes).</div>`:''}
+      <div style="margin-top:10px;font-size:11px;color:var(--muted)">Forex &amp; commodity data via Finnhub · Crypto data via Binance (no key required)</div>
     `;
   }catch(e){
-    el.innerHTML=`<div style="font-size:12px;color:var(--red)">Failed to fetch usage: ${e.message}</div>`;
+    el.innerHTML=`<div style="font-size:12px;color:var(--red)">Failed to reach Finnhub: ${e.message}</div>`;
   }
 }
 
@@ -4450,7 +4467,7 @@ async function loadAdminPanel(){
   const trCat = document.getElementById('trAdd-cat');
   if(trCat && !trCat._hinted){ trCat._hinted=true; trCat.addEventListener('change',()=>{ const u=trCat.value==='forex'?'pips':trCat.value==='crypto'?'%':'pts'; const h=document.getElementById('trAdd-unit-hint'); if(h) h.textContent='('+u+')'; }); }
   // Pre-fill key indicator if already set
-  sb.from('site_config').select('value').eq('key','twelve_data_key').single()
+  sb.from('site_config').select('value').eq('key','finnhub_key').single()
     .then(({data})=>{ if(data?.value){ const inp=document.getElementById('adminTdKey'); if(inp) inp.placeholder='Key saved — paste to replace'; }});
   // Reset per-tab caches so they reload from Supabase on next open
   adminPlanConfig = null;

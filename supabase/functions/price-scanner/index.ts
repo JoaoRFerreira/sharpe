@@ -33,24 +33,24 @@ async function dbInsert(table: string, rows: unknown[]): Promise<void> {
 }
 
 // ── Instrument catalogue ────────────────────────────────────────
-interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean }
+interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean; fhSymbol?:string; bnSymbol?:string }
 const INSTRUMENTS: Inst[] = [
-  { symbol:'EUR/USD', type:'forex',     base:1.08,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'GBP/USD', type:'forex',     base:1.27,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'USD/JPY', type:'forex',     base:149,   mult:100,   dec:3, unit:'pips' },
-  { symbol:'AUD/USD', type:'forex',     base:0.65,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'USD/CAD', type:'forex',     base:1.36,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'NZD/USD', type:'forex',     base:0.60,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'USD/CHF', type:'forex',     base:0.90,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'EUR/GBP', type:'forex',     base:0.85,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'EUR/JPY', type:'forex',     base:160,   mult:100,   dec:3, unit:'pips' },
-  { symbol:'GBP/JPY', type:'forex',     base:187,   mult:100,   dec:3, unit:'pips' },
-  { symbol:'EUR/CHF', type:'forex',     base:0.97,  mult:10000, dec:5, unit:'pips' },
-  { symbol:'AUD/JPY', type:'forex',     base:97,    mult:100,   dec:3, unit:'pips' },
-  { symbol:'XAU/USD', type:'commodity', base:1980,  mult:10,    dec:2, unit:'pts',  proOnly:true },
-  { symbol:'XAG/USD', type:'commodity', base:24,    mult:100,   dec:3, unit:'pts',  proOnly:true },
-  { symbol:'BTC/USD', type:'crypto',    base:42000, mult:1,     dec:0, unit:'pts',  proOnly:true },
-  { symbol:'ETH/USD', type:'crypto',    base:2200,  mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'EUR/USD', type:'forex',     base:1.08,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_USD' },
+  { symbol:'GBP/USD', type:'forex',     base:1.27,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:GBP_USD' },
+  { symbol:'USD/JPY', type:'forex',     base:149,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:USD_JPY' },
+  { symbol:'AUD/USD', type:'forex',     base:0.65,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:AUD_USD' },
+  { symbol:'USD/CAD', type:'forex',     base:1.36,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:USD_CAD' },
+  { symbol:'NZD/USD', type:'forex',     base:0.60,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:NZD_USD' },
+  { symbol:'USD/CHF', type:'forex',     base:0.90,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:USD_CHF' },
+  { symbol:'EUR/GBP', type:'forex',     base:0.85,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_GBP' },
+  { symbol:'EUR/JPY', type:'forex',     base:160,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:EUR_JPY' },
+  { symbol:'GBP/JPY', type:'forex',     base:187,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:GBP_JPY' },
+  { symbol:'EUR/CHF', type:'forex',     base:0.97,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_CHF' },
+  { symbol:'AUD/JPY', type:'forex',     base:97,    mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:AUD_JPY' },
+  { symbol:'XAU/USD', type:'commodity', base:1980,  mult:10,    dec:2, unit:'pts',  proOnly:true, fhSymbol:'OANDA:XAU_USD' },
+  { symbol:'XAG/USD', type:'commodity', base:24,    mult:100,   dec:3, unit:'pts',  proOnly:true, fhSymbol:'OANDA:XAG_USD' },
+  { symbol:'BTC/USD', type:'crypto',    base:42000, mult:1,     dec:0, unit:'pts',  proOnly:true, bnSymbol:'BTCUSDT' },
+  { symbol:'ETH/USD', type:'crypto',    base:2200,  mult:1,     dec:2, unit:'pts',  proOnly:true, bnSymbol:'ETHUSDT' },
 ]
 
 // ── Technical analysis ─────────────────────────────────────────
@@ -221,26 +221,62 @@ function analyseCandles(candles: Candle[], inst: Inst) {
   }
 }
 
-// ── Twelve Data helpers ─────────────────────────────────────────
-async function fetchPrices(apiKey: string, symbols: string[]): Promise<Record<string,number>> {
-  if (!apiKey||!symbols.length) return {}
-  const url=`https://api.twelvedata.com/price?symbol=${symbols.map(encodeURIComponent).join(',')}&apikey=${apiKey}`
-  const r=await fetch(url); if(!r.ok) return {}
-  const data=await r.json()
-  const out:Record<string,number>={}
-  if(symbols.length===1){ if(data.price) out[symbols[0]]=parseFloat(data.price) }
-  else { for(const sym of symbols) if(data[sym]?.price) out[sym]=parseFloat(data[sym].price) }
+// ── Finnhub helpers (forex + commodity) ───────────────────────
+async function fetchFinnhubPrices(apiKey: string, insts: Inst[]): Promise<Record<string,number>> {
+  if (!apiKey || !insts.length) return {}
+  const out: Record<string,number> = {}
+  await Promise.all(insts.map(async inst => {
+    if (!inst.fhSymbol) return
+    try {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(inst.fhSymbol)}&token=${apiKey}`)
+      if (!r.ok) return
+      const d = await r.json()
+      if (d.c && d.c > 0) out[inst.symbol] = d.c
+    } catch { /* skip */ }
+  }))
   return out
 }
 
-async function fetchCandles(symbol: string, interval: string, apiKey: string): Promise<Candle[]|null> {
-  const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=250&apikey=${apiKey}`
-  const r=await fetch(url); if(!r.ok) return null
-  const data=await r.json()
-  if(!data.values||!Array.isArray(data.values)) return null
-  return (data.values as Record<string,string>[]).reverse().map(v=>({
-    open:parseFloat(v.open),high:parseFloat(v.high),low:parseFloat(v.low),
-    close:parseFloat(v.close),volume:parseFloat(v.volume||'0')
+async function fetchFinnhubCandles(fhSymbol: string, resolution: string, apiKey: string): Promise<Candle[]|null> {
+  const to = Math.floor(Date.now() / 1000)
+  const lookbackDays = resolution === 'D' ? 400 : resolution === 'W' ? 2800 : 105
+  const from = to - lookbackDays * 86400
+  const url = `https://finnhub.io/api/v1/forex/candle?symbol=${encodeURIComponent(fhSymbol)}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`
+  const r = await fetch(url); if (!r.ok) return null
+  const d = await r.json()
+  if (d.s !== 'ok' || !Array.isArray(d.c)) return null
+  return (d.c as number[]).map((_, i: number) => ({
+    open: d.o[i], high: d.h[i], low: d.l[i], close: d.c[i], volume: d.v?.[i] ?? 0
+  }))
+}
+
+// ── Binance helpers (crypto) ───────────────────────────────────
+async function fetchBinancePrices(insts: Inst[]): Promise<Record<string,number>> {
+  if (!insts.length) return {}
+  const out: Record<string,number> = {}
+  await Promise.all(insts.map(async inst => {
+    if (!inst.bnSymbol) return
+    try {
+      const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`)
+      if (!r.ok) return
+      const d = await r.json()
+      if (d.price) out[inst.symbol] = parseFloat(d.price)
+    } catch { /* skip */ }
+  }))
+  return out
+}
+
+async function fetchBinanceCandles(bnSymbol: string, interval: string): Promise<Candle[]|null> {
+  const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=${bnSymbol}&interval=${interval}&limit=250`)
+  if (!r.ok) return null
+  const data = await r.json()
+  if (!Array.isArray(data)) return null
+  return data.map((k: unknown[]) => ({
+    open:  parseFloat(k[1] as string),
+    high:  parseFloat(k[2] as string),
+    low:   parseFloat(k[3] as string),
+    close: parseFloat(k[4] as string),
+    volume: parseFloat(k[5] as string)
   }))
 }
 
@@ -257,74 +293,85 @@ Deno.serve(async (req: Request) => {
   if (req.method==='OPTIONS') return new Response(null,{headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type'}})
 
   const startMs = Date.now()
-  const reqUrl=new URL(req.url)
-  const pricesOnly=reqUrl.searchParams.get('pricesOnly')==='true'
+  const reqUrl = new URL(req.url)
+  const pricesOnly = reqUrl.searchParams.get('pricesOnly') === 'true'
 
-  // Read Twelve Data key
-  const cfgRows=await dbGet('site_config','select=value&key=eq.twelve_data_key&limit=1') as {value:string}[]
-  const apiKey=cfgRows[0]?.value??''
+  // Read Finnhub key
+  const cfgRows = await dbGet('site_config', 'select=value&key=eq.finnhub_key&limit=1') as {value:string}[]
+  const apiKey = cfgRows[0]?.value ?? ''
 
-  // Fetch + upsert prices
-  const priceMap=await fetchPrices(apiKey,INSTRUMENTS.map(i=>i.symbol))
-  const priceCount=Object.keys(priceMap).length
-  if(priceCount>0){
-    const rows=Object.entries(priceMap).map(([symbol,price])=>({symbol,price,change_pct:0,updated_at:new Date().toISOString()}))
-    await dbUpsert('live_prices',rows,'symbol')
+  const fhInsts = INSTRUMENTS.filter(i => i.fhSymbol)
+  const bnInsts = INSTRUMENTS.filter(i => i.bnSymbol)
+
+  // Fetch prices: Finnhub for forex/commodity, Binance for crypto (no key needed)
+  const [fhPrices, bnPrices] = await Promise.all([
+    fetchFinnhubPrices(apiKey, fhInsts),
+    fetchBinancePrices(bnInsts)
+  ])
+  const priceMap = { ...fhPrices, ...bnPrices }
+  const priceCount = Object.keys(priceMap).length
+
+  if (priceCount > 0) {
+    const rows = Object.entries(priceMap).map(([symbol,price]) => ({symbol,price,change_pct:0,updated_at:new Date().toISOString()}))
+    await dbUpsert('live_prices', rows, 'symbol')
   }
 
-  if(pricesOnly){
+  if (pricesOnly) {
     await writeLog({run_type:'prices',prices_updated:priceCount,duration_ms:Date.now()-startMs,status:'ok'})
     return new Response(JSON.stringify({ok:true,prices:priceCount}),{headers:{'Content-Type':'application/json'}})
   }
 
-  if(!apiKey){
-    await writeLog({run_type:'full',status:'error',error_msg:'No Twelve Data API key configured',duration_ms:Date.now()-startMs})
-    return new Response(JSON.stringify({ok:false,error:'No Twelve Data API key configured'}),{status:400,headers:{'Content-Type':'application/json'}})
-  }
+  // Full scan — crypto runs even without a Finnhub key (Binance is free)
+  const batchId = crypto.randomUUID(), scannedAt = new Date().toISOString()
+  const signalRows: unknown[] = []
+  let scanError: string|null = null
 
-  // Full scan
-  const batchId=crypto.randomUUID(), scannedAt=new Date().toISOString()
-  const signalRows:unknown[]=[]
-  let scanError:string|null=null
-
-  try{
-    for(const {tf,interval} of [{tf:'daily',interval:'1day'},{tf:'4h',interval:'4h'}]){
-      for(const inst of INSTRUMENTS){
-        try{
-          const candles=await fetchCandles(inst.symbol,interval,apiKey)
-          if(!candles) continue
-          const result=analyseCandles(candles,inst)
-          if(!result) continue
-          const {overview,signal}=result
+  try {
+    for (const {tf, fhRes, bnInterval} of [
+      {tf:'daily', fhRes:'D',   bnInterval:'1d'},
+      {tf:'4h',    fhRes:'240', bnInterval:'4h'}
+    ]) {
+      for (const inst of INSTRUMENTS) {
+        try {
+          let candles: Candle[]|null = null
+          if (inst.fhSymbol && apiKey) {
+            candles = await fetchFinnhubCandles(inst.fhSymbol, fhRes, apiKey)
+          } else if (inst.bnSymbol) {
+            candles = await fetchBinanceCandles(inst.bnSymbol, bnInterval)
+          }
+          if (!candles) continue
+          const result = analyseCandles(candles, inst)
+          if (!result) continue
+          const {overview, signal} = result
           signalRows.push({
-            batch_id:batchId,scanned_at:scannedAt,timeframe:tf,symbol:inst.symbol,
-            inst_type:inst.type,price:overview.price,price_change:overview.change,
-            trend:overview.trend,rsi:overview.rsi,atr_pips:overview.atrPips,
-            direction:signal?.dir??null,pattern:signal?.pat??null,
-            entry:signal?.entry??null,stop_loss:signal?.stop??null,
-            tp1:signal?.t1??null,tp2:signal?.t2??null,rr:signal?.rr??null,
-            risk_pips:signal?.riskPips??null,confidence:signal?.conf??null,
-            structure:signal?.structure??null,at_key_level:signal?.atKeyLevel??false,
-            nearest_level:signal?.nearestLevel??null,vol_ratio:signal?.volRatio??null,
-            vol_declining:signal?.volDeclining??false,reasons:signal?.reasons??[],
-            inst_unit:inst.unit,inst_mult:inst.mult,inst_dec:inst.dec,pro_only:inst.proOnly??false
+            batch_id:batchId, scanned_at:scannedAt, timeframe:tf, symbol:inst.symbol,
+            inst_type:inst.type, price:overview.price, price_change:overview.change,
+            trend:overview.trend, rsi:overview.rsi, atr_pips:overview.atrPips,
+            direction:signal?.dir??null, pattern:signal?.pat??null,
+            entry:signal?.entry??null, stop_loss:signal?.stop??null,
+            tp1:signal?.t1??null, tp2:signal?.t2??null, rr:signal?.rr??null,
+            risk_pips:signal?.riskPips??null, confidence:signal?.conf??null,
+            structure:signal?.structure??null, at_key_level:signal?.atKeyLevel??false,
+            nearest_level:signal?.nearestLevel??null, vol_ratio:signal?.volRatio??null,
+            vol_declining:signal?.volDeclining??false, reasons:signal?.reasons??[],
+            inst_unit:inst.unit, inst_mult:inst.mult, inst_dec:inst.dec, pro_only:inst.proOnly??false
           })
-        }catch(e){ console.error(`scan ${inst.symbol} ${tf}:`,e) }
+        } catch(e) { console.error(`scan ${inst.symbol} ${tf}:`, e) }
       }
     }
-    if(signalRows.length>0) await dbInsert('signals',signalRows)
-  }catch(e){
+    if (signalRows.length > 0) await dbInsert('signals', signalRows)
+  } catch(e) {
     scanError = e instanceof Error ? e.message : String(e)
   }
 
   await writeLog({
-    run_type:'full',batch_id:batchId,
-    signals_generated:signalRows.length,prices_updated:priceCount,
+    run_type:'full', batch_id:batchId,
+    signals_generated:signalRows.length, prices_updated:priceCount,
     duration_ms:Date.now()-startMs,
     status:scanError?'error':'ok',
     error_msg:scanError
   })
 
-  if(scanError) return new Response(JSON.stringify({ok:false,error:scanError}),{status:500,headers:{'Content-Type':'application/json'}})
+  if (scanError) return new Response(JSON.stringify({ok:false,error:scanError}),{status:500,headers:{'Content-Type':'application/json'}})
   return new Response(JSON.stringify({ok:true,signals:signalRows.length,batch:batchId,scanned_at:scannedAt}),{headers:{'Content-Type':'application/json'}})
 })
