@@ -264,6 +264,12 @@ textarea{resize:vertical;min-height:56px}
 .tf-btn.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue)}
 .ovw-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .market-strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.sig-split{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:start}
+.sig-split-left{position:sticky;top:72px;max-height:calc(100vh - 100px);overflow-y:auto;padding-right:4px}
+.sig-split-left::-webkit-scrollbar{width:4px}.sig-split-left::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sig-split-right{min-width:0}
+.sig-split-left .market-strip{flex-direction:column;gap:6px}
+.sig-split-left .mkt-pill{min-width:0;width:100%}
 .mkt-pill{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:130px;transition:border-color .2s;cursor:default}
 .mkt-pill.bull{border-color:rgba(63,185,80,.25)}.mkt-pill.bear{border-color:rgba(248,81,73,.25)}
 .mp-sym{font-size:13px;font-weight:600;margin-bottom:3px}
@@ -487,6 +493,8 @@ textarea{resize:vertical;min-height:56px}
   .sig-ctrl-bar{flex-direction:column;align-items:flex-start;gap:10px;padding:12px}
   .sig-fresh{width:100%}
   .sig-ctrl-right{margin-left:0;width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px}
+  .sig-split{grid-template-columns:1fr;gap:0}
+  .sig-split-left{position:static;max-height:none;overflow-y:visible;padding-right:0;margin-bottom:24px}
   .sig-grid{grid-template-columns:1fr}
   .mkt-pill{min-width:100px}
   .sig-prices{grid-template-columns:1fr 1fr}

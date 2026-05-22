@@ -363,16 +363,22 @@
   </div>
   <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
 
-  <!-- Market Overview Pills -->
-  <div class="ovw-label">Market Overview</div>
-  <div class="market-strip" id="mktStrip">
-    <div style="color:var(--muted);font-size:12px;padding:8px 0">Run a scan to populate market overview.</div>
-  </div>
-
-  <!-- Signal Cards -->
-  <div class="ovw-label" style="margin-top:8px">Active Signals</div>
-  <div id="sigContainer">
-    <div class="no-sig-msg">Loading signals…</div>
+  <!-- Side-by-side split: Overview left, Signals right -->
+  <div class="sig-split">
+    <!-- Left: Market Overview -->
+    <div class="sig-split-left">
+      <div class="ovw-label">Market Overview</div>
+      <div id="mktStrip">
+        <div style="color:var(--muted);font-size:12px;padding:8px 0">Run a scan to populate market overview.</div>
+      </div>
+    </div>
+    <!-- Right: Active Signals -->
+    <div class="sig-split-right">
+      <div class="ovw-label">Active Signals</div>
+      <div id="sigContainer">
+        <div class="no-sig-msg">Loading signals…</div>
+      </div>
+    </div>
   </div>
 </section>
 
