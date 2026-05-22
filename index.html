@@ -191,6 +191,10 @@ textarea{resize:vertical;min-height:56px}
 .toggle-sl::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .toggle-sw input:checked+.toggle-sl{background:var(--blue)}
 .toggle-sw input:checked+.toggle-sl::before{transform:translateX(18px)}
+.toggle-sw.sm{width:32px;height:18px}
+.toggle-sw.sm .toggle-sl{border-radius:9px}
+.toggle-sw.sm .toggle-sl::before{width:12px;height:12px;left:3px;top:3px}
+.toggle-sw.sm input:checked+.toggle-sl::before{transform:translateX(14px)}
 .usr-toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .usr-toolbar input{flex:1;min-width:200px;max-width:280px}
 .usr-stat{font-size:12px;color:var(--muted);white-space:nowrap}
@@ -2149,6 +2153,9 @@ textarea{resize:vertical;min-height:56px}
   <div class="admin-tabs">
     <button class="atab active" onclick="switchAdminTab('overview',this)">Overview</button>
     <button class="atab" onclick="switchAdminTab('users',this)">Users</button>
+    <button class="atab" onclick="switchAdminTab('plans',this)">Plans & Pricing</button>
+    <button class="atab" onclick="switchAdminTab('features',this)">Plan Features</button>
+    <button class="atab" onclick="switchAdminTab('notifications',this)">Notifications</button>
     <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
@@ -2184,6 +2191,203 @@ textarea{resize:vertical;min-height:56px}
         </tr></thead>
         <tbody id="admin-users"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Plans & Pricing -->
+  <div class="admin-pane" id="apane-plans">
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        Plans &amp; Pricing
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Configure plan names, prices and descriptions. Changes are saved to Supabase and apply site-wide.</div>
+      <div id="plans-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+        <!-- rendered by renderAdminPlans() -->
+      </div>
+      <div style="margin-top:18px;display:flex;align-items:center;gap:12px">
+        <button class="btn btn-primary" onclick="saveAdminPlans()">Save Plans</button>
+        <span id="planSaveStatus" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan Features -->
+  <div class="admin-pane" id="apane-features">
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Plan Feature Matrix
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:18px">Toggle which features each plan can access. Numeric fields set usage caps. Changes are applied instantly after saving.</div>
+      <div class="table-wrap" style="overflow-x:auto">
+        <table id="features-table" style="min-width:560px">
+          <thead>
+            <tr>
+              <th style="width:200px">Feature</th>
+              <th style="text-align:center">Free</th>
+              <th style="text-align:center">Trader</th>
+              <th style="text-align:center">Pro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Journal</td></tr>
+            <tr>
+              <td>Max Trades</td>
+              <td style="text-align:center"><input type="number" id="fl_free_maxTrades" min="1" style="width:60px;text-align:center"></td>
+              <td style="text-align:center"><span style="font-size:11px;color:var(--muted)">Unlimited</span></td>
+              <td style="text-align:center"><span style="font-size:11px;color:var(--muted)">Unlimited</span></td>
+            </tr>
+            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Market Data</td></tr>
+            <tr>
+              <td>Live Data</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_liveData"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_liveData" checked><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_liveData" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Market News</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_news" checked><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_news" checked><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_news" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Signals & Ideas</td></tr>
+            <tr>
+              <td>Signal Scanner</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_signals"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_signals" checked><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_signals" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Weekly TF Signals</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_weeklyTf"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_weeklyTf"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_weeklyTf" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Auto-Log Signals</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_autoLog"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_autoLog" checked><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_autoLog" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Trade Ideas / Day</td>
+              <td style="text-align:center"><input type="number" id="fl_free_ideasCount" min="0" style="width:60px;text-align:center"></td>
+              <td style="text-align:center"><input type="number" id="fl_ess_ideasCount" min="0" style="width:60px;text-align:center"></td>
+              <td style="text-align:center"><input type="number" id="fl_pro_ideasCount" min="0" style="width:60px;text-align:center"></td>
+            </tr>
+            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Integrations & Export</td></tr>
+            <tr>
+              <td>OANDA Integration</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_oanda"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_oanda"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_oanda" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Data Export</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_export"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_export"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_export" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Webhooks</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_webhooks"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_webhooks"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_webhooks" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:18px;display:flex;align-items:center;gap:12px">
+        <button class="btn btn-primary" onclick="saveAdminFeatures()">Save Feature Matrix</button>
+        <span id="featureSaveStatus" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="admin-pane" id="apane-notifications">
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        Signal Alert Thresholds
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Default thresholds applied when users enable auto-log or webhook notifications. Users can override these in their own settings.</div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Auto-log confidence threshold</div>
+          <div class="cfg-row-desc">Signals above this confidence % are automatically logged to the journal.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="notifAutoLogConf" min="50" max="95" step="5" value="75" style="width:120px" oninput="document.getElementById('notifAutoLogConfVal').textContent=this.value+'%'">
+          <span id="notifAutoLogConfVal" style="font-size:13px;font-weight:600;color:var(--text);min-width:36px">75%</span>
+        </div>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Webhook notification threshold</div>
+          <div class="cfg-row-desc">Signals above this confidence % trigger webhook / email alerts.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="notifWebhookConf" min="50" max="95" step="5" value="75" style="width:120px" oninput="document.getElementById('notifWebhookConfVal').textContent=this.value+'%'">
+          <span id="notifWebhookConfVal" style="font-size:13px;font-weight:600;color:var(--text);min-width:36px">75%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        System Email Defaults
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Default sender identity for outbound alert emails (using Resend). Users can override the recipient in their own settings.</div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Default sender name</div>
+          <div class="cfg-row-desc">Display name shown in the "From:" field.</div>
+        </div>
+        <input type="text" id="notifFromName" placeholder="Sharpe Signals" style="width:200px">
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Default sender address</div>
+          <div class="cfg-row-desc">Must be a verified Resend domain address.</div>
+        </div>
+        <input type="text" id="notifFromEmail" placeholder="signals@yourdomain.com" style="width:220px">
+      </div>
+    </div>
+
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Notification Channels
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Email alerts enabled by default</div>
+          <div class="cfg-row-desc">New users start with email alerts turned on.</div>
+        </div>
+        <label class="toggle-sw"><input type="checkbox" id="notifEmailDefault"><span class="toggle-sl"></span></label>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">Webhook alerts enabled by default</div>
+          <div class="cfg-row-desc">New users start with webhook push enabled.</div>
+        </div>
+        <label class="toggle-sw"><input type="checkbox" id="notifWebhookDefault"><span class="toggle-sl"></span></label>
+      </div>
+      <div class="cfg-row">
+        <div class="cfg-row-info">
+          <div class="cfg-row-label">In-app toast notifications</div>
+          <div class="cfg-row-desc">Show a toast when a new signal is detected during an active session.</div>
+        </div>
+        <label class="toggle-sw"><input type="checkbox" id="notifToastDefault" checked><span class="toggle-sl"></span></label>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;padding:0 2px">
+      <button class="btn btn-primary" onclick="saveAdminNotifications()">Save Notification Settings</button>
+      <span id="notifSaveStatus" style="font-size:11px;color:var(--muted)"></span>
     </div>
   </div>
 
@@ -5397,6 +5601,10 @@ async function loadAdminPanel(){
   loadSiteSettings();
   loadAlertSettings();
   loadAdminScanStatus();
+  // Reset per-tab caches so they reload from Supabase on next open
+  adminPlanConfig = null;
+  adminFeatureConfig = null;
+  adminNotifConfig = null;
 
   const [{ data: users, error }, { data: tradeRows }] = await Promise.all([
     sb.from('profiles').select('id,email,plan,is_admin,created_at,status').order('created_at',{ascending:false}),
@@ -5605,6 +5813,184 @@ function switchAdminTab(name, btn){
   if(btn) btn.classList.add('active');
   const pane = document.getElementById('apane-'+name);
   if(pane) pane.classList.add('active');
+  if(name==='plans') loadAdminPlans();
+  if(name==='features') loadAdminFeatures();
+  if(name==='notifications') loadAdminNotifications();
+}
+
+// ── ADMIN: Plans & Pricing ────────────────────────────────────────
+const DEFAULT_PLAN_CONFIG = {
+  free:      { name:'Starter',  price:0,  priceAnnual:0,  description:'Build the habit. No card needed.',       trialDays:0  },
+  essential: { name:'Trader',   price:15, priceAnnual:12, description:'Everything you need to trade consistently.', trialDays:7 },
+  pro:       { name:'Pro',      price:39, priceAnnual:31, description:'Full automation. Every market. Every edge.', trialDays:7 }
+};
+let adminPlanConfig = null;
+
+async function loadAdminPlans(){
+  if(!adminPlanConfig){
+    const { data } = await sb.from('site_config').select('value').eq('key','plan_config').single();
+    adminPlanConfig = data?.value ? JSON.parse(data.value) : JSON.parse(JSON.stringify(DEFAULT_PLAN_CONFIG));
+  }
+  renderAdminPlans();
+}
+
+function renderAdminPlans(){
+  const cfg = adminPlanConfig || DEFAULT_PLAN_CONFIG;
+  const planKeys = ['free','essential','pro'];
+  const planColors = { free:'var(--text)', essential:'var(--blue)', pro:'var(--purple)' };
+  document.getElementById('plans-grid').innerHTML = planKeys.map(key => {
+    const p = cfg[key];
+    return `
+    <div class="cfg-card" style="margin:0;padding:18px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:${planColors[key]};margin-bottom:12px">${key.toUpperCase()}</div>
+      <div class="cfg-row" style="padding:6px 0;border:none;margin-bottom:8px">
+        <div class="cfg-row-info"><div class="cfg-row-label">Plan name</div></div>
+        <input type="text" id="plan_${key}_name" value="${p.name||''}" style="width:110px">
+      </div>
+      <div class="cfg-row" style="padding:6px 0;border:none;margin-bottom:8px">
+        <div class="cfg-row-info"><div class="cfg-row-label">Monthly price ($)</div></div>
+        <input type="number" id="plan_${key}_price" value="${p.price||0}" min="0" style="width:70px">
+      </div>
+      <div class="cfg-row" style="padding:6px 0;border:none;margin-bottom:8px">
+        <div class="cfg-row-info"><div class="cfg-row-label">Annual price ($)</div></div>
+        <input type="number" id="plan_${key}_priceAnnual" value="${p.priceAnnual||0}" min="0" style="width:70px">
+      </div>
+      <div class="cfg-row" style="padding:6px 0;border:none;margin-bottom:8px">
+        <div class="cfg-row-info"><div class="cfg-row-label">Trial days</div></div>
+        <input type="number" id="plan_${key}_trialDays" value="${p.trialDays||0}" min="0" style="width:70px">
+      </div>
+      <div style="margin-top:10px">
+        <div class="cfg-row-label" style="margin-bottom:4px">Description</div>
+        <textarea id="plan_${key}_desc" rows="2" style="width:100%;box-sizing:border-box;font-size:12px;resize:vertical">${p.description||''}</textarea>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveAdminPlans(){
+  const planKeys = ['free','essential','pro'];
+  const cfg = {};
+  planKeys.forEach(key => {
+    cfg[key] = {
+      name:        document.getElementById(`plan_${key}_name`)?.value.trim() || '',
+      price:       Number(document.getElementById(`plan_${key}_price`)?.value || 0),
+      priceAnnual: Number(document.getElementById(`plan_${key}_priceAnnual`)?.value || 0),
+      trialDays:   Number(document.getElementById(`plan_${key}_trialDays`)?.value || 0),
+      description: document.getElementById(`plan_${key}_desc`)?.value.trim() || ''
+    };
+  });
+  const { error } = await sb.from('site_config').upsert({ key:'plan_config', value: JSON.stringify(cfg) }, { onConflict:'key' });
+  const status = document.getElementById('planSaveStatus');
+  if(error){ showToast('Save failed: '+error.message,'tl'); return; }
+  adminPlanConfig = cfg;
+  if(status){ status.textContent='Saved ✓'; setTimeout(()=>status.textContent='',2500); }
+  showToast('Plan config saved','tw');
+}
+
+// ── ADMIN: Plan Features ──────────────────────────────────────────
+const FL_TOGGLES = ['liveData','signals','weeklyTf','autoLog','news','oanda','export','webhooks'];
+const FL_NUMBERS  = ['ideasCount'];
+let adminFeatureConfig = null;
+
+async function loadAdminFeatures(){
+  if(!adminFeatureConfig){
+    const { data } = await sb.from('site_config').select('value').eq('key','plan_limits').single();
+    adminFeatureConfig = data?.value ? JSON.parse(data.value) : null;
+  }
+  const cfg = adminFeatureConfig || PLAN_LIMITS;
+  // Populate form
+  ['free','essential','pro'].forEach(plan => {
+    const p = cfg[plan];
+    if(!p) return;
+    FL_TOGGLES.forEach(feat => {
+      const el = document.getElementById(`fl_${plan==='essential'?'ess':plan}_${feat}`);
+      if(el) el.checked = !!p[feat];
+    });
+    const mtEl = document.getElementById(`fl_free_maxTrades`);
+    if(plan==='free' && mtEl) mtEl.value = p.maxTrades===Infinity?50:p.maxTrades;
+    FL_NUMBERS.forEach(feat => {
+      const el = document.getElementById(`fl_${plan==='essential'?'ess':plan}_${feat}`);
+      if(el) el.value = p[feat]||0;
+    });
+  });
+}
+
+async function saveAdminFeatures(){
+  function readPlan(key){
+    const k = key==='essential'?'ess':key;
+    const obj = {};
+    FL_TOGGLES.forEach(feat => {
+      const el = document.getElementById(`fl_${k}_${feat}`);
+      if(el) obj[feat] = el.checked;
+    });
+    FL_NUMBERS.forEach(feat => {
+      const el = document.getElementById(`fl_${k}_${feat}`);
+      if(el) obj[feat] = Number(el.value)||0;
+    });
+    if(key==='free'){
+      const mtEl = document.getElementById('fl_free_maxTrades');
+      obj.maxTrades = mtEl ? Number(mtEl.value)||50 : 50;
+    } else {
+      obj.maxTrades = Infinity;
+    }
+    obj.instruments = key==='pro' ? 'all' : (PLAN_LIMITS[key]?.instruments||[]);
+    return obj;
+  }
+  const cfg = { free: readPlan('free'), essential: readPlan('essential'), pro: readPlan('pro') };
+  const { error } = await sb.from('site_config').upsert({ key:'plan_limits', value: JSON.stringify(cfg, (k,v)=>v===Infinity?'Infinity':v) }, { onConflict:'key' });
+  const status = document.getElementById('featureSaveStatus');
+  if(error){ showToast('Save failed: '+error.message,'tl'); return; }
+  // Apply to runtime PLAN_LIMITS
+  adminFeatureConfig = cfg;
+  ['free','essential','pro'].forEach(plan => {
+    if(PLAN_LIMITS[plan]) Object.assign(PLAN_LIMITS[plan], cfg[plan]);
+  });
+  if(status){ status.textContent='Saved & applied ✓'; setTimeout(()=>status.textContent='',2500); }
+  showToast('Feature matrix saved','tw');
+}
+
+// ── ADMIN: Notifications ──────────────────────────────────────────
+let adminNotifConfig = null;
+const DEFAULT_NOTIF = { autoLogConf:75, webhookConf:75, fromName:'Sharpe Signals', fromEmail:'', emailDefault:false, webhookDefault:false, toastDefault:true };
+
+async function loadAdminNotifications(){
+  if(!adminNotifConfig){
+    const { data } = await sb.from('site_config').select('value').eq('key','notif_config').single();
+    adminNotifConfig = data?.value ? JSON.parse(data.value) : { ...DEFAULT_NOTIF };
+  }
+  const c = adminNotifConfig;
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
+  const setChk = (id, val) => { const el=document.getElementById(id); if(el) el.checked=!!val; };
+  set('notifAutoLogConf', c.autoLogConf||75);
+  set('notifWebhookConf', c.webhookConf||75);
+  set('notifFromName', c.fromName||'');
+  set('notifFromEmail', c.fromEmail||'');
+  setChk('notifEmailDefault', c.emailDefault);
+  setChk('notifWebhookDefault', c.webhookDefault);
+  setChk('notifToastDefault', c.toastDefault!==false);
+  const alv = document.getElementById('notifAutoLogConfVal');
+  const wv  = document.getElementById('notifWebhookConfVal');
+  if(alv) alv.textContent=(c.autoLogConf||75)+'%';
+  if(wv)  wv.textContent=(c.webhookConf||75)+'%';
+}
+
+async function saveAdminNotifications(){
+  const get = id => document.getElementById(id);
+  const cfg = {
+    autoLogConf:    Number(get('notifAutoLogConf')?.value||75),
+    webhookConf:    Number(get('notifWebhookConf')?.value||75),
+    fromName:       get('notifFromName')?.value.trim()||'',
+    fromEmail:      get('notifFromEmail')?.value.trim()||'',
+    emailDefault:   get('notifEmailDefault')?.checked||false,
+    webhookDefault: get('notifWebhookDefault')?.checked||false,
+    toastDefault:   get('notifToastDefault')?.checked!==false
+  };
+  const { error } = await sb.from('site_config').upsert({ key:'notif_config', value: JSON.stringify(cfg) }, { onConflict:'key' });
+  const status = document.getElementById('notifSaveStatus');
+  if(error){ showToast('Save failed: '+error.message,'tl'); return; }
+  adminNotifConfig = cfg;
+  if(status){ status.textContent='Saved ✓'; setTimeout(()=>status.textContent='',2500); }
+  showToast('Notification settings saved','tw');
 }
 
 function saveSiteSettings(){
