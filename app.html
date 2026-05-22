@@ -3438,8 +3438,6 @@ async function oandaPlaceOrder(signal){
 }
 
 // ── Binance Integration ──
-const BN_PROXY = `${SUPA_URL}/functions/v1/binance-proxy`;
-
 async function bnSign(params){
   const qs = new URLSearchParams(params).toString();
   const key = await crypto.subtle.importKey(
@@ -3453,7 +3451,7 @@ async function bnSign(params){
 async function bnRequest(endpoint, params={}, method='GET'){
   const p = { ...params, timestamp: Date.now() };
   p.signature = await bnSign(p);
-  const r = await fetch(BN_PROXY, {
+  const r = await fetch(`${SUPA_URL}/functions/v1/binance-proxy`, {
     method:'POST',
     headers:{'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
     body: JSON.stringify({ endpoint, params:p, apiKey:bnApiKey, method, testnet:bnTestnet })
