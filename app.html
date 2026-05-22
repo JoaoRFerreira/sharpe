@@ -860,6 +860,17 @@
 </div><!-- /main -->
 
 
+<!-- AUTH GATE (shown when visiting app.html without a session) -->
+<div id="authGate" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.92);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:20px;backdrop-filter:blur(6px)">
+  <div style="background:#fff;border-radius:16px;padding:40px 44px;max-width:400px;width:calc(100vw - 40px);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3)">
+    <div style="font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px">Sharpe<span style="color:#3b82f6">.</span></div>
+    <p style="font-size:14px;color:#6b7280;margin-bottom:24px">Sign in to access your trading dashboard.</p>
+    <button class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;margin-bottom:10px" onclick="document.getElementById('authGate').style.display='none';openAuthModal('signin')">Sign In</button>
+    <button class="btn btn-ghost" style="width:100%;padding:11px;font-size:14px" onclick="document.getElementById('authGate').style.display='none';openAuthModal('signup')">Create Free Account</button>
+    <div style="margin-top:18px;font-size:12px;color:#9ca3af">or <a href="index.html" style="color:#1d4ed8;text-decoration:none">go back to the home page</a></div>
+  </div>
+</div>
+
 <!-- AUTH MODAL -->
 <div class="overlay" id="authOverlay">
   <div class="auth-modal">
@@ -3142,6 +3153,15 @@ async function submitAuth(){
   }
 }
 
+function showAuthGate(){
+  const g = document.getElementById('authGate');
+  if(g) g.style.display = 'flex';
+}
+function hideAuthGate(){
+  const g = document.getElementById('authGate');
+  if(g) g.style.display = 'none';
+}
+
 function updateAuthUI(){
   const area = document.getElementById('authArea');
   const appNav = document.getElementById('appNav');
@@ -3349,6 +3369,7 @@ async function deleteTradeFromDb(id){
 sb.auth.onAuthStateChange((event, session) => {
   const user = session?.user || null;
   if(user){
+    hideAuthGate();
     sbUser = user;
     updateAuthUI();
     if(event === 'INITIAL_SESSION' || event === 'SIGNED_IN'){
@@ -3361,10 +3382,10 @@ sb.auth.onAuthStateChange((event, session) => {
   } else {
     sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
     showAdminNav();
-    // INITIAL_SESSION with no user = not logged in; redirect to landing once
-    if(event === 'INITIAL_SESSION' || event === 'SIGNED_OUT'){
-      window.location.href = 'index.html';
-    }
+    updateAuthUI();
+    if(event === 'SIGNED_OUT') { window.location.href = 'index.html'; return; }
+    // Not logged in — show gate overlay instead of redirecting (prevents loops)
+    if(event === 'INITIAL_SESSION') showAuthGate();
   }
 });
 
