@@ -1070,12 +1070,23 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','ideas','news','learning','settings','admin']);
+let _hashNav = false;
+
 function nav(id, btn){
+  if(!VALID_SECTIONS.has(id)) id = 'dashboard';
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(btn) btn.classList.add('active');
+  if(btn){
+    btn.classList.add('active');
+  } else {
+    document.querySelectorAll('#appNav button').forEach(b=>{
+      if((b.getAttribute('onclick')||'').includes("'"+id+"'")) b.classList.add('active');
+    });
+  }
   mobNavSync(id);
+  if(!_hashNav) history.pushState(null,'','#'+id);
   if(id==='dashboard') renderDashboard();
   if(id==='journal') renderJournal();
   if(id==='signals') initSignals();
@@ -1085,6 +1096,13 @@ function nav(id, btn){
   if(id==='admin') loadAdminPanel();
   window.scrollTo(0,0);
 }
+
+window.addEventListener('hashchange',()=>{
+  const id = location.hash.slice(1);
+  _hashNav = true;
+  nav(VALID_SECTIONS.has(id) ? id : 'dashboard', null);
+  _hashNav = false;
+});
 function mobNavSync(id){
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
 }
@@ -3376,7 +3394,8 @@ sb.auth.onAuthStateChange((event, session) => {
       setTimeout(async () => {
         try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
         try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
-        renderDashboard();
+        const initId = location.hash.slice(1);
+        nav(VALID_SECTIONS.has(initId) ? initId : 'dashboard', null);
       }, 0);
     }
   } else {
