@@ -982,6 +982,56 @@
         <label class="toggle-sw"><input type="checkbox" id="ffSimFree" onchange="saveSiteSettings()" checked><span class="toggle-sl"></span></label>
       </div>
     </div>
+
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+        Social Links
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Paste the full URL for each network. Leave blank to hide it from the landing page footer.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="socialLinksGrid">
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">𝕏 (Twitter)</div></div>
+          <input type="url" id="social_x" placeholder="https://x.com/yourhandle" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">Instagram</div></div>
+          <input type="url" id="social_instagram" placeholder="https://instagram.com/yourhandle" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">LinkedIn</div></div>
+          <input type="url" id="social_linkedin" placeholder="https://linkedin.com/company/sharpe" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">Discord</div></div>
+          <input type="url" id="social_discord" placeholder="https://discord.gg/invite" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">Telegram</div></div>
+          <input type="url" id="social_telegram" placeholder="https://t.me/yourchannel" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">Reddit</div></div>
+          <input type="url" id="social_reddit" placeholder="https://reddit.com/r/subreddit" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">Facebook</div></div>
+          <input type="url" id="social_facebook" placeholder="https://facebook.com/yourpage" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">YouTube</div></div>
+          <input type="url" id="social_youtube" placeholder="https://youtube.com/@yourchannel" style="flex:1;min-width:0">
+        </div>
+        <div class="cfg-row" style="padding:6px 0;border:none;gap:10px">
+          <div class="cfg-row-info" style="min-width:90px"><div class="cfg-row-label">TikTok</div></div>
+          <input type="url" id="social_tiktok" placeholder="https://tiktok.com/@yourhandle" style="flex:1;min-width:0">
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
+        <button class="btn btn-primary" onclick="saveSocialLinks()">Save Social Links</button>
+        <span id="socialSaveStatus" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+    </div>
   </div>
 
   <!-- Track Record -->
@@ -4395,6 +4445,7 @@ async function loadAdminPanel(){
   loadAdminScanStatus();
   loadApiUsage();
   loadScanLog();
+  loadSocialLinks();
   // Wire category change to update unit hint in track record form
   const trCat = document.getElementById('trAdd-cat');
   if(trCat && !trCat._hinted){ trCat._hinted=true; trCat.addEventListener('change',()=>{ const u=trCat.value==='forex'?'pips':trCat.value==='crypto'?'%':'pts'; const h=document.getElementById('trAdd-unit-hint'); if(h) h.textContent='('+u+')'; }); }
@@ -4934,6 +4985,33 @@ async function deleteTrRow(id, btn) {
   if (error) { showToast('Delete failed: ' + error.message, 'te'); btn.textContent = '✕'; return; }
   showToast('Trade deleted', 'tw');
   loadTrAdminList();
+}
+
+const SOCIAL_KEYS = ['x','instagram','linkedin','discord','telegram','reddit','facebook','youtube','tiktok'];
+
+async function loadSocialLinks(){
+  const { data } = await sb.from('site_config').select('value').eq('key','social_links').single();
+  if(!data?.value) return;
+  try {
+    const links = JSON.parse(data.value);
+    SOCIAL_KEYS.forEach(k => {
+      const el = document.getElementById('social_' + k);
+      if(el && links[k]) el.value = links[k];
+    });
+  } catch(e){}
+}
+
+async function saveSocialLinks(){
+  const links = {};
+  SOCIAL_KEYS.forEach(k => {
+    const v = document.getElementById('social_' + k)?.value.trim();
+    if(v) links[k] = v;
+  });
+  const { error } = await sb.from('site_config').upsert({ key:'social_links', value: JSON.stringify(links) }, { onConflict:'key' });
+  const status = document.getElementById('socialSaveStatus');
+  if(error){ showToast('Save failed: '+error.message,'tl'); return; }
+  if(status){ status.textContent='Saved ✓'; setTimeout(()=>status.textContent='',2500); }
+  showToast('Social links saved','tw');
 }
 
 function saveSiteSettings(){
