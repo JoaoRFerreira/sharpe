@@ -94,6 +94,7 @@ tfoot td{border-top:2px solid var(--border);font-weight:700;background:#f8f9fa}
 .btn-primary{background:#1d4ed8;color:#fff}.btn-primary:hover{background:#1e40af}
 .btn-ghost{background:#fff;border:1px solid var(--border);color:var(--text)}.btn-ghost:hover{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
 .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(220,38,38,.2);padding:3px 9px;font-size:12px}.btn-danger:hover{background:rgba(220,38,38,.14)}
+.row-del{opacity:0;transition:opacity .15s}tr:hover .row-del{opacity:1}
 .btn-win{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);flex:1}.btn-win:hover{background:rgba(5,150,105,.15)}
 .btn-loss{background:var(--red-dim);color:var(--red);border:1px solid rgba(220,38,38,.2);flex:1}.btn-loss:hover{background:rgba(220,38,38,.14)}
 .filter-row{display:flex;gap:8px;align-items:center}
@@ -351,9 +352,10 @@ textarea{resize:vertical;min-height:56px}
 /* TRADE IDEAS */
 .ideas-header{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
 .ideas-filter{display:flex;gap:4px;flex-wrap:wrap}
-.ifilter{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;white-space:nowrap;transition:all .15s}
-.ifilter:hover{color:var(--text);border-color:var(--blue)}
-.ifilter.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue);font-weight:600}
+.ideas-filter{border-bottom:2px solid var(--border)}
+.ifilter{padding:6px 14px;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;background:none;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif}
+.ifilter:hover{color:var(--text)}
+.ifilter.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 .ideas-date{font-size:11px;color:var(--muted);white-space:nowrap}
 .idea-grid{display:block}
 .idea-row{cursor:pointer}.idea-row:hover td{background:#f0f4ff!important}
@@ -588,7 +590,7 @@ textarea{resize:vertical;min-height:56px}
 @media(max-width:900px){.lp-hero-inner{grid-template-columns:1fr;gap:40px}.lp-hero{min-height:auto;padding:60px 20px}}
 .lp-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--blue);margin-bottom:24px;letter-spacing:.3px;font-family:'Inter',sans-serif}
 .lp-headline{font-size:clamp(38px,5vw,64px);font-weight:900;line-height:1.05;margin-bottom:22px;letter-spacing:-2px;color:var(--text)}
-.lp-headline .acc{background:linear-gradient(135deg,#2563eb,#0891b2,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.lp-headline .acc{color:#1d4ed8}
 .lp-sub{font-size:18px;color:var(--muted);line-height:1.7;margin-bottom:36px;max-width:500px;font-weight:400}
 .lp-cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
 .lp-btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(37,99,235,.4),0 1px 3px rgba(0,0,0,.1);font-family:'Inter',sans-serif}
@@ -626,7 +628,7 @@ textarea{resize:vertical;min-height:56px}
 /* STATS BAR */
 .lp-statsbar{background:rgba(255,255,255,.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:28px 24px;display:flex;justify-content:center;gap:56px;flex-wrap:wrap;}
 .lp-stat{text-align:center}
-.lp-stat-val{font-size:32px;font-weight:900;background:linear-gradient(135deg,#2563eb,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
+.lp-stat-val{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-1px}
 .lp-stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
 
 /* SECTIONS */
@@ -636,7 +638,7 @@ textarea{resize:vertical;min-height:56px}
 .lp-sec-hdr{text-align:center;margin-bottom:60px}
 .lp-sec-hdr h2{font-size:clamp(28px,4vw,42px);font-weight:900;margin-bottom:16px;letter-spacing:-1px;line-height:1.1;color:var(--text)}
 .lp-sec-hdr p{font-size:17px;color:var(--muted);max-width:580px;margin:0 auto;line-height:1.65}
-.lp-tag{display:inline-block;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.2);color:var(--blue);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:16px}
+.lp-tag{display:inline-block;color:var(--blue);font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px;border-bottom:2px solid var(--blue);padding-bottom:2px}
 
 /* FEATURES */
 .lp-feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px}
@@ -764,19 +766,19 @@ textarea{resize:vertical;min-height:56px}
 .lp-final-cta p{font-size:17px;color:var(--muted);margin-bottom:36px}
 
 /* GATE BANNERS */
-.feat-gate-banner{background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid rgba(37,99,235,.2);border-radius:14px;padding:22px 28px;margin-bottom:22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 2px 12px rgba(37,99,235,.08)}
-.fgb-icon{font-size:26px}
+.feat-gate-banner{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fgb-icon{display:none}
 .fgb-text{flex:1;min-width:200px}
-.fgb-text strong{display:block;font-size:15px;margin-bottom:4px;font-weight:700;color:var(--text)}
+.fgb-text strong{display:block;font-size:13px;margin-bottom:2px;font-weight:600;color:var(--text)}
 .fgb-text span{font-size:12px;color:var(--muted)}
-.fgb-btn{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 4px 14px rgba(37,99,235,.3);font-family:'Inter',sans-serif}
-.fgb-btn:hover{box-shadow:0 6px 22px rgba(37,99,235,.45);transform:translateY(-1px)}
+.fgb-btn{background:#1d4ed8;color:#fff;border:none;border-radius:var(--r);padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:'Inter',sans-serif}
+.fgb-btn:hover{background:#1e40af}
 /* FOOTER */
 .footer{background:#fff;border-top:1px solid var(--border);margin-top:60px;padding:52px 28px 32px}
 .footer-inner{max-width:1440px;margin:0 auto}
 .footer-top{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
-.footer-brand .logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,#2563eb,#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px;margin-bottom:12px;display:inline-block}
-.footer-brand .logo span{background:linear-gradient(135deg,#059669,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.footer-brand .logo{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.5px;margin-bottom:12px;display:inline-block}
+.footer-brand .logo span{color:var(--blue)}
 .footer-brand p{font-size:13px;color:var(--muted);line-height:1.65;max-width:260px;margin-bottom:20px}
 .footer-social{display:flex;gap:10px}
 .footer-social a{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);text-decoration:none;font-size:13px;transition:all .15s}
@@ -850,16 +852,14 @@ textarea{resize:vertical;min-height:56px}
           <button class="lp-btn-outline" onclick="navLanding('pricing-page')">See Pricing →</button>
         </div>
         <div class="lp-trust">
-          <span>No credit card required</span>
-          <span>Cancel anytime</span>
-          <span>Free forever plan</span>
+          <span>Free plan available</span>
+          <span>7-day trial on paid plans</span>
+          <span>30-day money-back guarantee</span>
         </div>
       </div>
       <div class="lp-mock-wrap">
-        <div class="lp-mock-badge">LIVE PREVIEW</div>
         <div class="lp-mock">
           <div class="lp-mock-hdr">
-            <div class="lp-mock-dot r"></div><div class="lp-mock-dot y"></div><div class="lp-mock-dot g"></div>
             <span class="lp-mock-lbl">Portfolio Dashboard</span>
           </div>
           <div class="lp-mock-stats">
@@ -2018,10 +2018,7 @@ textarea{resize:vertical;min-height:56px}
 
   <!-- Auto Trading -->
   <div class="cfg-card">
-    <div class="cfg-card-hdr">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-      Auto Trading
-    </div>
+    <div class="cfg-card-hdr">Auto Trading</div>
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Confidence threshold &amp; auto-log</div>
@@ -2037,7 +2034,7 @@ textarea{resize:vertical;min-height:56px}
     </div>
     <div class="cfg-row" id="autoExecWrap" style="display:none">
       <div class="cfg-row-info">
-        <div class="cfg-row-label">Auto-execute via OANDA <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span></div>
+        <div class="cfg-row-label">Auto-execute via OANDA <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
         <div class="cfg-row-desc">Place market orders on OANDA automatically when qualifying signals fire. Requires OANDA connection below.</div>
       </div>
       <label class="toggle-sw"><input type="checkbox" id="autoExecChk" onchange="setAutoExec(this.checked)"><span class="toggle-sl"></span></label>
@@ -2046,10 +2043,7 @@ textarea{resize:vertical;min-height:56px}
 
   <!-- OANDA Integration -->
   <div class="cfg-card" id="oandaCfgCard">
-    <div class="cfg-card-hdr">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-      OANDA Integration <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
-    </div>
+    <div class="cfg-card-hdr">OANDA Integration <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Connect your OANDA account to enable live auto-execution. Use a practice account first. <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">Get a free practice account →</a></div>
     <div class="oanda-grid">
       <div class="fg">
@@ -2083,10 +2077,7 @@ textarea{resize:vertical;min-height:56px}
 
   <!-- Webhook & Email Alerts -->
   <div class="cfg-card">
-    <div class="cfg-card-hdr">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-      Webhook &amp; Email Alerts <span style="font-size:10px;background:rgba(124,58,237,.1);color:var(--purple);padding:2px 7px;border-radius:8px;font-weight:700;margin-left:6px">Pro</span>
-    </div>
+    <div class="cfg-card-hdr">Webhook &amp; Email Alerts <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Webhook URL</div>
@@ -2769,6 +2760,8 @@ function nav(id, btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn) btn.classList.add('active');
+  const footer=document.querySelector('.footer');
+  if(footer) footer.style.display=id==='landing'?'':'none';
   mobNavSync(id);
   if(id==='dashboard') renderDashboard();
   if(id==='journal') renderJournal();
@@ -2821,7 +2814,7 @@ function stats(){
 function renderDashboard(){
   const s = stats();
   const pfC = s.pf>=1.5?'green':s.pf>=1?'yellow':'red';
-  const pfNote = s.pf>=2?'Excellent':s.pf>=1.5?'Strong':s.pf>=1?'Positive':'Below 1.0';
+  const pfNote = s.pf>=1?'Gross wins ÷ gross losses':'Below breakeven';
   const kpis = [
     {l:'Win Rate', v:s.wr.toFixed(1)+'%', c:s.wr>=50?'green':'red',
       sub:`${s.wins} wins · ${s.losses} losses · ${s.closed} closed trades`},
@@ -2829,7 +2822,7 @@ function renderDashboard(){
       c:s.totalPips>=0?'green':'red',
       sub:`Avg win +${s.avgW.toFixed(0)} · Avg loss −${s.avgL.toFixed(0)} pips`},
     {l:'Profit Factor', v:isFinite(s.pf)?s.pf.toFixed(2):'∞', c:pfC,
-      sub:`${pfNote} — gross wins ÷ gross losses`},
+      sub:pfNote},
   ];
   const pills = [
     {l:'Total Trades', v:s.total, c:'blue'},
@@ -3042,7 +3035,7 @@ function renderJournal(){
         return `<span class="pips ${(t.pips||0)>=0?'pos':'neg'}">${(t.pips||0)>=0?'+':''}${t.pips||0}</span>`;
       })()}</td>
       <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
-      <td><button class="btn btn-danger" onclick="delTrade(${t.id})">✕</button></td>
+      <td><button class="btn btn-danger row-del" onclick="delTrade(${t.id})">✕</button></td>
     </tr>`).join('');
 
   const tot = rows.reduce((s,t)=>s+(t.pips||0),0);
