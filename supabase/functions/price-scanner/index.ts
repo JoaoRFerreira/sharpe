@@ -33,22 +33,22 @@ async function dbInsert(table: string, rows: unknown[]): Promise<void> {
 }
 
 // ── Instrument catalogue ────────────────────────────────────────
-interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean; fhSymbol?:string; bnSymbol?:string }
+interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean; bnSymbol?:string }
 const INSTRUMENTS: Inst[] = [
-  { symbol:'EUR/USD', type:'forex',     base:1.08,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_USD' },
-  { symbol:'GBP/USD', type:'forex',     base:1.27,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:GBP_USD' },
-  { symbol:'USD/JPY', type:'forex',     base:149,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:USD_JPY' },
-  { symbol:'AUD/USD', type:'forex',     base:0.65,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:AUD_USD' },
-  { symbol:'USD/CAD', type:'forex',     base:1.36,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:USD_CAD' },
-  { symbol:'NZD/USD', type:'forex',     base:0.60,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:NZD_USD' },
-  { symbol:'USD/CHF', type:'forex',     base:0.90,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:USD_CHF' },
-  { symbol:'EUR/GBP', type:'forex',     base:0.85,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_GBP' },
-  { symbol:'EUR/JPY', type:'forex',     base:160,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:EUR_JPY' },
-  { symbol:'GBP/JPY', type:'forex',     base:187,   mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:GBP_JPY' },
-  { symbol:'EUR/CHF', type:'forex',     base:0.97,  mult:10000, dec:5, unit:'pips', fhSymbol:'OANDA:EUR_CHF' },
-  { symbol:'AUD/JPY', type:'forex',     base:97,    mult:100,   dec:3, unit:'pips', fhSymbol:'OANDA:AUD_JPY' },
-  { symbol:'XAU/USD', type:'commodity', base:1980,  mult:10,    dec:2, unit:'pts',  proOnly:true, fhSymbol:'OANDA:XAU_USD' },
-  { symbol:'XAG/USD', type:'commodity', base:24,    mult:100,   dec:3, unit:'pts',  proOnly:true, fhSymbol:'OANDA:XAG_USD' },
+  { symbol:'EUR/USD', type:'forex',     base:1.08,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'GBP/USD', type:'forex',     base:1.27,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'USD/JPY', type:'forex',     base:149,   mult:100,   dec:3, unit:'pips' },
+  { symbol:'AUD/USD', type:'forex',     base:0.65,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'USD/CAD', type:'forex',     base:1.36,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'NZD/USD', type:'forex',     base:0.60,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'USD/CHF', type:'forex',     base:0.90,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'EUR/GBP', type:'forex',     base:0.85,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'EUR/JPY', type:'forex',     base:160,   mult:100,   dec:3, unit:'pips' },
+  { symbol:'GBP/JPY', type:'forex',     base:187,   mult:100,   dec:3, unit:'pips' },
+  { symbol:'EUR/CHF', type:'forex',     base:0.97,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'AUD/JPY', type:'forex',     base:97,    mult:100,   dec:3, unit:'pips' },
+  { symbol:'XAU/USD', type:'commodity', base:1980,  mult:10,    dec:2, unit:'pts',  proOnly:true },
+  { symbol:'XAG/USD', type:'commodity', base:24,    mult:100,   dec:3, unit:'pts',  proOnly:true },
   { symbol:'BTC/USD', type:'crypto',    base:42000, mult:1,     dec:0, unit:'pts',  proOnly:true, bnSymbol:'BTCUSDT' },
   { symbol:'ETH/USD', type:'crypto',    base:2200,  mult:1,     dec:2, unit:'pts',  proOnly:true, bnSymbol:'ETHUSDT' },
 ]
@@ -221,32 +221,30 @@ function analyseCandles(candles: Candle[], inst: Inst) {
   }
 }
 
-// ── Finnhub helpers (forex + commodity) ───────────────────────
-async function fetchFinnhubPrices(apiKey: string, insts: Inst[]): Promise<Record<string,number>> {
+// ── Twelve Data helpers (forex + commodity) ────────────────────
+async function fetchTwelveDataPrices(apiKey: string, insts: Inst[]): Promise<Record<string,number>> {
   if (!apiKey || !insts.length) return {}
+  const symbols = insts.map(i => i.symbol)
+  const url = `https://api.twelvedata.com/price?symbol=${symbols.map(encodeURIComponent).join(',')}&apikey=${apiKey}`
+  const r = await fetch(url); if (!r.ok) return {}
+  const data = await r.json()
   const out: Record<string,number> = {}
-  await Promise.all(insts.map(async inst => {
-    if (!inst.fhSymbol) return
-    try {
-      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(inst.fhSymbol)}&token=${apiKey}`)
-      if (!r.ok) return
-      const d = await r.json()
-      if (d.c && d.c > 0) out[inst.symbol] = d.c
-    } catch { /* skip */ }
-  }))
+  if (symbols.length === 1) {
+    if (data.price) out[symbols[0]] = parseFloat(data.price)
+  } else {
+    for (const sym of symbols) if (data[sym]?.price) out[sym] = parseFloat(data[sym].price)
+  }
   return out
 }
 
-async function fetchFinnhubCandles(fhSymbol: string, resolution: string, apiKey: string): Promise<Candle[]|null> {
-  const to = Math.floor(Date.now() / 1000)
-  const lookbackDays = resolution === 'D' ? 400 : resolution === 'W' ? 2800 : 105
-  const from = to - lookbackDays * 86400
-  const url = `https://finnhub.io/api/v1/forex/candle?symbol=${encodeURIComponent(fhSymbol)}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`
+async function fetchTwelveDataCandles(symbol: string, interval: string, apiKey: string): Promise<Candle[]|null> {
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=250&apikey=${apiKey}`
   const r = await fetch(url); if (!r.ok) return null
-  const d = await r.json()
-  if (d.s !== 'ok' || !Array.isArray(d.c)) return null
-  return (d.c as number[]).map((_, i: number) => ({
-    open: d.o[i], high: d.h[i], low: d.l[i], close: d.c[i], volume: d.v?.[i] ?? 0
+  const data = await r.json()
+  if (!data.values || !Array.isArray(data.values)) return null
+  return (data.values as Record<string,string>[]).reverse().map(v => ({
+    open: parseFloat(v.open), high: parseFloat(v.high), low: parseFloat(v.low),
+    close: parseFloat(v.close), volume: parseFloat(v.volume || '0')
   }))
 }
 
@@ -298,19 +296,19 @@ Deno.serve(async (req: Request) => {
   const reqUrl = new URL(req.url)
   const pricesOnly = reqUrl.searchParams.get('pricesOnly') === 'true'
 
-  // Read Finnhub key
-  const cfgRows = await dbGet('site_config', 'select=value&key=eq.finnhub_key&limit=1') as {value:string}[]
+  // Read Twelve Data key
+  const cfgRows = await dbGet('site_config', 'select=value&key=eq.twelve_data_key&limit=1') as {value:string}[]
   const apiKey = cfgRows[0]?.value ?? ''
 
-  const fhInsts = INSTRUMENTS.filter(i => i.fhSymbol)
+  const tdInsts = INSTRUMENTS.filter(i => !i.bnSymbol)
   const bnInsts = INSTRUMENTS.filter(i => i.bnSymbol)
 
-  // Fetch prices: Finnhub for forex/commodity, Binance for crypto (no key needed)
-  const [fhPrices, bnPrices] = await Promise.all([
-    fetchFinnhubPrices(apiKey, fhInsts),
+  // Fetch prices: Twelve Data for forex/commodity, Binance for crypto (no key needed)
+  const [tdPrices, bnPrices] = await Promise.all([
+    fetchTwelveDataPrices(apiKey, tdInsts),
     fetchBinancePrices(bnInsts)
   ])
-  const priceMap = { ...fhPrices, ...bnPrices }
+  const priceMap = { ...tdPrices, ...bnPrices }
   const priceCount = Object.keys(priceMap).length
 
   if (priceCount > 0) {
@@ -329,17 +327,17 @@ Deno.serve(async (req: Request) => {
   let scanError: string|null = null
 
   try {
-    for (const {tf, fhRes, bnInterval} of [
-      {tf:'daily', fhRes:'D',   bnInterval:'1d'},
-      {tf:'4h',    fhRes:'240', bnInterval:'4h'}
+    for (const {tf, tdInterval, bnInterval} of [
+      {tf:'daily', tdInterval:'1day', bnInterval:'1d'},
+      {tf:'4h',    tdInterval:'4h',   bnInterval:'4h'}
     ]) {
       for (const inst of INSTRUMENTS) {
         try {
           let candles: Candle[]|null = null
-          if (inst.fhSymbol && apiKey) {
-            candles = await fetchFinnhubCandles(inst.fhSymbol, fhRes, apiKey)
-          } else if (inst.bnSymbol) {
+          if (inst.bnSymbol) {
             candles = await fetchBinanceCandles(inst.bnSymbol, bnInterval)
+          } else if (apiKey) {
+            candles = await fetchTwelveDataCandles(inst.symbol, tdInterval, apiKey)
           }
           if (!candles) continue
           const result = analyseCandles(candles, inst)
