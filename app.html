@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sharpe — Trading Intelligence Platform</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -43,6 +46,7 @@
     </div>
     <button class="btn btn-primary" style="font-size:13px" onclick="openModal()">+ New Trade</button>
   </div>
+  <div id="onboardingCard" style="display:none"></div>
   <div id="statsGrid"></div>
 
   <!-- Live Open Positions -->
@@ -75,6 +79,15 @@
     </div>
   </div>
 
+  <div class="chart-card" style="margin-top:14px">
+    <h3>Daily P&amp;L Heatmap <span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px" id="calYearLabel"></span></h3>
+    <div class="cal-wrap"><div id="pnlCalendar" class="cal-grid"></div></div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--muted);align-items:center">
+      <span>Loss</span>
+      <div style="display:flex;gap:2px">${['#fca5a5','#fcd34d','#86efac','#22c55e','#16a34a'].map(c=>`<div style="width:14px;height:14px;border-radius:3px;background:${c}"></div>`).join('')}</div>
+      <span>Best day</span>
+    </div>
+  </div>
   <div class="chart-card" style="margin-top:14px"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
 </section>
 
@@ -92,6 +105,7 @@
           <option value="open">Open</option>
         </select>
       </div>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="openCsvImport()">↑ Import CSV</button>
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="exportJournalCSV()" title="Export journal to CSV (Pro)">↓ Export CSV</button>
       <button class="btn btn-primary" onclick="openModal()">+ Add Trade</button>
     </div>
@@ -199,6 +213,26 @@
         <button class="btn btn-loss" onclick="logSim('loss')">Loss (SL Hit)</button>
       </div>
       <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="logSim('open')">Log as Open Trade</button>
+    </div>
+  </div>
+
+  <!-- Risk of Ruin Calculator -->
+  <div class="sim-card" style="margin-top:24px">
+    <h3>Risk of Ruin Calculator</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Estimate the probability your account hits zero given your trading statistics.</p>
+    <div class="ror-grid">
+      <div class="fg"><label>Win Rate (%)</label><input type="number" id="ror_wr" value="50" min="1" max="99" step="1" oninput="calcRoR()"></div>
+      <div class="fg"><label>Avg Win (pips)</label><input type="number" id="ror_aw" value="50" min="1" step="1" oninput="calcRoR()"></div>
+      <div class="fg"><label>Avg Loss (pips)</label><input type="number" id="ror_al" value="30" min="1" step="1" oninput="calcRoR()"></div>
+      <div class="fg"><label>Risk per Trade (%)</label><input type="number" id="ror_rpt" value="1" min="0.1" max="50" step="0.1" oninput="calcRoR()"></div>
+      <div class="fg"><label>Max Drawdown Allowed (%)</label><input type="number" id="ror_dd" value="20" min="1" max="100" step="1" oninput="calcRoR()"></div>
+      <div class="fg"><label>Trades to Simulate</label><input type="number" id="ror_n" value="1000" min="100" max="10000" step="100" oninput="calcRoR()"></div>
+    </div>
+    <div class="ror-result" id="rorResult">
+      <div class="ror-pct" id="rorPct">—</div>
+      <div class="ror-label">Probability of ruin</div>
+      <div class="ror-bar-wrap"><div class="ror-bar" id="rorBar" style="width:0%;background:#059669"></div></div>
+      <div style="margin-top:12px;font-size:11px;color:var(--muted)" id="rorNote"></div>
     </div>
   </div>
 </section>
@@ -492,6 +526,7 @@
     <button class="atab" onclick="switchAdminTab('plans',this)">Plans & Pricing</button>
     <button class="atab" onclick="switchAdminTab('features',this)">Plan Features</button>
     <button class="atab" onclick="switchAdminTab('notifications',this)">Notifications</button>
+    <button class="atab" onclick="switchAdminTab('analytics',this)">Analytics</button>
     <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
@@ -499,6 +534,24 @@
   <!-- Overview -->
   <div class="admin-pane active" id="apane-overview">
     <div class="stats-grid" id="admin-stats"></div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="admin-pane" id="apane-analytics">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="cfg-card">
+        <div class="cfg-card-hdr">Signups — Last 8 Weeks</div>
+        <div style="position:relative;height:160px"><canvas id="adminSignupChart"></canvas></div>
+      </div>
+      <div class="cfg-card">
+        <div class="cfg-card-hdr">Plan Distribution</div>
+        <div style="position:relative;height:160px"><canvas id="adminPlanChart"></canvas></div>
+      </div>
+    </div>
+    <div class="cfg-card">
+      <div class="cfg-card-hdr">Engagement</div>
+      <div id="adminEngagement" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
+    </div>
   </div>
 
   <!-- Users -->
@@ -874,29 +927,100 @@
 <!-- AUTH MODAL -->
 <div class="overlay" id="authOverlay">
   <div class="auth-modal">
-    <div class="auth-tabs">
-      <button class="atab active" id="atab-signin" onclick="switchAuthTab('signin')">Sign In</button>
-      <button class="atab" id="atab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+
+    <!-- Sign In / Sign Up view -->
+    <div id="auth-main-view">
+      <div class="auth-tabs">
+        <button class="atab active" id="atab-signin" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="atab" id="atab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;padding:10px;margin-bottom:14px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px" onclick="signInWithGoogle()">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--muted)">or</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')submitAuth()">
+      </div>
+      <div class="fg" style="margin-bottom:4px">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()">
+      </div>
+      <div id="auth-forgot-row" style="text-align:right;margin-bottom:14px">
+        <a href="#" style="font-size:11px;color:var(--muted);text-decoration:none" onclick="switchAuthTab('reset');return false">Forgot password?</a>
+      </div>
+      <div id="auth-name-row" class="fg" style="margin-bottom:14px;display:none">
+        <label>Full Name (optional)</label>
+        <input type="text" id="auth-name" placeholder="Your name">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+      <div class="auth-err" id="auth-err"></div>
+      <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
+        <span id="auth-switch-text">Don't have an account? </span>
+        <a href="#" style="color:var(--blue);text-decoration:none" id="auth-switch-link" onclick="switchAuthTab('signup');return false">Sign up free</a>
+      </div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12px" onclick="closeAuthModal()">Cancel</button>
     </div>
-    <div class="fg" style="margin-bottom:14px">
-      <label>Email</label>
-      <input type="email" id="auth-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')submitAuth()">
+
+    <!-- Forgot password view -->
+    <div id="auth-reset-view" style="display:none">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Reset your password</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px">Enter your email and we'll send a reset link.</p>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Email</label>
+        <input type="email" id="auth-reset-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')sendResetEmail()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px" id="auth-reset-btn" onclick="sendResetEmail()">Send Reset Link</button>
+      <div class="auth-err" id="auth-reset-err"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12px" onclick="switchAuthTab('signin')">← Back to Sign In</button>
     </div>
-    <div class="fg" style="margin-bottom:14px">
-      <label>Password</label>
-      <input type="password" id="auth-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()">
+
+    <!-- Set new password view (shown after recovery link) -->
+    <div id="auth-newpw-view" style="display:none">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px">Set new password</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:18px">Choose a strong password for your account.</p>
+      <div class="fg" style="margin-bottom:14px">
+        <label>New Password</label>
+        <input type="password" id="auth-newpw" placeholder="••••••••" onkeydown="if(event.key==='Enter')setNewPassword()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:10px" id="auth-newpw-btn" onclick="setNewPassword()">Update Password</button>
+      <div class="auth-err" id="auth-newpw-err"></div>
     </div>
-    <div id="auth-name-row" class="fg" style="margin-bottom:14px;display:none">
-      <label>Full Name (optional)</label>
-      <input type="text" id="auth-name" placeholder="Your name">
+
+  </div>
+</div>
+
+<!-- CSV IMPORT MODAL -->
+<div class="overlay" id="csvImportOverlay">
+  <div class="csv-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <strong style="font-size:15px">Import Trades from CSV</strong>
+      <button class="btn btn-ghost" style="padding:3px 10px;font-size:12px" onclick="closeCsvImport()">✕</button>
     </div>
-    <button class="btn btn-primary" style="width:100%;padding:10px" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
-    <div class="auth-err" id="auth-err"></div>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
-      <span id="auth-switch-text">Don't have an account? </span>
-      <a href="#" style="color:var(--blue);text-decoration:none" id="auth-switch-link" onclick="switchAuthTab('signup');return false">Sign up free</a>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      CSV must have headers: <code>Date, Market, Direction, Status, Entry, Stop Loss, Exit, Pips</code><br>
+      Direction = LONG or SHORT &nbsp;·&nbsp; Status = win, loss, or open<br>
+      Date format: YYYY-MM-DD &nbsp;·&nbsp; Optional: <code>Entry Reason, Exit Reason, Take Profit, Tags</code>
+    </p>
+    <div id="csv-drop-zone" style="border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:14px;transition:border-color .2s"
+      onclick="document.getElementById('csvFileInput').click()"
+      ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
+      ondragleave="this.style.borderColor='var(--border)'"
+      ondrop="event.preventDefault();this.style.borderColor='var(--border)';handleCsvDrop(event)">
+      <div style="font-size:28px;margin-bottom:6px">📂</div>
+      <div style="font-size:13px;color:var(--muted)">Drop a CSV file here or <span style="color:var(--blue)">browse</span></div>
+      <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCsvFile(this.files[0])">
     </div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:10px;font-size:12px" onclick="closeAuthModal()">Cancel</button>
+    <div id="csv-preview" style="font-size:12px;color:var(--muted);margin-bottom:14px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeCsvImport()">Cancel</button>
+      <button class="btn btn-primary" id="csv-import-btn" disabled onclick="confirmCsvImport()">Import Trades</button>
+    </div>
   </div>
 </div>
 
@@ -978,6 +1102,14 @@
       <div class="fg full"><label>Pips / Points *</label><input type="number" id="t_pips" step="any" placeholder="e.g. 85 or -45"></div>
       <div class="fg full"><label>Entry Reason *</label><textarea id="t_er"></textarea></div>
       <div class="fg full"><label>Exit Reason</label><textarea id="t_xr"></textarea></div>
+      <div class="fg full">
+        <label>Tags <span style="font-weight:400;color:var(--muted)">(press Enter or comma to add)</span></label>
+        <div class="tag-input-wrap" id="tagInputWrap" onclick="document.getElementById('tagRawInput').focus()">
+          <input class="tag-inline-input" id="tagRawInput" placeholder="strategy, setup, session…"
+            onkeydown="handleTagKey(event)" oninput="handleTagInput(event)">
+        </div>
+        <input type="hidden" id="t_tags" value="">
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -1072,6 +1204,7 @@ function navLanding(id, btn){
 }
 const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','ideas','news','learning','settings','admin']);
 let _hashNav = false;
+const _sectionInited = new Set();
 
 function nav(id, btn){
   if(!VALID_SECTIONS.has(id)) id = 'dashboard';
@@ -1087,13 +1220,18 @@ function nav(id, btn){
   }
   mobNavSync(id);
   if(!_hashNav) history.pushState(null,'','#'+id);
+  // Always re-render live/data-driven sections; init static sections once
   if(id==='dashboard') renderDashboard();
-  if(id==='journal') renderJournal();
-  if(id==='signals') initSignals();
-  if(id==='news') initNews();
-  if(id==='ideas') renderIdeas();
-  if(id==='settings') initSettings();
-  if(id==='admin') loadAdminPanel();
+  else if(id==='journal') renderJournal();
+  else if(id==='news') initNews();
+  else if(id==='admin') loadAdminPanel();
+  else if(!_sectionInited.has(id)){
+    if(id==='signals') initSignals();
+    if(id==='ideas') renderIdeas();
+    if(id==='settings') initSettings();
+    if(id==='simulator') calcRoR();
+    _sectionInited.add(id);
+  }
   window.scrollTo(0,0);
 }
 
@@ -1142,7 +1280,25 @@ function stats(){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────
+function showDashboardSkeleton(){
+  document.getElementById('statsGrid').innerHTML=`
+    <div class="dash-kpi-row">${'<div class="skel skel-kpi"></div>'.repeat(3)}</div>
+    <div class="dash-sec-row">${'<div class="skel skel-pill"></div>'.repeat(5)}</div>`;
+}
+
 function renderDashboard(){
+  if(trades.length===0){
+    document.getElementById('statsGrid').innerHTML=`
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h18v18H3z" rx="2"/><path d="M8 12h8M8 8h5M8 16h3"/></svg>
+        <h3>No trades yet</h3>
+        <p>Log your first trade to see your dashboard stats, equity curve and performance breakdown.</p>
+        <button class="btn btn-primary" onclick="openModal()">+ Log your first trade</button>
+      </div>`;
+    renderEquity(); renderMonthly(); renderByMarket();
+    renderLivePositions();
+    return;
+  }
   const s = stats();
   const pfC = s.pf>=1.5?'green':s.pf>=1?'yellow':'red';
   const pfNote = s.pf>=1?'Gross wins ÷ gross losses':'Below breakeven';
@@ -1186,11 +1342,47 @@ function renderDashboard(){
   renderEquity();
   renderMonthly();
   renderByMarket();
+  renderCalendar();
   renderRecent();
   renderLivePositions();
   if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
 }
 
+
+// ── ONBOARDING ────────────────────────────────────────────────
+function maybeShowOnboarding(){
+  const card = document.getElementById('onboardingCard');
+  if(!card) return;
+  if(localStorage.getItem('sharpe_ob_dismissed')) { card.style.display='none'; return; }
+  const steps = [
+    { label:'Add your first trade', done: trades.length > 0 },
+    { label:'Connect a broker via Settings', done: !!localStorage.getItem('sharpe_broker_connected') },
+    { label:'Set your risk rules in Settings', done: !!localStorage.getItem('sharpe_risk_set') },
+    { label:'Explore Auto Signals', done: !!localStorage.getItem('sharpe_signals_viewed') },
+  ];
+  const allDone = steps.every(s=>s.done);
+  if(allDone){ card.style.display='none'; localStorage.setItem('sharpe_ob_dismissed','1'); return; }
+  const done = steps.filter(s=>s.done).length;
+  card.style.display='';
+  card.innerHTML=`
+    <div class="ob-card">
+      <div class="ob-title">Get started with Sharpe (${done}/${steps.length})</div>
+      <div class="ob-sub">Complete these steps to get the most from your trading dashboard.</div>
+      <div class="ob-steps">
+        ${steps.map(s=>`
+          <div class="ob-step${s.done?' done':''}">
+            <div class="ob-step-icon">${s.done?'✓':''}</div>
+            <span>${s.label}</span>
+          </div>`).join('')}
+      </div>
+      <button class="ob-dismiss" onclick="dismissOnboarding()">Dismiss</button>
+    </div>`;
+}
+function dismissOnboarding(){
+  localStorage.setItem('sharpe_ob_dismissed','1');
+  const card = document.getElementById('onboardingCard');
+  if(card) card.style.display='none';
+}
 
 const CHART_TOOLTIP = {
   backgroundColor:'#fff', borderColor:'rgba(37,99,235,.15)', borderWidth:1,
@@ -1300,6 +1492,59 @@ function renderByMarket(){
   });
 }
 
+function renderCalendar(){
+  const el = document.getElementById('pnlCalendar');
+  if(!el) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const yrLbl = document.getElementById('calYearLabel');
+  if(yrLbl) yrLbl.textContent = year;
+
+  // Build map: 'YYYY-MM-DD' -> total pips
+  const dayMap = {};
+  trades.filter(t=>t.status!=='open' && t.date && t.date.startsWith(year)).forEach(t=>{
+    dayMap[t.date] = (dayMap[t.date]||0) + (t.pips||0);
+  });
+
+  const vals = Object.values(dayMap);
+  const maxAbs = vals.length ? Math.max(...vals.map(Math.abs), 1) : 1;
+
+  function cellColor(v){
+    if(v===undefined) return 'transparent';
+    const r = v/maxAbs; // -1..1
+    if(r < -0.4) return '#fca5a5';
+    if(r < 0)    return '#fcd34d';
+    if(r < 0.3)  return '#86efac';
+    if(r < 0.7)  return '#22c55e';
+    return '#16a34a';
+  }
+
+  // Build a 7-column grid starting from Jan 1
+  const jan1 = new Date(year, 0, 1);
+  const startPad = jan1.getDay(); // 0=Sun
+  const daysInYear = (year%4===0&&(year%100!==0||year%400===0)) ? 366 : 365;
+  const totalCells = startPad + daysInYear;
+
+  // Day-of-week headers
+  const headers = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let html = headers.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+
+  // Empty pad cells
+  for(let i=0;i<startPad;i++) html+=`<div></div>`;
+
+  for(let d=0;d<daysInYear;d++){
+    const dt = new Date(year,0,1+d);
+    const key = dt.toISOString().split('T')[0];
+    const v = dayMap[key];
+    const col = cellColor(v);
+    const tip = v!==undefined ? `${key}: ${v>0?'+':''}${v} pips` : key;
+    html+=`<div class="cal-cell" style="background:${col===undefined?'var(--border)':col};border:1px solid var(--border)"><span class="cal-tip">${tip}</span></div>`;
+  }
+
+  el.innerHTML = html;
+  el.style.gridTemplateColumns = 'repeat(7,1fr)';
+}
+
 function renderRecent(){
   const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
   if(!recent.length){document.getElementById('recentDiv').innerHTML='<p class="empty" style="font-size:12px;color:var(--muted);margin:12px 0">No trades yet.</p>';return;}
@@ -1354,7 +1599,7 @@ function renderJournal(){
       <td style="white-space:nowrap;color:var(--muted)">${t.date}</td>
       <td><strong>${t.market}</strong></td>
       <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
-      <td><div class="mono">${t.entry}</div><div class="reason">${t.entryReason||'—'}</div></td>
+      <td><div class="mono">${t.entry}</div><div class="reason">${t.entryReason||'—'}</div>${t.tags?t.tags.split(',').filter(Boolean).map(g=>`<span class="tag-badge">${g.trim()}</span>`).join(' '):''}</td>
       <td class="mono">${t.sl}</td>
       <td><div class="mono">${t.exit||'—'}</div><div class="reason">${t.exitReason||'—'}</div></td>
       <td>${(()=>{
@@ -1388,6 +1633,48 @@ function clearFilters(){
 }
 
 // ── MODAL ──────────────────────────────────────────────────────
+// ── TRADE TAGS ─────────────────────────────────────────────────
+function getTagsArray(){
+  return (document.getElementById('t_tags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+}
+function renderTagChips(){
+  const wrap = document.getElementById('tagInputWrap');
+  const input = document.getElementById('tagRawInput');
+  const tags = getTagsArray();
+  wrap.querySelectorAll('.tag-chip').forEach(el=>el.remove());
+  tags.forEach(tag=>{
+    const chip = document.createElement('span');
+    chip.className='tag-chip';
+    chip.innerHTML=`${tag}<button type="button" onclick="removeTag('${tag.replace(/'/g,"\\'")}')" title="Remove">×</button>`;
+    wrap.insertBefore(chip, input);
+  });
+}
+function addTag(val){
+  const v = val.trim().replace(/,/g,'');
+  if(!v) return;
+  const tags = getTagsArray();
+  if(!tags.includes(v)) tags.push(v);
+  document.getElementById('t_tags').value = tags.join(',');
+  renderTagChips();
+}
+function removeTag(val){
+  const tags = getTagsArray().filter(t=>t!==val);
+  document.getElementById('t_tags').value = tags.join(',');
+  renderTagChips();
+}
+function setTagsFromStr(str){
+  document.getElementById('t_tags').value = str;
+  renderTagChips();
+  document.getElementById('tagRawInput').value='';
+}
+function handleTagKey(e){
+  if(e.key==='Enter'||e.key===','){ e.preventDefault(); addTag(e.target.value); e.target.value=''; }
+  if(e.key==='Backspace'&&!e.target.value){ const tags=getTagsArray(); if(tags.length){ removeTag(tags[tags.length-1]); } }
+}
+function handleTagInput(e){
+  if(e.target.value.endsWith(',')){ addTag(e.target.value.slice(0,-1)); e.target.value=''; }
+}
+
 function openModal(trade){
   editId = trade ? trade.id : null;
   document.getElementById('modalTitle').textContent = trade ? 'Edit Trade' : 'Add Trade';
@@ -1403,6 +1690,7 @@ function openModal(trade){
   document.getElementById('t_pips').value  = trade?.pips||'';
   document.getElementById('t_er').value    = trade?.entryReason||'';
   document.getElementById('t_xr').value    = trade?.exitReason||'';
+  setTagsFromStr(trade?.tags||'');
   document.getElementById('overlay').classList.add('open');
 }
 function closeModal(){ document.getElementById('overlay').classList.remove('open'); editId=null; }
@@ -1420,7 +1708,8 @@ function saveTrade(){
     exit:  parseFloat(document.getElementById('t_exit').value)||null,
     pips:  parseFloat(document.getElementById('t_pips').value)||0,
     entryReason:document.getElementById('t_er').value,
-    exitReason: document.getElementById('t_xr').value
+    exitReason: document.getElementById('t_xr').value,
+    tags: document.getElementById('t_tags').value
   };
   if(!t.date||!t.market){alert('Date and Market are required.');return;}
   if(!editId && !canAccess('moreTrades')){
@@ -1465,6 +1754,38 @@ function calcSim(){
   document.getElementById('mRiskU').textContent  = '-$'+riskU.toFixed(2);
   document.getElementById('mRewU').textContent   = '+$'+rewU.toFixed(2);
   document.getElementById('mMinWR').textContent  = minWR.toFixed(1)+'%';
+}
+
+function calcRoR(){
+  const wr  = parseFloat(document.getElementById('ror_wr').value)/100  || 0.5;
+  const aw  = parseFloat(document.getElementById('ror_aw').value)       || 50;
+  const al  = parseFloat(document.getElementById('ror_al').value)       || 30;
+  const rpt = parseFloat(document.getElementById('ror_rpt').value)/100  || 0.01;
+  const dd  = parseFloat(document.getElementById('ror_dd').value)/100   || 0.2;
+  const n   = parseInt(document.getElementById('ror_n').value)          || 1000;
+
+  // Monte Carlo simulation: run 2000 paths of n trades, count how many go bust
+  const paths = 2000;
+  const ruinLevel = 1 - dd;
+  let ruined = 0;
+  for(let p=0; p<paths; p++){
+    let eq = 1;
+    for(let t=0; t<n; t++){
+      if(Math.random() < wr){ eq += eq * rpt * (aw/al); }
+      else                  { eq -= eq * rpt; }
+      if(eq <= ruinLevel){ ruined++; break; }
+    }
+  }
+  const rorPct = (ruined/paths)*100;
+  const pctEl  = document.getElementById('rorPct');
+  const barEl  = document.getElementById('rorBar');
+  const noteEl = document.getElementById('rorNote');
+  pctEl.textContent = rorPct.toFixed(1)+'%';
+  pctEl.style.color = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : '#dc2626';
+  barEl.style.width = Math.min(rorPct,100)+'%';
+  barEl.style.background = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : '#dc2626';
+  const ev = wr*aw - (1-wr)*al;
+  noteEl.innerHTML = `Expected value per trade: <strong style="color:${ev>=0?'var(--green)':'var(--red)'}">${ev>=0?'+':''}${ev.toFixed(1)} pips</strong> &nbsp;·&nbsp; R:R ${(aw/al).toFixed(2)} &nbsp;·&nbsp; Based on ${paths.toLocaleString()} simulated paths`;
 }
 
 function logSim(outcome){
@@ -3130,10 +3451,17 @@ function goUpgrade(plan){ closePricingModal(); showToast('Stripe payments coming
 
 function switchAuthTab(mode){
   authTabMode = mode;
+  const isReset = mode === 'reset';
+  const isNewPw = mode === 'newpw';
+  document.getElementById('auth-main-view').style.display  = (!isReset && !isNewPw) ? '' : 'none';
+  document.getElementById('auth-reset-view').style.display = isReset  ? '' : 'none';
+  document.getElementById('auth-newpw-view').style.display = isNewPw  ? '' : 'none';
+  if(isReset || isNewPw) return;
   document.getElementById('atab-signin').classList.toggle('active', mode==='signin');
   document.getElementById('atab-signup').classList.toggle('active', mode==='signup');
   document.getElementById('auth-submit-btn').textContent = mode==='signin' ? 'Sign In' : 'Create Account';
   document.getElementById('auth-name-row').style.display = mode==='signup' ? 'flex' : 'none';
+  document.getElementById('auth-forgot-row').style.display = mode==='signin' ? '' : 'none';
   document.getElementById('auth-switch-text').textContent = mode==='signin' ? "Don't have an account? " : 'Already have an account? ';
   document.getElementById('auth-switch-link').textContent = mode==='signin' ? 'Sign up free' : 'Sign in';
   document.getElementById('auth-switch-link').onclick = (e)=>{ e.preventDefault(); switchAuthTab(mode==='signin'?'signup':'signin'); };
@@ -3168,6 +3496,58 @@ async function submitAuth(){
   } finally {
     btn.textContent = authTabMode==='signin' ? 'Sign In' : 'Create Account';
     btn.disabled = false;
+  }
+}
+
+async function signInWithGoogle(){
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if(error) showToast(error.message, 'tl');
+}
+
+async function sendResetEmail(){
+  const email = document.getElementById('auth-reset-email').value.trim();
+  const errEl = document.getElementById('auth-reset-err');
+  const btn   = document.getElementById('auth-reset-btn');
+  if(!email){ errEl.style.color='var(--red)'; errEl.textContent='Enter your email.'; return; }
+  btn.textContent='Sending…'; btn.disabled=true; errEl.textContent='';
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
+  btn.textContent='Send Reset Link'; btn.disabled=false;
+  if(error){ errEl.style.color='var(--red)'; errEl.textContent=error.message; return; }
+  errEl.style.color='var(--green)';
+  errEl.textContent='Reset link sent! Check your inbox.';
+}
+
+async function setNewPassword(){
+  const pw    = document.getElementById('auth-newpw').value;
+  const errEl = document.getElementById('auth-newpw-err');
+  const btn   = document.getElementById('auth-newpw-btn');
+  if(pw.length < 6){ errEl.style.color='var(--red)'; errEl.textContent='Password must be at least 6 characters.'; return; }
+  btn.textContent='Updating…'; btn.disabled=true; errEl.textContent='';
+  const { error } = await sb.auth.updateUser({ password: pw });
+  btn.textContent='Update Password'; btn.disabled=false;
+  if(error){ errEl.style.color='var(--red)'; errEl.textContent=error.message; return; }
+  closeAuthModal();
+  showToast('Password updated! You are now signed in.','tw');
+}
+
+function handleAuthUrlTokens(){
+  // Supabase puts access_token and type in the URL hash after redirect
+  const hash = location.hash.slice(1);
+  const params = new URLSearchParams(hash.replace(/^[^?]*#?/,''));
+  // Also check query string
+  const qp = new URLSearchParams(location.search);
+  const type = params.get('type') || qp.get('type');
+  if(type === 'recovery'){
+    openAuthModal('newpw');
+    history.replaceState(null,'', location.pathname);
+  } else if(type === 'signup'){
+    history.replaceState(null,'', location.pathname+'#dashboard');
+    showToast('Email confirmed! Welcome to Sharpe.','tw');
   }
 }
 
@@ -3383,6 +3763,9 @@ async function deleteTradeFromDb(id){
   await sb.from('trades').delete().eq('id', id).eq('user_id', sbUser.id);
 }
 
+// Handle Supabase redirect tokens (password recovery, email confirmation)
+handleAuthUrlTokens();
+
 // ── AUTH STATE LISTENER ────────────────────────────────────────
 sb.auth.onAuthStateChange((event, session) => {
   const user = session?.user || null;
@@ -3391,11 +3774,13 @@ sb.auth.onAuthStateChange((event, session) => {
     sbUser = user;
     updateAuthUI();
     if(event === 'INITIAL_SESSION' || event === 'SIGNED_IN'){
+      showDashboardSkeleton();
       setTimeout(async () => {
         try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
         try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
         const initId = location.hash.slice(1);
         nav(VALID_SECTIONS.has(initId) ? initId : 'dashboard', null);
+        maybeShowOnboarding();
       }, 0);
     }
   } else {
@@ -3682,6 +4067,65 @@ async function loadAdminPanel(){
     <div class="stat-card"><div class="lbl">Blocked</div><div class="val" style="color:var(--red)">${blocked}</div></div>`;
 
   renderAdminUsers();
+  renderAdminAnalytics();
+}
+
+let _adminSignupChart, _adminPlanChart;
+function renderAdminAnalytics(){
+  const users = adminUsersCache || [];
+  const now = Date.now();
+
+  // Signups per week for last 8 weeks
+  const weekLabels = [], weekCounts = [];
+  for(let w=7; w>=0; w--){
+    const start = new Date(now - (w+1)*7*864e5);
+    const end   = new Date(now - w*7*864e5);
+    weekLabels.push(start.toLocaleDateString('en-GB',{month:'short',day:'numeric'}));
+    weekCounts.push(users.filter(u=>{ const d=new Date(u.created_at); return d>=start&&d<end; }).length);
+  }
+
+  // Plan distribution
+  const byPlan = {free:0,essential:0,pro:0};
+  users.forEach(u=>{ byPlan[u.plan]=(byPlan[u.plan]||0)+1; });
+
+  // Engagement
+  const active7  = users.filter(u=> adminTradeMap?.[u.id]?.last && (now-new Date(adminTradeMap[u.id].last))<=7*864e5).length;
+  const active30 = users.filter(u=> adminTradeMap?.[u.id]?.last && (now-new Date(adminTradeMap[u.id].last))<=30*864e5).length;
+  const withTrades = users.filter(u=> adminTradeMap?.[u.id]?.total > 0).length;
+  const retentionPct = users.length ? Math.round(withTrades/users.length*100) : 0;
+
+  // Signup chart
+  const sCtx = document.getElementById('adminSignupChart');
+  if(sCtx){
+    if(_adminSignupChart) _adminSignupChart.destroy();
+    _adminSignupChart = new Chart(sCtx.getContext('2d'),{
+      type:'bar',
+      data:{labels:weekLabels,datasets:[{data:weekCounts,backgroundColor:'rgba(37,99,235,.65)',borderRadius:5}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+        x:{border:{display:false},grid:{display:false},ticks:{...CHART_TICK}},
+        y:{border:{display:false},grid:CHART_GRID,ticks:{...CHART_TICK,stepSize:1}}
+      }}
+    });
+  }
+
+  // Plan donut chart
+  const pCtx = document.getElementById('adminPlanChart');
+  if(pCtx){
+    if(_adminPlanChart) _adminPlanChart.destroy();
+    _adminPlanChart = new Chart(pCtx.getContext('2d'),{
+      type:'doughnut',
+      data:{labels:['Free','Essential','Pro'],datasets:[{data:[byPlan.free,byPlan.essential,byPlan.pro],backgroundColor:['#94a3b8','#3b82f6','#8b5cf6'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{boxWidth:10,font:{size:11}}}}}
+    });
+  }
+
+  // Engagement grid
+  const eng = document.getElementById('adminEngagement');
+  if(eng) eng.innerHTML=`
+    <div class="stat-card"><div class="lbl">Active last 7d</div><div class="val blue">${active7}</div></div>
+    <div class="stat-card"><div class="lbl">Active last 30d</div><div class="val blue">${active30}</div></div>
+    <div class="stat-card"><div class="lbl">Users with trades</div><div class="val green">${withTrades}</div></div>
+    <div class="stat-card"><div class="lbl">Activation rate</div><div class="val ${retentionPct>=50?'green':'red'}">${retentionPct}%</div></div>`;
 }
 
 function usrTenure(created_at){
@@ -4109,6 +4553,69 @@ function exportJournalCSV(){
   showToast(`Exported ${trades.length} trades to CSV`,'tw');
 }
 
+let _csvParsed = [];
+function openCsvImport(){
+  _csvParsed = [];
+  document.getElementById('csv-preview').textContent='';
+  document.getElementById('csv-import-btn').disabled=true;
+  document.getElementById('csvFileInput').value='';
+  document.getElementById('csvImportOverlay').classList.add('open');
+}
+function closeCsvImport(){ document.getElementById('csvImportOverlay').classList.remove('open'); }
+function handleCsvDrop(e){ const f=e.dataTransfer.files[0]; if(f) handleCsvFile(f); }
+function handleCsvFile(file){
+  if(!file||!file.name.endsWith('.csv')){ showToast('Please select a .csv file','tl'); return; }
+  const reader = new FileReader();
+  reader.onload = e => parseCsvText(e.target.result);
+  reader.readAsText(file);
+}
+function parseCsvText(text){
+  const lines = text.trim().split('\n').filter(Boolean);
+  if(lines.length<2){ showToast('CSV must have a header row and at least one trade.','tl'); return; }
+  const hdrs = lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const col = k => hdrs.indexOf(k);
+  const get = (row,k) => { const i=col(k); return i>=0 ? (row[i]||'').replace(/^"|"$/g,'').trim() : ''; };
+  const trades = [];
+  const errors = [];
+  for(let i=1;i<lines.length;i++){
+    const row = lines[i].split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+    const date = get(row,'date');
+    const market = get(row,'market');
+    const dir = get(row,'direction').toUpperCase();
+    const status = get(row,'status').toLowerCase();
+    const entry = parseFloat(get(row,'entry'));
+    const sl = parseFloat(get(row,'stop loss')||get(row,'sl'));
+    const pips = parseFloat(get(row,'pips'));
+    if(!date||!market||!['LONG','SHORT'].includes(dir)||!['win','loss','open'].includes(status)||isNaN(entry)){
+      errors.push(`Row ${i}: missing required fields`); continue;
+    }
+    trades.push({ date, market, direction:dir, status, entry,
+      sl: isNaN(sl)?null:sl,
+      tp: parseFloat(get(row,'take profit'))||null,
+      exit: parseFloat(get(row,'exit'))||null,
+      pips: isNaN(pips)?null:pips,
+      entryReason: get(row,'entry reason'), exitReason: get(row,'exit reason'),
+      tags: get(row,'tags') });
+  }
+  _csvParsed = trades;
+  const prev = document.getElementById('csv-preview');
+  prev.innerHTML = `<strong style="color:var(--green)">${trades.length} trade(s) ready to import</strong>`
+    + (errors.length ? `<br><span style="color:var(--red)">${errors.length} row(s) skipped: ${errors.slice(0,2).join('; ')}</span>` : '');
+  document.getElementById('csv-import-btn').disabled = trades.length===0;
+}
+async function confirmCsvImport(){
+  if(!_csvParsed.length) return;
+  const btn = document.getElementById('csv-import-btn');
+  btn.textContent='Importing…'; btn.disabled=true;
+  let ok=0;
+  for(const t of _csvParsed){
+    try{ await addTrade(t); ok++; } catch(e){ console.warn('CSV import row error',e); }
+  }
+  closeCsvImport();
+  showToast(`Imported ${ok} trade(s) successfully`,'tw');
+  renderDashboard(); renderJournal();
+}
+
 // ── Webhooks ─────────────────────────────────────────────────────
 function tfLabel(){ return sigTf==='1day'?'Daily':sigTf==='4h'?'4H':'Weekly'; }
 
@@ -4271,6 +4778,10 @@ buildIdeas();
 initSignals();
 updateAuthUI();
 document.getElementById('s_date').value = new Date().toISOString().split('T')[0];
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 <!-- FOOTER -->
 <footer class="footer">

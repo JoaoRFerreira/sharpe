@@ -808,3 +808,56 @@ textarea{resize:vertical;min-height:56px}
 .legal-body h2:first-child{margin-top:0}
 .legal-body p{font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:0}
 .legal-body code{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12px;font-family:'SF Mono','Fira Code',monospace}
+
+/* ── SKELETONS ──────────────────────────────────────────────── */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel{background:linear-gradient(90deg,var(--border) 25%,rgba(200,210,230,.6) 50%,var(--border) 75%);background-size:800px 100%;animation:shimmer 1.4s infinite linear;border-radius:8px}
+.skel-kpi{height:90px;border-radius:14px;flex:1}
+.skel-pill{height:56px;border-radius:10px;flex:1}
+.skel-chart{height:200px;border-radius:12px;margin-top:14px}
+.skel-row{height:36px;border-radius:6px;margin-bottom:8px}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 24px;text-align:center;gap:14px}
+.empty-state svg{opacity:.25}
+.empty-state h3{font-size:16px;font-weight:700;color:var(--text);margin:0}
+.empty-state p{font-size:13px;color:var(--muted);margin:0;max-width:340px;line-height:1.6}
+.empty-state .btn{margin-top:4px}
+
+/* ── ONBOARDING CHECKLIST ──────────────────────────────────── */
+.ob-card{background:linear-gradient(135deg,#1e3a8a,#1d4ed8);border-radius:16px;padding:22px 24px;margin-bottom:18px;color:#fff}
+.ob-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.ob-sub{font-size:12px;opacity:.75;margin-bottom:16px}
+.ob-steps{display:flex;flex-direction:column;gap:8px}
+.ob-step{display:flex;align-items:center;gap:10px;font-size:13px}
+.ob-step-icon{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.ob-step.done .ob-step-icon{background:rgba(255,255,255,.9);border-color:transparent;color:#1d4ed8}
+.ob-step.done span{opacity:.6;text-decoration:line-through}
+.ob-dismiss{margin-top:14px;font-size:11px;opacity:.6;cursor:pointer;text-decoration:underline;background:none;border:none;color:inherit;padding:0}
+
+/* ── P&L CALENDAR ────────────────────────────────────────────── */
+.cal-wrap{overflow-x:auto;padding-bottom:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;min-width:420px}
+.cal-cell{aspect-ratio:1;border-radius:4px;cursor:default;position:relative}
+.cal-cell:hover .cal-tip{display:block}
+.cal-tip{display:none;position:absolute;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;font-size:10px;white-space:nowrap;padding:3px 7px;border-radius:5px;z-index:10;pointer-events:none}
+.cal-day-label{font-size:9px;color:var(--muted);text-align:center;padding:2px 0}
+
+/* ── CSV IMPORT MODAL ────────────────────────────────────────── */
+.csv-modal{background:var(--card);border-radius:16px;padding:28px 30px;width:520px;max-width:94vw}
+
+/* ── TRADE TAGS ──────────────────────────────────────────────── */
+.tag-input-wrap{display:flex;flex-wrap:wrap;gap:5px;align-items:center;border:1px solid var(--border);border-radius:8px;padding:5px 8px;background:var(--bg);cursor:text}
+.tag-chip{background:rgba(37,99,235,.1);color:var(--blue);border-radius:5px;padding:2px 8px;font-size:11px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.tag-chip button{background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;font-size:13px}
+.tag-inline-input{border:none;outline:none;background:transparent;font-size:12px;min-width:80px;color:var(--text)}
+.tag-badge{background:rgba(37,99,235,.08);color:var(--blue);border-radius:4px;padding:1px 6px;font-size:10px;white-space:nowrap}
+
+/* ── RISK OF RUIN ─────────────────────────────────────────────── */
+.ror-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.ror-grid{grid-template-columns:1fr}}
+.ror-result{margin-top:20px;padding:18px 20px;border-radius:12px;border:1px solid var(--border);text-align:center}
+.ror-pct{font-size:36px;font-weight:800}
+.ror-label{font-size:12px;color:var(--muted);margin-top:4px}
+.ror-bar-wrap{height:10px;border-radius:5px;background:var(--border);margin-top:14px;overflow:hidden}
+.ror-bar{height:100%;border-radius:5px;transition:width .5s}

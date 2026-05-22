@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sharpe — Trading Intelligence Platform</title>
+<meta name="description" content="Sharpe gives independent traders institutional-grade analytics, journaling, and real-time signals — all in one place. Free to start.">
+<meta name="theme-color" content="#0f172a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sharpe — Trade Smarter. Grow Consistently.">
+<meta property="og:description" content="Institutional-grade analytics, journaling, and real-time signals for independent traders. Free plan available.">
+<meta property="og:image" content="https://joaoRFerreira.github.io/sharpe/og.png">
+<meta property="og:url" content="https://joaoRFerreira.github.io/sharpe/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sharpe — Trade Smarter. Grow Consistently.">
+<meta name="twitter:description" content="Institutional-grade analytics, journaling, and real-time signals for independent traders.">
+<meta name="twitter:image" content="https://joaoRFerreira.github.io/sharpe/og.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1419,6 +1432,10 @@ function switchTrackTab(name, btn) {
   document.querySelectorAll('.tr-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('trp-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
 </body>
