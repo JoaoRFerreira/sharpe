@@ -4390,15 +4390,17 @@ async function loadApiUsage(){
   }
 
   try{
-    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=OANDA:EUR_USD&token=${apiKey}`);
+    // forex/rates is the correct free-tier endpoint for verifying a Finnhub key
+    const r=await fetch(`https://finnhub.io/api/v1/forex/rates?base=USD&token=${apiKey}`);
     const d=await r.json();
     if(!r.ok||d.error){
       el.innerHTML=`<div style="font-size:12px;color:var(--red)">Connection failed: ${d.error||'Invalid key or quota exceeded'}</div>`;
       return;
     }
-    const price=d.c?.toFixed(5)||'—';
-    const change=d.d?.toFixed(5)||'—';
-    const pct=d.dp?.toFixed(3)||'—';
+    // d.quote.EUR is USD→EUR rate, so EUR/USD = 1/d.quote.EUR
+    const eurUsd = d.quote?.EUR ? (1/d.quote.EUR).toFixed(5) : '—';
+    const gbpUsd = d.quote?.GBP ? (1/d.quote.GBP).toFixed(5) : '—';
+    const jpyUsd = d.quote?.JPY ? (d.quote.JPY).toFixed(3) : '—';
     el.innerHTML=`
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <span style="background:rgba(34,197,94,.12);color:var(--green);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600">✓ Connected</span>
@@ -4406,16 +4408,16 @@ async function loadApiUsage(){
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${price}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">EUR/USD price</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${eurUsd}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">EUR/USD</div>
         </div>
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${change}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Change</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${gbpUsd}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">GBP/USD</div>
         </div>
         <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${pct}%</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Change %</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text)">${jpyUsd}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">USD/JPY</div>
         </div>
       </div>
       <div style="margin-top:10px;font-size:11px;color:var(--muted)">Forex &amp; commodity data via Finnhub · Crypto data via Binance (no key required)</div>
