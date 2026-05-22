@@ -836,7 +836,7 @@ textarea{resize:vertical;min-height:56px}
 .ob-dismiss{margin-top:14px;font-size:11px;opacity:.6;cursor:pointer;text-decoration:underline;background:none;border:none;color:inherit;padding:0}
 
 /* ── P&L CALENDAR ────────────────────────────────────────────── */
-.cal-wrap{overflow-x:auto;padding-bottom:6px}
+.cal-wrap{overflow:hidden;padding-bottom:4px}
 
 /* ── CSV IMPORT MODAL ────────────────────────────────────────── */
 .csv-modal{background:var(--card);border-radius:16px;padding:28px 30px;width:520px;max-width:94vw}

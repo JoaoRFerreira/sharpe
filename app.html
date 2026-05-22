@@ -1503,16 +1503,36 @@ function renderByMarket(){
   });
 }
 
+let _calLastW = 0;
 function renderCalendar(){
   const el = document.getElementById('pnlCalendar');
   if(!el) return;
 
-  const CELL = 12, GAP = 2, DOW_W = 18, MONTH_H = 16;
-  const COL = CELL + GAP;
+  // Measure available width from the card, subtract padding (16px each side)
+  const card = el.closest('.chart-card') || el.parentElement;
+  const availW = Math.floor(card.clientWidth) - 32;
+  if(availW < 50) return; // not mounted yet
+
+  // Skip re-render if width hasn't changed (avoids ResizeObserver loop)
+  if(availW === _calLastW && el.firstChild) return;
+  _calLastW = availW;
+
+  const GAP = 2, DOW_W = 22, MONTH_H = 16;
   const now = new Date();
   const year = now.getFullYear();
   const yrLbl = document.getElementById('calYearLabel');
   if(yrLbl) yrLbl.textContent = year;
+
+  const jan1     = new Date(year, 0, 1);
+  const startDow = jan1.getDay();
+  const leap     = year%4===0 && (year%100!==0 || year%400===0);
+  const daysInYear = leap ? 366 : 365;
+  const numWeeks   = Math.ceil((startDow + daysInYear) / 7);
+
+  // Cell size derived from available width
+  const CELL = Math.max(6, Math.floor((availW - DOW_W + GAP) / numWeeks - GAP));
+  const COL  = CELL + GAP;
+  const fs   = Math.max(7, Math.min(10, CELL - 2)); // label font-size
 
   const dayMap = {};
   trades.filter(t=>t.status!=='open' && t.date && String(t.date).startsWith(year)).forEach(t=>{
@@ -1522,8 +1542,8 @@ function renderCalendar(){
   const maxAbs = vals.length ? Math.max(...vals.map(Math.abs), 1) : 1;
 
   function pipColor(v){
-    if(v === undefined) return '#e2e8f0';
-    const r = v / maxAbs;
+    if(v===undefined) return '#e2e8f0';
+    const r = v/maxAbs;
     if(r < -0.4) return '#fca5a5';
     if(r < 0)    return '#fcd34d';
     if(r < 0.3)  return '#86efac';
@@ -1531,69 +1551,64 @@ function renderCalendar(){
     return '#16a34a';
   }
 
-  const jan1    = new Date(year, 0, 1);
-  const startDow = jan1.getDay();
-  const leap     = year%4===0 && (year%100!==0 || year%400===0);
-  const daysInYear = leap ? 366 : 365;
-  const numWeeks   = Math.ceil((startDow + daysInYear) / 7);
-
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const DOWS   = ['','M','','W','','F',''];
+  const totalH = MONTH_H + 7*COL - GAP;
 
-  const totalW = DOW_W + numWeeks * COL - GAP;
-  const totalH = MONTH_H + 7 * COL - GAP;
+  let html = `<div style="position:relative;width:100%;height:${totalH}px;font-size:${fs}px;user-select:none">`;
 
-  let html = `<div style="position:relative;width:${totalW}px;height:${totalH}px;font-size:9px;user-select:none">`;
-
-  // Day-of-week labels (M, W, F only)
+  // Day-of-week labels
   DOWS.forEach((d,i) => {
     if(!d) return;
-    const y = MONTH_H + i * COL + (CELL - 9) / 2;
+    const y = MONTH_H + i*COL + (CELL-fs)/2;
     html += `<span style="position:absolute;left:0;top:${y}px;width:${DOW_W-4}px;text-align:right;color:#94a3b8;line-height:1">${d}</span>`;
   });
 
-  // Month labels + cells, week by week
+  // Month labels + day cells, week by week
   let prevM = -1;
-  for(let w = 0; w < numWeeks; w++){
-    const x = DOW_W + w * COL;
-
-    // Month label — show when the first in-range day of this week starts a new month
-    const firstIdx = w * 7 - startDow;
+  for(let w=0; w<numWeeks; w++){
+    const x = DOW_W + w*COL;
+    const firstIdx = w*7 - startDow;
     const firstInRange = Math.max(firstIdx, 0);
     if(firstInRange < daysInYear){
-      const dt = new Date(year, 0, 1 + firstInRange);
-      const m  = dt.getMonth();
+      const m = new Date(year, 0, 1+firstInRange).getMonth();
       if(m !== prevM){
-        html += `<span style="position:absolute;left:${x}px;top:0;color:#94a3b8;white-space:nowrap">${MONTHS[m]}</span>`;
+        html += `<span style="position:absolute;left:${x}px;top:0;color:#94a3b8;white-space:nowrap;font-size:${fs}px">${MONTHS[m]}</span>`;
         prevM = m;
       }
     }
-
-    // 7 day cells in this week column
-    for(let dow = 0; dow < 7; dow++){
-      const dayIdx = w * 7 + dow - startDow;
-      const cx = x;
-      const cy = MONTH_H + dow * COL;
-
+    for(let dow=0; dow<7; dow++){
+      const dayIdx = w*7 + dow - startDow;
+      const cx = x, cy = MONTH_H + dow*COL;
       if(dayIdx < 0 || dayIdx >= daysInYear){
         html += `<div style="position:absolute;left:${cx}px;top:${cy}px;width:${CELL}px;height:${CELL}px"></div>`;
         continue;
       }
-
-      const dt  = new Date(year, 0, 1 + dayIdx);
-      const key = dt.toISOString().split('T')[0];
+      const key = new Date(year, 0, 1+dayIdx).toISOString().split('T')[0];
       const v   = dayMap[key];
-      const bg  = pipColor(v);
       const tip = v !== undefined ? `${key}: ${v>0?'+':''}${v} pips` : `${key}: no trades`;
-
-      html += `<div style="position:absolute;left:${cx}px;top:${cy}px;width:${CELL}px;height:${CELL}px;border-radius:2px;background:${bg};cursor:default"
-        onmouseenter="calTipShow(event,'${tip}')" onmouseleave="calTipHide()"></div>`;
+      html += `<div style="position:absolute;left:${cx}px;top:${cy}px;width:${CELL}px;height:${CELL}px;border-radius:2px;background:${pipColor(v)};cursor:default" onmouseenter="calTipShow(event,'${tip}')" onmouseleave="calTipHide()"></div>`;
     }
   }
 
-  html += '</div><div id="calTipEl" style="display:none;position:fixed;background:#0f172a;color:#fff;font-size:11px;padding:4px 9px;border-radius:6px;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25)"></div>';
+  html += '</div>';
+  // Keep tooltip element outside the re-rendered area
+  if(!document.getElementById('calTipEl')){
+    const tip = document.createElement('div');
+    tip.id = 'calTipEl';
+    tip.style.cssText = 'display:none;position:fixed;background:#0f172a;color:#fff;font-size:11px;padding:4px 9px;border-radius:6px;pointer-events:none;z-index:999;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25)';
+    document.body.appendChild(tip);
+  }
   el.innerHTML = html;
 }
+
+// Re-render on resize (debounced)
+let _calResizeTimer;
+window.addEventListener('resize', () => {
+  _calLastW = 0; // force re-measure
+  clearTimeout(_calResizeTimer);
+  _calResizeTimer = setTimeout(renderCalendar, 80);
+});
 
 function calTipShow(e, text){
   const t = document.getElementById('calTipEl');
