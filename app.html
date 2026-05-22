@@ -4395,8 +4395,12 @@ async function loadApiUsage(){
       ? fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`)
           .then(r=>r.json()).then(d=>({ok:d.c>0,price:d.c})).catch(e=>({ok:false,error:e.message}))
       : Promise.resolve({ok:false,error:'No key configured — save it above first'}),
-    fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-      .then(r=>r.json()).then(d=>({ok:!!d.price,price:parseFloat(d.price)})).catch(e=>({ok:false,error:e.message}))
+    fetch('https://api.binance.com/api/v3/ticker/price?symbols=%5B%22BTCUSDT%22%2C%22ETHUSDT%22%2C%22SOLUSDT%22%2C%22XRPUSDT%22%5D')
+      .then(r=>r.json()).then(d=>{
+        if(!Array.isArray(d)) return {ok:false,error:'Unexpected response'};
+        const m=Object.fromEntries(d.map(x=>[x.symbol,parseFloat(x.price)]));
+        return {ok:true,btc:m.BTCUSDT,eth:m.ETHUSDT,sol:m.SOLUSDT,xrp:m.XRPUSDT};
+      }).catch(e=>({ok:false,error:e.message}))
   ]);
 
   const badge=(ok,label)=>ok
@@ -4420,10 +4424,14 @@ async function loadApiUsage(){
           <span style="font-size:13px;font-weight:600;color:var(--text)">Binance</span>
           ${badge(bnResult.ok, bnResult.ok?'Connected':'Failed')}
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Crypto · No key required</div>
-        <div style="font-size:12px;color:${bnResult.ok?'var(--text)':'var(--red)'}">
-          ${bnResult.ok?`BTC $${bnResult.price?.toLocaleString('en-US',{maximumFractionDigits:0})}`:(bnResult.error||'Unreachable')}
-        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Crypto · No key required</div>
+        ${bnResult.ok?`
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+            <div style="font-size:11px;color:var(--text)">BTC <span style="color:var(--muted)">$${bnResult.btc?.toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>
+            <div style="font-size:11px;color:var(--text)">ETH <span style="color:var(--muted)">$${bnResult.eth?.toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>
+            <div style="font-size:11px;color:var(--text)">SOL <span style="color:var(--muted)">$${bnResult.sol?.toFixed(2)}</span></div>
+            <div style="font-size:11px;color:var(--text)">XRP <span style="color:var(--muted)">$${bnResult.xrp?.toFixed(4)}</span></div>
+          </div>`:`<div style="font-size:12px;color:var(--red)">${bnResult.error||'Unreachable'}</div>`}
       </div>
     </div>
   `;
