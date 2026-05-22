@@ -3157,8 +3157,10 @@ function updateAuthUI(){
     if(landingNav) landingNav.style.display = 'none';
     const mobNav=document.getElementById('mobNav'); if(mobNav) mobNav.classList.add('visible');
   } else {
-    // Not logged in on app page — redirect to landing
-    window.location.href = 'index.html';
+    area.innerHTML = `
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>`;
+    if(appNav) appNav.style.display = 'none';
+    const mobNav2=document.getElementById('mobNav'); if(mobNav2) mobNav2.classList.remove('visible');
   }
   applyPlanGates();
 }
@@ -3345,12 +3347,10 @@ async function deleteTradeFromDb(id){
 
 // ── AUTH STATE LISTENER ────────────────────────────────────────
 sb.auth.onAuthStateChange((event, session) => {
-  console.log('[auth] event:', event, 'user:', session?.user?.id);
   const user = session?.user || null;
   if(user){
     sbUser = user;
     updateAuthUI();
-    // defer async work so signInWithPassword resolves immediately
     setTimeout(async () => {
       try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
       try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
@@ -3358,15 +3358,17 @@ sb.auth.onAuthStateChange((event, session) => {
     }, 0);
   } else {
     sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
-    updateAuthUI();
     showAdminNav();
+    // Only redirect on an explicit sign-out, not on the initial session check
+    if(event === 'SIGNED_OUT') { window.location.href = 'index.html'; return; }
+    updateAuthUI();
   }
 });
 
-// Auth guard: redirect to landing if no session within 2s
+// Auth guard: redirect to landing only after confirming no session exists
 sb.auth.getSession().then(({ data }) => {
   if (!data?.session) {
-    setTimeout(() => { if (!sbUser) window.location.href = 'index.html'; }, 2000);
+    setTimeout(() => { if (!sbUser) window.location.href = 'index.html'; }, 1500);
   }
 });
 

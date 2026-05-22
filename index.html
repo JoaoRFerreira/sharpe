@@ -1293,7 +1293,10 @@ sb.auth.getSession().then(({ data }) => {
 });
 
 sb.auth.onAuthStateChange((event, session) => {
-  if (session?.user) window.location.href = 'app.html';
+  // Only redirect on explicit sign-in events, not on the initial session check
+  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+    window.location.href = 'app.html';
+  }
 });
 
 // ── NAV ───────────────────────────────────────────────────
