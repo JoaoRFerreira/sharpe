@@ -62,6 +62,15 @@ nav button.active{color:#f1f5f9;background:rgba(255,255,255,.12);font-weight:600
 .recent-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
 .recent-row:last-child{border-bottom:none;padding-bottom:0}
 .green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.yellow{color:var(--gold)}.purple{color:var(--purple)}
+/* FAQ */
+.faq-list{max-width:800px}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;background:none;border:none;text-align:left;padding:16px 0;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;font-family:'Inter',sans-serif}
+.faq-q:hover{color:var(--blue)}
+.faq-chv{font-size:18px;font-weight:400;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.faq-q.open .faq-chv{transform:rotate(45deg);color:var(--blue)}
+.faq-a{display:none;padding:0 0 16px;font-size:13px;color:var(--muted);line-height:1.7}
+.faq-a.open{display:block}
 /* CHARTS */
 .charts-row{display:none}
 .dash-charts{display:flex;flex-direction:column;gap:14px;margin-top:14px;margin-bottom:14px}
@@ -2562,6 +2571,62 @@ textarea{resize:vertical;min-height:56px}
   </div>
 </section>
 
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Frequently Asked Questions</div>
+      <div class="dash-subtitle">Everything you need to know about Sharpe</div>
+    </div>
+  </div>
+  <div class="faq-list" id="faqList">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is Sharpe?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Sharpe is a professional-grade trading analytics platform for independent traders. It combines a trade journal, performance analytics, real-time signals, daily trade ideas, and an educational library — all in one place. It is not a broker; no trades are executed through Sharpe directly.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How do Auto Signals work?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Auto Signals run a server-side scan every 4 hours via our automated pipeline. The scanner analyses price data across 32+ instruments — Forex pairs, indices, commodities, ETFs, and crypto — using technical indicators (RSI, ATR, EMA, volume, key levels). Each signal includes entry zone, stop loss, two targets, risk-to-reward ratio, and a confidence score. Results are stored in our database and pushed to your dashboard in real time.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What markets does Sharpe cover?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Sharpe covers major and minor Forex pairs (e.g. EUR/USD, GBP/JPY), equity indices (S&amp;P 500, NASDAQ, DAX), commodities (Gold, Oil, Silver), top ETFs (SPY, QQQ, XLE), and major crypto assets (BTC, ETH, SOL). The instrument list varies by plan — Free users get a curated subset, Trader and Pro plans unlock the full universe.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How often are signals updated?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Signals are refreshed automatically 6 times per day at 00:00, 04:00, 08:00, 12:00, 16:00, and 20:00 UTC. Pro plan users can also trigger a manual scan from the Admin panel at any time.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button>
+      <div class="faq-a">No. Sharpe is an analytical and educational tool. Nothing on this platform constitutes financial advice, investment advice, or a solicitation to buy or sell any financial instrument. All signals, ideas, and analysis are for informational purposes only. Trading involves significant risk of loss — always apply your own risk management and consult a qualified financial adviser before making investment decisions.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How is my data stored and secured?<span class="faq-chv">+</span></button>
+      <div class="faq-a">All data is stored on Supabase, a SOC 2 Type II certified infrastructure provider, with data encrypted at rest and in transit (TLS 1.3). Trade journal entries and account data are private to your account — row-level security policies ensure no other user can access your records. We never sell personal data to third parties.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the difference between the Free, Trader, and Pro plans?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The Free plan covers core journaling (up to 20 trades) and a curated signal feed. The Trader plan unlocks unlimited journaling, the full instrument list, and 5 daily trade ideas. The Pro plan adds OANDA auto-execution, webhook and email alerts, manual scan triggers, and priority signal access. Full plan details are on the Pricing page.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can I export my trade journal?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Yes. In the Trade Journal tab, click the "Export CSV" button to download all your trades as a CSV file. This includes entry date, market, direction, entry price, stop loss, exit price, pips/points, and notes.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is Profit Factor and why does it matter?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Profit Factor is total gross winnings divided by total gross losses. A Profit Factor above 1.0 means your strategy is net-profitable; above 1.5 indicates a solid edge; above 2.0 is considered strong. It is one of the most important metrics for evaluating a trading strategy because it accounts for both win rate and average win/loss size together.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How do I connect my OANDA account for auto-execution?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Go to Settings → OANDA Integration (Pro plan required). Enter your OANDA Personal Access Token and Account ID, set your risk per trade as a percentage of account balance, and click Connect. We strongly recommend starting with a practice account before enabling live auto-execution.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Can I cancel my subscription at any time?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Yes. There are no long-term contracts or lock-in periods. You can cancel your subscription at any time from your account settings. Your plan will remain active until the end of the current billing period, after which it will revert to the Free plan. Your journal data is always retained.</div>
+    </div>
+  </div>
+</section>
+
 </div><!-- /main -->
 
 <!-- AUTH MODAL -->
@@ -2725,6 +2790,14 @@ function persist(){
 }
 
 // ── NAV ────────────────────────────────────────────────────────
+function toggleFaq(btn){
+  const item=btn.closest('.faq-item');
+  const ans=item.querySelector('.faq-a');
+  const open=!ans.classList.contains('open');
+  // close all others
+  document.querySelectorAll('.faq-a.open').forEach(a=>{ a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
+  if(open){ ans.classList.add('open'); btn.classList.add('open'); }
+}
 function toggleHowto(id,bar){
   const panel=document.getElementById(id);
   const open=panel.classList.toggle('open');
@@ -2760,8 +2833,6 @@ function nav(id, btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(btn) btn.classList.add('active');
-  const footer=document.querySelector('.footer');
-  if(footer) footer.style.display=id==='landing'?'':'none';
   mobNavSync(id);
   if(id==='dashboard') renderDashboard();
   if(id==='journal') renderJournal();
@@ -5800,6 +5871,7 @@ document.getElementById('s_date').value = new Date().toISOString().split('T')[0]
       <div class="footer-col">
         <h4>Resources</h4>
         <ul>
+          <li><a href="#" onclick="nav('faq',null);return false">FAQ</a></li>
           <li><a href="#" onclick="sbUser&&nav('learning',null);return false">Learning Center</a></li>
           <li><a href="#" onclick="sbUser&&nav('ideas',null);return false">Trade Ideas</a></li>
           <li><a href="#" onclick="navLanding('pricing-page',null);return false">Pricing</a></li>
