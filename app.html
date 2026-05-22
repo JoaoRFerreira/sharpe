@@ -4389,42 +4389,44 @@ async function loadApiUsage(){
     return;
   }
 
-  try{
-    // forex/rates is the correct free-tier endpoint for verifying a Finnhub key
-    const r=await fetch(`https://finnhub.io/api/v1/forex/rates?base=USD&token=${apiKey}`);
-    const d=await r.json();
-    if(!r.ok||d.error){
-      el.innerHTML=`<div style="font-size:12px;color:var(--red)">Connection failed: ${d.error||'Invalid key or quota exceeded'}</div>`;
-      return;
-    }
-    // d.quote.EUR is USD→EUR rate, so EUR/USD = 1/d.quote.EUR
-    const eurUsd = d.quote?.EUR ? (1/d.quote.EUR).toFixed(5) : '—';
-    const gbpUsd = d.quote?.GBP ? (1/d.quote.GBP).toFixed(5) : '—';
-    const jpyUsd = d.quote?.JPY ? (d.quote.JPY).toFixed(3) : '—';
-    el.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <span style="background:rgba(34,197,94,.12);color:var(--green);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600">✓ Connected</span>
-        <span style="font-size:12px;color:var(--muted)">Finnhub API key is valid</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${eurUsd}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">EUR/USD</div>
+  // Test Finnhub (stock quote — free tier endpoint) and Binance in parallel
+  const [fhResult, bnResult] = await Promise.all([
+    apiKey
+      ? fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${apiKey}`)
+          .then(r=>r.json()).then(d=>({ok:d.c>0,price:d.c})).catch(e=>({ok:false,error:e.message}))
+      : Promise.resolve({ok:false,error:'No key configured — save it above first'}),
+    fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+      .then(r=>r.json()).then(d=>({ok:!!d.price,price:parseFloat(d.price)})).catch(e=>({ok:false,error:e.message}))
+  ]);
+
+  const badge=(ok,label)=>ok
+    ?`<span style="background:rgba(34,197,94,.12);color:var(--green);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600">✓ ${label}</span>`
+    :`<span style="background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600">✗ ${label}</span>`;
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="padding:14px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:600;color:var(--text)">Finnhub</span>
+          ${badge(fhResult.ok, fhResult.ok?'Connected':'Failed')}
         </div>
-        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${gbpUsd}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">GBP/USD</div>
-        </div>
-        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
-          <div style="font-size:18px;font-weight:800;color:var(--text)">${jpyUsd}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">USD/JPY</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Forex &amp; commodities · Key required</div>
+        <div style="font-size:12px;color:${fhResult.ok?'var(--text)':'var(--red)'}">
+          ${fhResult.ok?`AAPL $${fhResult.price?.toFixed(2)} — key valid`:(fhResult.error||'Check key above')}
         </div>
       </div>
-      <div style="margin-top:10px;font-size:11px;color:var(--muted)">Forex &amp; commodity data via Finnhub · Crypto data via Binance (no key required)</div>
-    `;
-  }catch(e){
-    el.innerHTML=`<div style="font-size:12px;color:var(--red)">Failed to reach Finnhub: ${e.message}</div>`;
-  }
+      <div style="padding:14px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:600;color:var(--text)">Binance</span>
+          ${badge(bnResult.ok, bnResult.ok?'Connected':'Failed')}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Crypto · No key required</div>
+        <div style="font-size:12px;color:${bnResult.ok?'var(--text)':'var(--red)'}">
+          ${bnResult.ok?`BTC $${bnResult.price?.toLocaleString('en-US',{maximumFractionDigits:0})}`:(bnResult.error||'Unreachable')}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 async function loadScanLog(){
