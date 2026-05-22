@@ -1,6 +1,12 @@
 // Uses raw Supabase REST API — no npm imports needed (avoids esm.sh resolution at boot)
-const SUPA_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPA_URL   = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+// Candles fetched per instrument on regular runs vs seed runs
+const FETCH_SIZE = 3
+const SEED_SIZE  = 250
+
+const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type'}
 
 const hdr = (extra: Record<string,string> = {}) => ({
   'Authorization': `Bearer ${SERVICE_KEY}`,
@@ -221,61 +227,48 @@ function analyseCandles(candles: Candle[], inst: Inst) {
   }
 }
 
-// ── Twelve Data helpers (forex + commodity) ────────────────────
-async function fetchTwelveDataPrices(apiKey: string, insts: Inst[]): Promise<Record<string,number>> {
-  if (!apiKey || !insts.length) return {}
-  const symbols = insts.map(i => i.symbol)
-  const url = `https://api.twelvedata.com/price?symbol=${symbols.map(encodeURIComponent).join(',')}&apikey=${apiKey}`
-  const r = await fetch(url); if (!r.ok) return {}
-  const data = await r.json()
-  const out: Record<string,number> = {}
-  if (symbols.length === 1) {
-    if (data.price) out[symbols[0]] = parseFloat(data.price)
-  } else {
-    for (const sym of symbols) if (data[sym]?.price) out[sym] = parseFloat(data[sym].price)
-  }
-  return out
-}
+// ── Candle fetch helpers ───────────────────────────────────────
+interface CandleFetch { candles: Candle[]; timestamps: string[] }
 
-async function fetchTwelveDataCandles(symbol: string, interval: string, apiKey: string): Promise<Candle[]|null> {
-  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=250&apikey=${apiKey}`
+async function fetchTdCandles(symbol: string, interval: string, apiKey: string, size: number): Promise<CandleFetch|null> {
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${size}&apikey=${apiKey}`
   const r = await fetch(url); if (!r.ok) return null
   const data = await r.json()
   if (!data.values || !Array.isArray(data.values)) return null
-  return (data.values as Record<string,string>[]).reverse().map(v => ({
-    open: parseFloat(v.open), high: parseFloat(v.high), low: parseFloat(v.low),
-    close: parseFloat(v.close), volume: parseFloat(v.volume || '0')
-  }))
+  const rows = (data.values as Record<string,string>[]).reverse()
+  return {
+    candles: rows.map(v=>({open:+v.open,high:+v.high,low:+v.low,close:+v.close,volume:+(v.volume||0)})),
+    timestamps: rows.map(v=>new Date(v.datetime.replace(' ','T')+'Z').toISOString())
+  }
 }
 
-// ── Binance helpers (crypto) ───────────────────────────────────
-async function fetchBinancePrices(insts: Inst[]): Promise<Record<string,number>> {
-  if (!insts.length) return {}
-  const out: Record<string,number> = {}
-  await Promise.all(insts.map(async inst => {
-    if (!inst.bnSymbol) return
-    try {
-      const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`)
-      if (!r.ok) return
-      const d = await r.json()
-      if (d.price) out[inst.symbol] = parseFloat(d.price)
-    } catch { /* skip */ }
-  }))
-  return out
-}
-
-async function fetchBinanceCandles(bnSymbol: string, interval: string): Promise<Candle[]|null> {
-  const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=${bnSymbol}&interval=${interval}&limit=250`)
+async function fetchBnCandles(bnSymbol: string, interval: string, size: number): Promise<CandleFetch|null> {
+  const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=${bnSymbol}&interval=${interval}&limit=${size}`)
   if (!r.ok) return null
   const data = await r.json()
   if (!Array.isArray(data)) return null
-  return data.map((k: unknown[]) => ({
-    open:  parseFloat(k[1] as string),
-    high:  parseFloat(k[2] as string),
-    low:   parseFloat(k[3] as string),
-    close: parseFloat(k[4] as string),
-    volume: parseFloat(k[5] as string)
+  return {
+    candles: data.map((k:unknown[])=>({open:+((k as string[])[1]),high:+((k as string[])[2]),low:+((k as string[])[3]),close:+((k as string[])[4]),volume:+((k as string[])[5])})),
+    timestamps: data.map((k:unknown[])=>new Date((k as number[])[0]).toISOString())
+  }
+}
+
+// ── Candle cache (Supabase) ────────────────────────────────────
+async function cacheCandles(symbol: string, tf: string, fetched: CandleFetch): Promise<void> {
+  if (!fetched.candles.length) return
+  const rows = fetched.candles.map((c,i)=>({
+    symbol, timeframe:tf, ts:fetched.timestamps[i],
+    open:c.open, high:c.high, low:c.low, close:c.close, volume:c.volume
   }))
+  await dbUpsert('candles', rows, 'symbol,timeframe,ts')
+}
+
+async function loadCandles(symbol: string, tf: string): Promise<Candle[]> {
+  // Fetch latest 250 rows descending, then reverse for chronological TA order
+  const rows = await dbGet('candles',
+    `select=open,high,low,close,volume&symbol=eq.${encodeURIComponent(symbol)}&timeframe=eq.${encodeURIComponent(tf)}&order=ts.desc&limit=250`
+  ) as {open:string;high:string;low:string;close:string;volume:string}[]
+  return rows.reverse().map(r=>({open:+r.open,high:+r.high,low:+r.low,close:+r.close,volume:+r.volume}))
 }
 
 async function writeLog(entry: Record<string,unknown>): Promise<void> {
@@ -287,44 +280,42 @@ async function writeLog(entry: Record<string,unknown>): Promise<void> {
 }
 
 // ── Entry point ─────────────────────────────────────────────────
-const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type'}
-
 Deno.serve(async (req: Request) => {
   if (req.method==='OPTIONS') return new Response(null,{headers:CORS})
 
-  const startMs = Date.now()
-  const reqUrl = new URL(req.url)
+  const startMs  = Date.now()
+  const reqUrl   = new URL(req.url)
   const pricesOnly = reqUrl.searchParams.get('pricesOnly') === 'true'
+  const seed       = reqUrl.searchParams.get('seed') === 'true'
+  const fetchSize  = seed ? SEED_SIZE : FETCH_SIZE
 
   // Read Twelve Data key
-  const cfgRows = await dbGet('site_config', 'select=value&key=eq.twelve_data_key&limit=1') as {value:string}[]
-  const apiKey = cfgRows[0]?.value ?? ''
+  const cfgRows = await dbGet('site_config','select=value&key=eq.twelve_data_key&limit=1') as {value:string}[]
+  const apiKey  = cfgRows[0]?.value ?? ''
 
-  const tdInsts = INSTRUMENTS.filter(i => !i.bnSymbol)
-  const bnInsts = INSTRUMENTS.filter(i => i.bnSymbol)
-
-  // Fetch prices: Twelve Data for forex/commodity, Binance for crypto (no key needed)
-  const [tdPrices, bnPrices] = await Promise.all([
-    fetchTwelveDataPrices(apiKey, tdInsts),
-    fetchBinancePrices(bnInsts)
-  ])
-  const priceMap = { ...tdPrices, ...bnPrices }
-  const priceCount = Object.keys(priceMap).length
-
-  if (priceCount > 0) {
-    const rows = Object.entries(priceMap).map(([symbol,price]) => ({symbol,price,change_pct:0,updated_at:new Date().toISOString()}))
-    await dbUpsert('live_prices', rows, 'symbol')
-  }
-
+  // ── Price-only mode: update crypto via Binance, no Twelve Data credits used
   if (pricesOnly) {
-    await writeLog({run_type:'prices',prices_updated:priceCount,duration_ms:Date.now()-startMs,status:'ok'})
-    return new Response(JSON.stringify({ok:true,prices:priceCount}),{headers:{...CORS,'Content-Type':'application/json'}})
+    const bnInsts = INSTRUMENTS.filter(i=>i.bnSymbol)
+    const priceRows: {symbol:string;price:number;change_pct:number;updated_at:string}[] = []
+    await Promise.all(bnInsts.map(async inst=>{
+      try {
+        const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`)
+        if (!r.ok) return
+        const d = await r.json()
+        if (d.price) priceRows.push({symbol:inst.symbol,price:parseFloat(d.price),change_pct:0,updated_at:new Date().toISOString()})
+      } catch { /* skip */ }
+    }))
+    if (priceRows.length) await dbUpsert('live_prices', priceRows, 'symbol')
+    await writeLog({run_type:'prices',prices_updated:priceRows.length,duration_ms:Date.now()-startMs,status:'ok'})
+    return new Response(JSON.stringify({ok:true,prices:priceRows.length}),{headers:{...CORS,'Content-Type':'application/json'}})
   }
 
-  // Full scan — crypto runs even without a Finnhub key (Binance is free)
+  // ── Full scan (or seed)
   const batchId = crypto.randomUUID(), scannedAt = new Date().toISOString()
   const signalRows: unknown[] = []
-  let scanError: string|null = null
+  const priceMap:  Record<string,number> = {}
+  let   seedCount  = 0
+  let   scanError: string|null = null
 
   try {
     for (const {tf, tdInterval, bnInterval} of [
@@ -333,16 +324,27 @@ Deno.serve(async (req: Request) => {
     ]) {
       for (const inst of INSTRUMENTS) {
         try {
-          let candles: Candle[]|null = null
+          // 1. Fetch new candles from API and write to cache
+          let fetched: CandleFetch|null = null
           if (inst.bnSymbol) {
-            candles = await fetchBinanceCandles(inst.bnSymbol, bnInterval)
+            fetched = await fetchBnCandles(inst.bnSymbol, bnInterval, fetchSize)
           } else if (apiKey) {
-            candles = await fetchTwelveDataCandles(inst.symbol, tdInterval, apiKey)
+            fetched = await fetchTdCandles(inst.symbol, tdInterval, apiKey, fetchSize)
           }
-          if (!candles) continue
+          if (fetched) { await cacheCandles(inst.symbol, tf, fetched); seedCount++ }
+
+          // 2. Load full history from cache for TA
+          const candles = await loadCandles(inst.symbol, tf)
+          if (candles.length < 220) continue
+
+          // 3. Track latest price from daily candles
+          if (tf === 'daily') priceMap[inst.symbol] = candles[candles.length-1].close
+
+          // 4. Run analysis
           const result = analyseCandles(candles, inst)
           if (!result) continue
           const {overview, signal} = result
+
           signalRows.push({
             batch_id:batchId, scanned_at:scannedAt, timeframe:tf, symbol:inst.symbol,
             inst_type:inst.type, price:overview.price, price_change:overview.change,
@@ -359,19 +361,29 @@ Deno.serve(async (req: Request) => {
         } catch(e) { console.error(`scan ${inst.symbol} ${tf}:`, e) }
       }
     }
+
+    // Update live_prices from latest daily candle closes
+    if (Object.keys(priceMap).length > 0) {
+      const rows = Object.entries(priceMap).map(([symbol,price])=>({symbol,price,change_pct:0,updated_at:new Date().toISOString()}))
+      await dbUpsert('live_prices', rows, 'symbol')
+    }
+
     if (signalRows.length > 0) await dbInsert('signals', signalRows)
   } catch(e) {
     scanError = e instanceof Error ? e.message : String(e)
   }
 
   await writeLog({
-    run_type:'full', batch_id:batchId,
-    signals_generated:signalRows.length, prices_updated:priceCount,
+    run_type: seed ? 'seed' : 'full',
+    batch_id:batchId, signals_generated:signalRows.length,
+    prices_updated:Object.keys(priceMap).length,
     duration_ms:Date.now()-startMs,
-    status:scanError?'error':'ok',
-    error_msg:scanError
+    status:scanError?'error':'ok', error_msg:scanError
   })
 
   if (scanError) return new Response(JSON.stringify({ok:false,error:scanError}),{status:500,headers:{...CORS,'Content-Type':'application/json'}})
-  return new Response(JSON.stringify({ok:true,signals:signalRows.length,batch:batchId,scanned_at:scannedAt}),{headers:{...CORS,'Content-Type':'application/json'}})
+  return new Response(JSON.stringify({
+    ok:true, seed, candles_written:seedCount,
+    signals:signalRows.length, batch:batchId, scanned_at:scannedAt
+  }),{headers:{...CORS,'Content-Type':'application/json'}})
 })

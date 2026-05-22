@@ -862,6 +862,7 @@
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="loadAdminScanStatus()">↻ Refresh status</button>
         <button id="runNowBtn" class="btn btn-primary" style="font-size:12px;padding:5px 14px" onclick="triggerScan()">▶ Run Now</button>
+        <button id="seedBtn" class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="triggerSeed()" title="Fetch 250 candles for all instruments and store in DB. Do this once to initialise the cache (~7,000 Twelve Data credits).">⬇ Seed Candles</button>
         <button class="btn btn-ghost" style="font-size:12px;padding:5px 14px" onclick="runScan()" title="Generate synthetic demo signals to test the UI">▶ Run demo scan</button>
         <a href="https://github.com/JoaoRFerreira/sharpe/actions" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:5px 14px;text-decoration:none">⬡ GitHub Actions →</a>
       </div>
@@ -4350,6 +4351,22 @@ async function triggerScan(){
     else{ showToast(d.error||'Scan failed — check Edge Function logs.','tl'); }
   } catch(e){ showToast('Failed to invoke scanner: '+e.message,'tl'); }
   finally{ btn.disabled=false; btn.textContent='▶ Run Now'; }
+}
+
+async function triggerSeed(){
+  const btn=document.getElementById('seedBtn');
+  btn.disabled=true; btn.textContent='⬇ Seeding…';
+  try{
+    const res=await fetch(`${SUPA_URL}/functions/v1/price-scanner?seed=true`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
+      body:'{}'
+    });
+    const d=await res.json();
+    if(d.ok){ showToast(`Seed complete — ${d.candles_written} candle batches cached. Scanner is ready.`,'tw'); loadAdminScanStatus(); loadScanLog(); }
+    else{ showToast(d.error||'Seed failed — check Edge Function logs.','tl'); }
+  } catch(e){ showToast('Failed to invoke seed: '+e.message,'tl'); }
+  finally{ btn.disabled=false; btn.textContent='⬇ Seed Candles'; }
 }
 
 async function saveAdminTdKey(){
