@@ -622,7 +622,18 @@
       <div id="plans-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
         <!-- rendered by renderAdminPlans() -->
       </div>
-      <div style="margin-top:18px;display:flex;align-items:center;gap:12px">
+      <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap">Annual discount badge</label>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:12px;color:var(--muted)">SAVE</span>
+            <input type="number" id="annualSavePct" value="20" min="0" max="99" style="width:58px;text-align:center" title="Shown as 'SAVE X%' on the billing toggle">
+            <span style="font-size:12px;color:var(--muted)">%</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">— shown on the Annual billing toggle on the landing page</span>
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:12px">
         <button class="btn btn-primary" onclick="saveAdminPlans()">Save Plans</button>
         <span id="planSaveStatus" style="font-size:11px;color:var(--muted)"></span>
       </div>
@@ -4680,6 +4691,10 @@ async function loadAdminPlans(){
     const { data } = await sb.from('site_config').select('value').eq('key','plan_config').single();
     adminPlanConfig = data?.value ? JSON.parse(data.value) : JSON.parse(JSON.stringify(DEFAULT_PLAN_CONFIG));
   }
+  // Load annual save %
+  const { data: savData } = await sb.from('site_config').select('value').eq('key','annual_save_pct').single();
+  const inp = document.getElementById('annualSavePct');
+  if(inp && savData?.value) inp.value = savData.value;
   renderAdminPlans();
 }
 
@@ -4728,9 +4743,13 @@ async function saveAdminPlans(){
       description: document.getElementById(`plan_${key}_desc`)?.value.trim() || ''
     };
   });
-  const { error } = await sb.from('site_config').upsert({ key:'plan_config', value: JSON.stringify(cfg) }, { onConflict:'key' });
+  const savePct = Number(document.getElementById('annualSavePct')?.value || 20);
+  const [{ error }, { error: e2 }] = await Promise.all([
+    sb.from('site_config').upsert({ key:'plan_config', value: JSON.stringify(cfg) }, { onConflict:'key' }),
+    sb.from('site_config').upsert({ key:'annual_save_pct', value: String(savePct) }, { onConflict:'key' })
+  ]);
   const status = document.getElementById('planSaveStatus');
-  if(error){ showToast('Save failed: '+error.message,'tl'); return; }
+  if(error || e2){ showToast('Save failed: '+(error||e2).message,'tl'); return; }
   adminPlanConfig = cfg;
   if(status){ status.textContent='Saved ✓'; setTimeout(()=>status.textContent='',2500); }
   showToast('Plan config saved','tw');

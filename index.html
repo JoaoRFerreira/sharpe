@@ -794,7 +794,7 @@
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:36px">
         <span id="billMonthLbl" style="font-size:13px;font-weight:700;color:var(--text)">Monthly</span>
         <label class="toggle-sw" style="cursor:pointer" onclick="toggleBilling()"><input type="checkbox" id="billToggle" style="display:none"><span class="toggle-sl"></span></label>
-        <span id="billAnnualLbl" style="font-size:13px;color:var(--muted)">Annual <span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
+        <span id="billAnnualLbl" style="font-size:13px;color:var(--muted)">Annual <span id="annualSaveBadge" style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
       </div>
       <div class="pricing-page-cards">
         <!-- Starter (Free) -->
@@ -1328,7 +1328,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const hash = window.location.hash.slice(1);
   if (hash && document.getElementById(hash)) navLanding(hash, null);
   loadTrackRecord();
+  loadAnnualSaveBadge();
 });
+
+async function loadAnnualSaveBadge() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/site_config?key=eq.annual_save_pct&select=value&limit=1`, {
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
+    });
+    const rows = await res.json();
+    const pct = rows?.[0]?.value;
+    if (pct) {
+      const badge = document.getElementById('annualSaveBadge');
+      if (badge) badge.textContent = `SAVE ${pct}%`;
+    }
+  } catch(e) {}
+}
 
 // ── AUTH ──────────────────────────────────────────────────
 let authTabMode = 'signin';
