@@ -63,6 +63,8 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 .green{color:var(--green)}.red{color:var(--red)}.blue{color:var(--blue)}.yellow{color:var(--gold)}.purple{color:var(--purple)}
 /* CHARTS */
 .charts-row{display:none}
+.dash-charts{display:flex;flex-direction:column;gap:14px;margin-top:14px;margin-bottom:14px}
+.dash-charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 2px 8px rgba(37,99,235,.05)}
 .chart-card h3{font-size:11px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
 /* TABLE */
@@ -432,7 +434,7 @@ textarea{resize:vertical;min-height:56px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--blue)}
-@media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row,.dash-charts-row{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 
 /* ── MOBILE NAV ─────────────────────────────────────────────── */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:200;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -1700,6 +1702,24 @@ textarea{resize:vertical;min-height:56px}
   </div>
   <div id="livePosGrid"></div>
 
+  <!-- Analytics Charts -->
+  <div class="dash-charts">
+    <div class="chart-card">
+      <h3>Equity Curve</h3>
+      <div class="chart-wrap" style="position:relative;height:200px"><canvas id="eqChart"></canvas></div>
+    </div>
+    <div class="dash-charts-row">
+      <div class="chart-card">
+        <h3>Monthly P&amp;L</h3>
+        <div class="chart-wrap" style="position:relative;height:180px"><canvas id="monthChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>P&amp;L by Market</h3>
+        <div class="chart-wrap" style="position:relative;height:180px"><canvas id="mktChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   <div class="chart-card" style="margin-top:14px"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
 </section>
 
@@ -2691,6 +2711,7 @@ const DEMO = [
 // ── STATE ──────────────────────────────────────────────────────
 let trades = [];
 let editId = null;
+let eqChart = null, monthChart = null, mktChart = null;
 
 function loadTrades(){
   if(sbUser){ loadTradesFromDb(); return; }
@@ -2830,11 +2851,122 @@ function renderDashboard(){
         <div class="sec-pill-val ${c.c}">${c.v}</div>
       </div>`).join('')}</div>`;
 
+  renderEquity();
+  renderMonthly();
+  renderByMarket();
   renderRecent();
   renderLivePositions();
   if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
 }
 
+
+const CHART_TOOLTIP = {
+  backgroundColor:'#fff', borderColor:'rgba(37,99,235,.15)', borderWidth:1,
+  titleColor:'#0d1b3e', bodyColor:'#6b7a99', padding:10
+};
+const CHART_GRID = {color:'rgba(200,210,230,.5)'};
+const CHART_TICK = {color:'#6b7a99', font:{size:10}};
+
+function renderEquity(){
+  const closed = [...trades].filter(t=>t.status!=='open').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let cum=0;
+  const labels=['Start'], data=[0];
+  closed.forEach(t=>{ cum+=(t.pips||0); labels.push(t.date.slice(5)); data.push(+cum.toFixed(1)); });
+  const el = document.getElementById('eqChart'); if(!el) return;
+  const ctx = el.getContext('2d');
+  if(eqChart) eqChart.destroy();
+  const up = cum>=0;
+  const grad = ctx.createLinearGradient(0,0,0,200);
+  if(up){ grad.addColorStop(0,'rgba(5,150,105,.15)'); grad.addColorStop(1,'rgba(5,150,105,.01)'); }
+  else  { grad.addColorStop(0,'rgba(220,38,38,.13)');  grad.addColorStop(1,'rgba(220,38,38,.01)'); }
+  eqChart = new Chart(ctx,{
+    type:'line',
+    data:{labels, datasets:[{
+      data, fill:true, tension:0.4,
+      borderColor:up?'#059669':'#dc2626', backgroundColor:grad,
+      borderWidth:2.5,
+      pointRadius: data.length>25?0:3, pointHoverRadius:5,
+      pointBackgroundColor: data.map((v,i)=>i===0?'transparent':v>=0?'#059669':'#dc2626'),
+      pointBorderColor:'#fff', pointBorderWidth:1.5
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:8,right:6,bottom:2,left:2}},
+      plugins:{legend:{display:false}, tooltip:{...CHART_TOOLTIP,callbacks:{
+        label:c=>` ${c.parsed.y>=0?'+':''}${c.parsed.y} pips`
+      }}},
+      scales:{
+        x:{border:{display:false}, grid:CHART_GRID, ticks:{...CHART_TICK, maxTicksLimit:10, maxRotation:0}},
+        y:{border:{display:false}, grid:CHART_GRID, ticks:{...CHART_TICK, callback:v=>v>0?'+'+v:v}, grace:'15%'}
+      }
+    }
+  });
+}
+
+function renderMonthly(){
+  const closed = trades.filter(t=>t.status!=='open');
+  const byMonth={};
+  closed.forEach(t=>{ const m=t.date.slice(0,7); byMonth[m]=(byMonth[m]||0)+(t.pips||0); });
+  const labels=Object.keys(byMonth).sort().map(m=>{
+    const [y,mo]=m.split('-');
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo-1]+' '+y.slice(2);
+  });
+  const data=Object.keys(byMonth).sort().map(m=>+byMonth[m].toFixed(1));
+  const el=document.getElementById('monthChart'); if(!el) return;
+  if(monthChart) monthChart.destroy();
+  monthChart = new Chart(el.getContext('2d'),{
+    type:'bar',
+    data:{labels, datasets:[{
+      data,
+      backgroundColor: data.map(v=>v>=0?'rgba(5,150,105,.75)':'rgba(220,38,38,.75)'),
+      borderColor:     data.map(v=>v>=0?'#059669':'#dc2626'),
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:8,right:4,bottom:2,left:2}},
+      plugins:{legend:{display:false}, tooltip:{...CHART_TOOLTIP,callbacks:{
+        label:c=>` ${c.parsed.y>=0?'+':''}${c.parsed.y} pips`
+      }}},
+      scales:{
+        x:{border:{display:false}, grid:{display:false}, ticks:{...CHART_TICK, maxRotation:0}},
+        y:{border:{display:false}, grid:CHART_GRID, ticks:{...CHART_TICK, callback:v=>v>0?'+'+v:v}, grace:'15%'}
+      }
+    }
+  });
+}
+
+function renderByMarket(){
+  const closed = trades.filter(t=>t.status!=='open');
+  const byMkt={};
+  closed.forEach(t=>{ byMkt[t.market]=(byMkt[t.market]||0)+(t.pips||0); });
+  const entries=Object.entries(byMkt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const labels=entries.map(e=>e[0]);
+  const data=entries.map(e=>+e[1].toFixed(1));
+  const el=document.getElementById('mktChart'); if(!el) return;
+  if(mktChart) mktChart.destroy();
+  mktChart = new Chart(el.getContext('2d'),{
+    type:'bar',
+    data:{labels, datasets:[{
+      data,
+      backgroundColor: data.map(v=>v>=0?'rgba(5,150,105,.75)':'rgba(220,38,38,.75)'),
+      borderColor:     data.map(v=>v>=0?'#059669':'#dc2626'),
+      borderWidth:1.5, borderRadius:4
+    }]},
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:4,right:8,bottom:4,left:2}},
+      plugins:{legend:{display:false}, tooltip:{...CHART_TOOLTIP,callbacks:{
+        label:c=>` ${c.parsed.x>=0?'+':''}${c.parsed.x} pips`
+      }}},
+      scales:{
+        x:{border:{display:false}, grid:CHART_GRID, ticks:{...CHART_TICK, callback:v=>v>0?'+'+v:v}, grace:'15%'},
+        y:{border:{display:false}, grid:{display:false}, ticks:{...CHART_TICK}}
+      }
+    }
+  });
+}
 
 function renderRecent(){
   const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
