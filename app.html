@@ -86,13 +86,15 @@
         <div style="font-size:11px;color:var(--muted)">Each square = one trading day. Colour = net pips.</div>
       </div>
       <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);flex-shrink:0">
-        <span>Loss</span>
-        <div style="width:10px;height:10px;border-radius:2px;background:#fca5a5"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#fcd34d"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#86efac"></div>
-        <div style="width:10px;height:10px;border-radius:2px;background:#22c55e"></div>
+        <span>Big loss</span>
+        <div style="width:10px;height:10px;border-radius:2px;background:#dc2626"></div>
+        <div style="width:10px;height:10px;border-radius:2px;background:#f87171"></div>
+        <div style="width:10px;height:10px;border-radius:2px;background:#fecaca"></div>
+        <div style="width:10px;height:10px;border-radius:2px;background:#e2e8f0"></div>
+        <div style="width:10px;height:10px;border-radius:2px;background:#bbf7d0"></div>
+        <div style="width:10px;height:10px;border-radius:2px;background:#4ade80"></div>
         <div style="width:10px;height:10px;border-radius:2px;background:#16a34a"></div>
-        <span>Best</span>
+        <span>Big win</span>
       </div>
     </div>
     <div class="cal-wrap">
@@ -1542,13 +1544,17 @@ function renderCalendar(){
   const maxAbs = vals.length ? Math.max(...vals.map(Math.abs), 1) : 1;
 
   function pipColor(v){
-    if(v===undefined) return '#e2e8f0';
-    const r = v/maxAbs;
-    if(r < -0.4) return '#fca5a5';
-    if(r < 0)    return '#fcd34d';
-    if(r < 0.3)  return '#86efac';
-    if(r < 0.7)  return '#22c55e';
-    return '#16a34a';
+    if(v===undefined || v===0) return '#e2e8f0';
+    const r = Math.abs(v) / maxAbs; // 0..1 intensity
+    if(v < 0){
+      if(r < 0.33) return '#fecaca'; // small loss  — light red
+      if(r < 0.66) return '#f87171'; // medium loss — red
+      return '#dc2626';               // big loss    — deep red
+    } else {
+      if(r < 0.33) return '#bbf7d0'; // small win   — light green
+      if(r < 0.66) return '#4ade80'; // medium win  — green
+      return '#16a34a';               // big win     — deep green
+    }
   }
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
