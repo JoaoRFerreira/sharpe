@@ -270,16 +270,16 @@ textarea{resize:vertical;min-height:56px}
 .rsi-ob{background:rgba(248,81,73,.15);color:var(--red)}
 .rsi-os{background:rgba(63,185,80,.15);color:var(--green)}
 .rsi-ok{background:rgba(88,166,255,.12);color:var(--blue)}
-.sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-.sig-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;transition:border-color .2s}
-.sig-card.bull-card{border-color:rgba(63,185,80,.3)}.sig-card.bear-card{border-color:rgba(248,81,73,.3)}
+.sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
+.sig-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;transition:border-color .15s}
+.sig-card.bull-card{border-left:3px solid var(--green)}.sig-card.bear-card{border-left:3px solid var(--red)}
 .sig-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
 .sig-sym{font-size:16px;font-weight:700}
 .sig-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .sig-pattern{font-size:19px;font-weight:700;margin-bottom:3px}
 .sig-dir-line{display:none}
 .sig-prices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.spbox{background:rgba(255,255,255,.03);border-radius:6px;padding:8px 10px}
+.spbox{background:var(--card2);border:1px solid var(--border);border-radius:3px;padding:7px 9px}
 .spbox-lbl{font-size:10px;color:var(--muted);margin-bottom:3px}
 .spbox-val{font-size:12px;font-weight:600;font-family:'SF Mono','Fira Code',monospace}
 .sig-rr{display:flex;gap:16px;font-size:12px;margin-bottom:12px;flex-wrap:wrap}
@@ -355,10 +355,14 @@ textarea{resize:vertical;min-height:56px}
 .ifilter:hover{color:var(--text);border-color:var(--blue)}
 .ifilter.active{background:rgba(88,166,255,.14);border-color:var(--blue);color:var(--blue);font-weight:600}
 .ideas-date{font-size:11px;color:var(--muted);white-space:nowrap}
-.idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
-.idea-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .2s}
-.idea-card.long-card{border-color:rgba(63,185,80,.3)}
-.idea-card.short-card{border-color:rgba(248,81,73,.3)}
+.idea-grid{display:block}
+.idea-row{cursor:pointer}.idea-row:hover td{background:#f0f4ff!important}
+.idea-row td{transition:background .1s}
+.idea-detail-row td{border-bottom:2px solid var(--border)}
+.conf-chip{display:inline-block;padding:2px 7px;border-radius:3px;font-size:11px;font-weight:700}
+.conf-chip.cf-high{background:rgba(5,150,105,.1);color:var(--green)}
+.conf-chip.cf-med{background:rgba(217,119,6,.09);color:var(--gold)}
+.conf-chip.cf-low{background:rgba(220,38,38,.08);color:var(--red)}
 .idea-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 .idea-sym{font-size:16px;font-weight:700}
 .idea-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -1986,20 +1990,22 @@ textarea{resize:vertical;min-height:56px}
 
 <!-- TRADE IDEAS -->
 <section class="section" id="ideas">
-  <div class="section-title">Daily Trade Ideas</div>
-  <div class="info-banner" style="margin-bottom:16px">
-    Ideas refresh each day, drawn from 8 strategies across Forex, ETFs, and Crypto: Fibonacci retracements, chart patterns, candlestick signals, sector rotation, on-chain metrics, and sentiment analysis. <strong>Educational only — not financial advice.</strong> Always apply your own risk management before acting.
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Trade Ideas</div>
+      <div class="dash-subtitle">Educational only — not financial advice. Always apply your own risk management.</div>
+    </div>
+    <button class="btn btn-ghost" style="font-size:12px" onclick="buildIdeas()">↻ Refresh</button>
   </div>
   <div class="ideas-header">
     <div class="ideas-filter">
-      <button class="ifilter active" onclick="setIdeasFilter('all',this)">All Markets</button>
+      <button class="ifilter active" onclick="setIdeasFilter('all',this)">All</button>
       <button class="ifilter" onclick="setIdeasFilter('forex',this)">Forex</button>
       <button class="ifilter" onclick="setIdeasFilter('etf',this)">ETF</button>
       <button class="ifilter" onclick="setIdeasFilter('crypto',this)">Crypto</button>
       <button class="ifilter" onclick="setIdeasFilter('commodity',this)">Commodity</button>
     </div>
     <span class="ideas-date" id="ideas-date"></span>
-    <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px;margin-left:auto" onclick="buildIdeas()">↻ Refresh</button>
   </div>
   <div class="idea-grid" id="ideas-grid">
     <div class="no-sig-msg">Loading trade ideas…</div>
@@ -5215,58 +5221,64 @@ function renderIdeas(){
   if(!container) return;
   const list = ideasFilter==='all' ? ideasSelected : ideasSelected.filter(i=>i.type===ideasFilter);
   if(!list.length){
-    container.innerHTML='<div class="no-sig-msg">No ideas match the current filter — try "All Markets".</div>';
+    container.innerHTML='<div class="no-sig-msg">No ideas match the current filter.</div>';
     return;
   }
   const typeLabel = {forex:'Forex',etf:'ETF',crypto:'Crypto',commodity:'Commodity'};
-  container.innerHTML = list.map(idea=>{
+  const fmt = (idea,v)=>{
+    if(idea.type==='crypto') return '$'+Math.round(v).toLocaleString();
+    if(idea.type==='etf') return '$'+v.toFixed(2);
+    if(idea.sym==='USD/JPY') return v.toFixed(2);
+    if(idea.sym==='XAU/USD') return '$'+v.toFixed(0);
+    return v.toFixed(4);
+  };
+  const rows = list.map((idea,i)=>{
     const isLong = idea.dir==='long';
-    const dirBadge = isLong
-      ? '<span class="badge badge-long">▲ LONG</span>'
-      : '<span class="badge badge-short">▼ SHORT</span>';
-    const fmt = v=>{
-      if(idea.type==='crypto') return '$'+Math.round(v).toLocaleString();
-      if(idea.type==='etf') return '$'+v.toFixed(2);
-      if(idea.sym==='USD/JPY') return v.toFixed(2);
-      if(idea.sym==='XAU/USD') return '$'+v.toFixed(0);
-      return v.toFixed(4);
-    };
-    const entStr = fmt(idea.entLo)+' – '+fmt(idea.entHi);
     const mid = (idea.entLo+idea.entHi)/2;
     const riskD = Math.abs(mid-idea.sl);
     const rr1 = (Math.abs(idea.tp1-mid)/riskD).toFixed(1);
-    const rr2 = (Math.abs(idea.tp2-mid)/riskD).toFixed(1);
     const cfCls = idea.conf>=75?'cf-high':idea.conf>=65?'cf-med':'cf-low';
-    return `<div class="idea-card ${isLong?'long-card':'short-card'}">
-      <div class="idea-top">
-        <div class="idea-sym">${idea.sym}</div>
-        <div class="idea-badges">
-          <span class="idea-type-badge">${typeLabel[idea.type]||idea.type}</span>
-          ${dirBadge}
-        </div>
-      </div>
-      <div class="idea-strat-row">
-        <span class="idea-strat">${idea.strat}</span>
-        <span class="idea-tf">${idea.tf}</span>
-      </div>
-      <div class="sig-prices">
-        <div class="spbox"><div class="spbox-lbl">Entry Zone</div><div class="spbox-val" style="font-size:11px">${entStr}</div></div>
-        <div class="spbox"><div class="spbox-lbl">Stop Loss</div><div class="spbox-val red">${fmt(idea.sl)}</div></div>
-        <div class="spbox"><div class="spbox-lbl">Target 1</div><div class="spbox-val green">${fmt(idea.tp1)}</div></div>
-        <div class="spbox"><div class="spbox-lbl">Target 2</div><div class="spbox-val green">${fmt(idea.tp2)}</div></div>
-      </div>
-      <div class="idea-rr-row">
-        <span>R:R (T1) <strong>1 : ${rr1}</strong></span>
-        <span>R:R (T2) <strong>1 : ${rr2}</strong></span>
-      </div>
-      <div class="conf-row">
-        <div class="conf-labels"><span>Confidence</span><span>${idea.conf}%</span></div>
-        <div class="conf-track"><div class="conf-fill ${cfCls}" style="width:${idea.conf}%"></div></div>
-      </div>
-      <div class="idea-why"><strong>Why This Trade</strong>${idea.why}</div>
-      <div class="idea-risk"><strong>⚠ Key Risk</strong>${idea.risk}</div>
-    </div>`;
+    return `
+      <tr class="idea-row" onclick="toggleIdeaDetail(${i})">
+        <td><strong style="font-size:13px">${idea.sym}</strong></td>
+        <td><span class="badge ${isLong?'badge-long':'badge-short'}">${isLong?'▲ LONG':'▼ SHORT'}</span></td>
+        <td style="color:var(--muted);font-size:12px">${typeLabel[idea.type]||idea.type}</td>
+        <td><span style="font-size:12px;font-weight:500">${idea.strat}</span> <span style="color:var(--muted);font-size:11px">${idea.tf}</span></td>
+        <td class="mono" style="font-size:11px">${fmt(idea,idea.entLo)} – ${fmt(idea,idea.entHi)}</td>
+        <td class="mono red" style="font-size:12px">${fmt(idea,idea.sl)}</td>
+        <td class="mono green" style="font-size:12px">${fmt(idea,idea.tp1)}</td>
+        <td class="mono green" style="font-size:12px">${fmt(idea,idea.tp2)}</td>
+        <td style="font-size:12px;font-weight:600">1:${rr1}</td>
+        <td><span class="conf-chip ${cfCls}">${idea.conf}%</span></td>
+        <td style="color:var(--muted);font-size:11px">▾</td>
+      </tr>
+      <tr class="idea-detail-row" id="idea-detail-${i}" style="display:none">
+        <td colspan="11" style="background:#f8f9fa;padding:14px 20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Rationale</div>
+              <div style="font-size:12px;color:var(--text);line-height:1.65">${idea.why}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Key Risk</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.65">${idea.risk}</div>
+            </div>
+          </div>
+        </td>
+      </tr>`;
   }).join('');
+  container.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Symbol</th><th>Direction</th><th>Type</th><th>Strategy / TF</th>
+      <th>Entry Zone</th><th>Stop Loss</th><th>TP1</th><th>TP2</th><th>R:R</th><th>Conf</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+
+function toggleIdeaDetail(i){
+  const row=document.getElementById('idea-detail-'+i);
+  if(row) row.style.display=row.style.display==='none'?'table-row':'none';
 }
 
 function setIdeasFilter(f,btn){
