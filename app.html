@@ -450,8 +450,8 @@
     </div>
     <div class="cfg-row" id="autoExecWrap" style="display:none">
       <div class="cfg-row-info">
-        <div class="cfg-row-label">Auto-execute via OANDA <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
-        <div class="cfg-row-desc">Place market orders on OANDA automatically when qualifying signals fire. Requires OANDA connection below.</div>
+        <div class="cfg-row-label">Auto-execute via connected brokers <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
+        <div class="cfg-row-desc">Place market orders automatically when qualifying signals fire. OANDA handles forex &amp; commodities; Binance handles crypto. Connect at least one broker below.</div>
       </div>
       <label class="toggle-sw"><input type="checkbox" id="autoExecChk" onchange="setAutoExec(this.checked)"><span class="toggle-sl"></span></label>
     </div>
@@ -488,6 +488,40 @@
     <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
       <span class="api-dot demo" id="oandaDot"></span>
       <span class="api-lbl" id="oandaLbl">Not connected — free practice account at <a href="https://www.oanda.com" target="_blank" style="color:var(--blue)">oanda.com</a></span>
+    </div>
+  </div>
+
+  <!-- Binance Integration -->
+  <div class="cfg-card" id="binanceCfgCard">
+    <div class="cfg-card-hdr">Binance Integration <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Connect your Binance account to auto-execute crypto signals (BTC, ETH, SOL, XRP). Enable Spot trading permissions. Use Testnet first. <a href="https://testnet.binance.vision" target="_blank" style="color:var(--blue)">Get testnet keys →</a></div>
+    <div class="oanda-grid">
+      <div class="fg">
+        <label>API Key</label>
+        <input type="password" id="bnApiKeyInput" placeholder="Your Binance API key">
+      </div>
+      <div class="fg">
+        <label>API Secret</label>
+        <input type="password" id="bnSecretInput" placeholder="Your Binance API secret">
+      </div>
+      <div class="fg">
+        <label>Risk per trade</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="bnRiskInput" value="1" min="0.1" max="5" step="0.1" style="width:60px">
+          <span style="font-size:12px;color:var(--muted)">% of USDT balance</span>
+        </div>
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <label class="auto-chk" style="margin-bottom:2px">
+          <input type="checkbox" id="bnTestnetChk" checked onchange="setBnTestnet(this.checked)">
+          Testnet
+        </label>
+        <button class="btn btn-primary" onclick="connectBinance()">Connect</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <span class="api-dot demo" id="bnDot"></span>
+      <span class="api-lbl" id="bnLbl">Not connected — get free testnet keys at <a href="https://testnet.binance.vision" target="_blank" style="color:var(--blue)">testnet.binance.vision</a></span>
     </div>
   </div>
 
@@ -716,6 +750,12 @@
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_oanda"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_oanda"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_oanda" checked><span class="toggle-sl"></span></label></td>
+            </tr>
+            <tr>
+              <td>Binance Integration</td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_binance"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_binance"><span class="toggle-sl"></span></label></td>
+              <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_binance" checked><span class="toggle-sl"></span></label></td>
             </tr>
             <tr>
               <td>Data Export</td>
@@ -1252,7 +1292,7 @@
           <li>Demo signals preview</li>
           <li class="no">Live signal scanner</li>
           <li class="no">Market news</li>
-          <li class="no">OANDA execution</li>
+          <li class="no">Broker execution (OANDA / Binance)</li>
         </ul>
         <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="closePricingModal()">Current plan</button>
       </div>
@@ -1269,7 +1309,7 @@
           <li>Performance analytics</li>
           <li class="no">Weekly timeframe (1W)</li>
           <li class="no">Crypto, ETFs &amp; Indices</li>
-          <li class="no">OANDA execution &amp; export</li>
+          <li class="no">Broker execution &amp; export</li>
         </ul>
         <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="goUpgrade('essential')">Start Trader — 7 days free</button>
       </div>
@@ -1281,7 +1321,7 @@
           <li>Everything in Trader</li>
           <li>32 instruments — Forex, Crypto, Indices &amp; ETFs</li>
           <li>Weekly signals (1W)</li>
-          <li>OANDA live auto-execution</li>
+          <li>OANDA (forex) + Binance (crypto) auto-execution</li>
           <li>10 trade ideas/day — all markets</li>
           <li>Priority alerts (85%+ confidence)</li>
           <li>Webhooks &amp; email alerts</li>
@@ -2779,6 +2819,11 @@ let oandaAccount = localStorage.getItem('oanda_account') || '';
 let oandaPractice= localStorage.getItem('oanda_practice') !== 'false';
 let oandaRisk    = parseFloat(localStorage.getItem('oanda_risk')) || 1;
 let oandaBalance = 0;
+let bnApiKey     = localStorage.getItem('bn_api_key') || '';
+let bnSecret     = localStorage.getItem('bn_secret')  || '';
+let bnRisk       = parseFloat(localStorage.getItem('bn_risk')) || 1;
+let bnTestnet    = localStorage.getItem('bn_testnet') !== 'false';
+let bnBalance    = 0;
 
 // ── Seeded RNG (LCG) ──
 function makeSeed(n){ let s=n; return ()=>{ s=(Math.imul(1664525,s)+1013904223)|0; return (s>>>0)/0xffffffff; }; }
@@ -3363,6 +3408,8 @@ async function connectOanda(){
     document.getElementById('oandaTokenInput').value='';
     document.getElementById('oandaAccountInput').placeholder=account;
     document.getElementById('autoExecWrap').style.display='flex';
+    document.getElementById('autoExecChk').checked=autoExecute;
+    localStorage.setItem('sharpe_broker_connected','1');
   } catch(e){
     dot.className='api-dot err';
     lbl.textContent='Failed: '+e.message;
@@ -3390,6 +3437,91 @@ async function oandaPlaceOrder(signal){
   throw new Error(d.errorMessage||(d.errorCode?`OANDA ${d.errorCode}`:JSON.stringify(d).slice(0,120)));
 }
 
+// ── Binance Integration ──
+const BN_PROXY = `${SUPA_URL}/functions/v1/binance-proxy`;
+
+async function bnSign(params){
+  const qs = new URLSearchParams(params).toString();
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(bnSecret),
+    { name:'HMAC', hash:'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(qs));
+  return Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function bnRequest(endpoint, params={}, method='GET'){
+  const p = { ...params, timestamp: Date.now() };
+  p.signature = await bnSign(p);
+  const r = await fetch(BN_PROXY, {
+    method:'POST',
+    headers:{'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
+    body: JSON.stringify({ endpoint, params:p, apiKey:bnApiKey, method, testnet:bnTestnet })
+  });
+  return r.json();
+}
+
+function toBnSymbol(symbol){ return symbol.split('/')[0]+'USDT'; }
+
+function calcBnQty(signal){
+  if(!bnBalance) return 0.001;
+  const riskAmt = bnBalance*(bnRisk/100);
+  const stopDist = Math.abs(signal.entry-signal.stop);
+  if(!stopDist) return 0.001;
+  const qty = riskAmt/stopDist;
+  // enforce Binance ~$10 minimum notional
+  const minQty = 10/signal.entry;
+  return Math.max(qty, minQty);
+}
+
+async function connectBinance(){
+  if(!canAccess('binance')){ requirePlan('binance','Binance integration is available on the Pro plan.'); return; }
+  const apiKey = document.getElementById('bnApiKeyInput').value.trim()  || bnApiKey;
+  const secret = document.getElementById('bnSecretInput').value.trim()  || bnSecret;
+  const risk   = parseFloat(document.getElementById('bnRiskInput').value) || 1;
+  if(!apiKey||!secret){ alert('Enter your Binance API key and secret first.'); return; }
+  bnApiKey=apiKey; bnSecret=secret; bnRisk=risk;
+  localStorage.setItem('bn_api_key',apiKey);
+  localStorage.setItem('bn_secret',secret);
+  localStorage.setItem('bn_risk',risk);
+  const dot=document.getElementById('bnDot'), lbl=document.getElementById('bnLbl');
+  dot.className='api-dot demo'; lbl.textContent='Connecting…';
+  try{
+    const d = await bnRequest('/api/v3/account');
+    if(d.code) throw new Error(d.msg||`Binance error ${d.code}`);
+    const usdt = d.balances?.find(b=>b.asset==='USDT');
+    bnBalance = parseFloat(usdt?.free||0);
+    const riskAmt = (bnBalance*bnRisk/100).toFixed(2);
+    dot.className='api-dot ok';
+    lbl.textContent=`${bnTestnet?'Testnet':'Live'} · USDT: ${bnBalance.toFixed(2)} · Risk ${bnRisk}% = ${riskAmt} USDT/trade`;
+    document.getElementById('bnApiKeyInput').value='';
+    document.getElementById('bnSecretInput').value='';
+    document.getElementById('autoExecWrap').style.display='flex';
+    document.getElementById('autoExecChk').checked=autoExecute;
+    localStorage.setItem('sharpe_broker_connected','1');
+  } catch(e){
+    dot.className='api-dot err';
+    lbl.textContent='Failed: '+e.message;
+  }
+}
+
+async function bnPlaceOrder(signal){
+  const bnSym = toBnSymbol(signal.symbol);
+  const qty   = calcBnQty(signal);
+  // Binance quantity precision: 6dp is safe for most crypto pairs
+  const qtyStr = qty.toFixed(6);
+  const d = await bnRequest('/api/v3/order', {
+    symbol:  bnSym,
+    side:    signal.dir==='LONG'?'BUY':'SELL',
+    type:    'MARKET',
+    quantity: qtyStr,
+  }, 'POST');
+  if(d.code) throw new Error(d.msg||`Binance error ${d.code}`);
+  return d;
+}
+
+function setBnTestnet(v){ bnTestnet=v; localStorage.setItem('bn_testnet',v); }
+
 async function processAutoActions(results, isDemo=false){
   const today=new Date().toISOString().split('T')[0];
   const webhookConf = parseInt(localStorage.getItem('webhook_conf'))||75;
@@ -3404,13 +3536,23 @@ async function processAutoActions(results, isDemo=false){
       fireWebhook(sig);
       sendEmailAlert(sig);
     }
-    if(!isDemo&&autoExecute&&oandaToken&&oandaAccount&&!alreadyLogged){
-      try{
-        const units=calcOandaUnits(sig);
-        await oandaPlaceOrder(sig);
-        showToast(`OANDA order placed: ${sig.symbol} ${sig.dir} · ${units.toLocaleString()} units`,'tw');
-      } catch(e){
-        showToast(`OANDA failed (${sig.symbol}): ${e.message}`,'tl');
+    if(!isDemo&&autoExecute&&!alreadyLogged){
+      const isCrypto = sig.type==='Crypto';
+      if(isCrypto&&bnApiKey&&bnSecret){
+        try{
+          await bnPlaceOrder(sig);
+          showToast(`Binance order placed: ${sig.symbol} ${sig.dir}`,'tw');
+        } catch(e){
+          showToast(`Binance failed (${sig.symbol}): ${e.message}`,'tl');
+        }
+      } else if(!isCrypto&&oandaToken&&oandaAccount){
+        try{
+          const units=calcOandaUnits(sig);
+          await oandaPlaceOrder(sig);
+          showToast(`OANDA order placed: ${sig.symbol} ${sig.dir} · ${units.toLocaleString()} units`,'tw');
+        } catch(e){
+          showToast(`OANDA failed (${sig.symbol}): ${e.message}`,'tl');
+        }
       }
     }
   }
@@ -3432,8 +3574,8 @@ function setAutoLog(v){
   if(qChk) qChk.checked=v;
 }
 function setAutoExec(v){
-  if(v && !canAccess('oanda')){
-    requirePlan('oanda','OANDA auto-execution is available on the Pro plan.');
+  if(v && !canAccess('oanda') && !canAccess('binance')){
+    requirePlan('oanda','Auto-execution is available on the Pro plan.');
     document.getElementById('autoExecChk').checked=false;
     return;
   }
@@ -3700,9 +3842,9 @@ let sbUser = null;   // current auth user
 let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
 
 const PLAN_LIMITS = {
-  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:true, autoLog:false, oanda:false, weeklyTf:false, export:false, webhooks:false },
-  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false, weeklyTf:false, export:false, webhooks:false },
-  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true, weeklyTf:true, export:true, webhooks:true }
+  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:true, autoLog:false, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false },
+  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false },
+  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true, binance:true, weeklyTf:true, export:true, webhooks:true }
 };
 
 function planLimits(){ return PLAN_LIMITS[sbPlan] || PLAN_LIMITS.free; }
@@ -3714,6 +3856,7 @@ function canAccess(feature){
   if(feature === 'news')       return p.news;
   if(feature === 'autoLog')    return p.autoLog;
   if(feature === 'oanda')      return p.oanda;
+  if(feature === 'binance')    return p.binance;
   if(feature === 'weeklyTf')   return p.weeklyTf;
   if(feature === 'export')     return p.export;
   if(feature === 'webhooks')   return p.webhooks;
@@ -5396,6 +5539,18 @@ function initSettings(){
     if(ec) ec.checked=autoExecute;
     const lbl=document.getElementById('oandaLbl');
     if(lbl) lbl.textContent=`${oandaPractice?'Practice':'Live'} account saved · click Connect to verify · Risk ${oandaRisk}%`;
+  }
+  if(bnApiKey&&bnSecret){
+    const ri=document.getElementById('bnRiskInput');
+    const ti=document.getElementById('bnTestnetChk');
+    const ew=document.getElementById('autoExecWrap');
+    const ec=document.getElementById('autoExecChk');
+    if(ri) ri.value=bnRisk;
+    if(ti) ti.checked=bnTestnet;
+    if(ew) ew.style.display='flex';
+    if(ec) ec.checked=autoExecute;
+    const lbl=document.getElementById('bnLbl');
+    if(lbl) lbl.textContent=`${bnTestnet?'Testnet':'Live'} credentials saved · click Connect to verify · Risk ${bnRisk}%`;
   }
   loadAlertSettings();
 }
