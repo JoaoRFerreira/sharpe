@@ -289,8 +289,10 @@ async function writeLog(entry: Record<string,unknown>): Promise<void> {
 }
 
 // ── Entry point ─────────────────────────────────────────────────
+const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type'}
+
 Deno.serve(async (req: Request) => {
-  if (req.method==='OPTIONS') return new Response(null,{headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,content-type'}})
+  if (req.method==='OPTIONS') return new Response(null,{headers:CORS})
 
   const startMs = Date.now()
   const reqUrl = new URL(req.url)
@@ -318,7 +320,7 @@ Deno.serve(async (req: Request) => {
 
   if (pricesOnly) {
     await writeLog({run_type:'prices',prices_updated:priceCount,duration_ms:Date.now()-startMs,status:'ok'})
-    return new Response(JSON.stringify({ok:true,prices:priceCount}),{headers:{'Content-Type':'application/json'}})
+    return new Response(JSON.stringify({ok:true,prices:priceCount}),{headers:{...CORS,'Content-Type':'application/json'}})
   }
 
   // Full scan — crypto runs even without a Finnhub key (Binance is free)
@@ -372,6 +374,6 @@ Deno.serve(async (req: Request) => {
     error_msg:scanError
   })
 
-  if (scanError) return new Response(JSON.stringify({ok:false,error:scanError}),{status:500,headers:{'Content-Type':'application/json'}})
-  return new Response(JSON.stringify({ok:true,signals:signalRows.length,batch:batchId,scanned_at:scannedAt}),{headers:{'Content-Type':'application/json'}})
+  if (scanError) return new Response(JSON.stringify({ok:false,error:scanError}),{status:500,headers:{...CORS,'Content-Type':'application/json'}})
+  return new Response(JSON.stringify({ok:true,signals:signalRows.length,batch:batchId,scanned_at:scannedAt}),{headers:{...CORS,'Content-Type':'application/json'}})
 })
