@@ -56,7 +56,6 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 .sec-pill{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;flex:1;min-width:110px}
 .sec-pill-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:5px}
 .sec-pill-val{font-size:18px;font-weight:700}
-.dash-analytics{display:grid;grid-template-columns:3fr 2fr;gap:14px;margin-bottom:0;align-items:start}
 .dash-analytics-right{display:flex;flex-direction:column;gap:14px}
 .recent-list{display:flex;flex-direction:column;gap:6px}
 .recent-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
@@ -66,8 +65,6 @@ nav button.active{color:var(--blue);background:var(--blue-dim);font-weight:600}
 .charts-row{display:none}
 .chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:0 2px 8px rgba(37,99,235,.05)}
 .chart-card h3{font-size:11px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
-#eqChart{height:260px}
-#wlChart{height:190px}
 /* TABLE */
 .table-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;overflow-x:auto;box-shadow:0 2px 8px rgba(37,99,235,.05)}
@@ -435,7 +432,7 @@ textarea{resize:vertical;min-height:56px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--blue)}
-@media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row,.dash-analytics{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.charts-row,.sim-grid,.dash-kpi-row{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}}
 
 /* ── MOBILE NAV ─────────────────────────────────────────────── */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:200;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -469,10 +466,6 @@ textarea{resize:vertical;min-height:56px}
   .sec-pill{min-width:0;flex:1;padding:10px 10px}
   .sec-pill-lbl{font-size:9px}
   .sec-pill-val{font-size:15px}
-  .dash-analytics{grid-template-columns:1fr}
-  #eqChart{height:180px}
-  #wlChart{height:160px}
-
   /* Open positions list */
   .lpos-list-row{flex-wrap:wrap;gap:8px;padding:12px}
   .lpos-list-cell{min-width:calc(50% - 8px)}
@@ -1707,10 +1700,6 @@ textarea{resize:vertical;min-height:56px}
   </div>
   <div id="livePosGrid"></div>
 
-  <div class="dash-analytics">
-    <div class="chart-card"><h3>Equity Curve</h3><canvas id="eqChart"></canvas></div>
-    <div class="chart-card"><h3>Trade Breakdown</h3><canvas id="wlChart"></canvas><div id="wlLegend"></div></div>
-  </div>
   <div class="chart-card" style="margin-top:14px"><h3>Recent Trades</h3><div id="recentDiv"></div></div>
 </section>
 
@@ -2701,7 +2690,6 @@ const DEMO = [
 ];
 // ── STATE ──────────────────────────────────────────────────────
 let trades = [];
-let eqChart = null, wlChart = null;
 let editId = null;
 
 function loadTrades(){
@@ -2842,101 +2830,11 @@ function renderDashboard(){
         <div class="sec-pill-val ${c.c}">${c.v}</div>
       </div>`).join('')}</div>`;
 
-  renderEquity(s);
-  renderWL(s);
   renderRecent();
   renderLivePositions();
   if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
 }
 
-function renderEquity(s){
-  const closed = [...trades].filter(t=>t.status!=='open').sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let cum=0;
-  const labels=['Start'], data=[0];
-  closed.forEach(t=>{ cum+=(t.pips||0); labels.push(t.date.slice(5)); data.push(cum); });
-  const up = cum>=0;
-  const ctx = document.getElementById('eqChart').getContext('2d');
-  if(eqChart) eqChart.destroy();
-  eqChart = new Chart(ctx,{
-    type:'line',
-    data:{labels,datasets:[{
-      data, fill:true, tension:0.35,
-      borderColor: up?'#3fb950':'#f85149',
-      backgroundColor: up?'rgba(63,185,80,.08)':'rgba(248,81,73,.08)',
-      borderWidth:2, pointRadius:4,
-      pointBackgroundColor: data.map((v,i)=>i===0?'transparent':v>=0?'#3fb950':'#f85149'),
-      pointBorderColor:'transparent'
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{
-        x:{grid:{color:'rgba(48,54,61,.4)'},ticks:{color:'#8b949e',font:{size:10}}},
-        y:{grid:{color:'rgba(48,54,61,.4)'},ticks:{color:'#8b949e',font:{size:10}}}
-      }}
-  });
-}
-
-function renderWL(s){
-  const ctx = document.getElementById('wlChart').getContext('2d');
-  if(wlChart) wlChart.destroy();
-  const total = s.wins + s.losses + s.open;
-  const wr = s.wr.toFixed(1);
-  const centerPlugin = {
-    id:'wlCenter',
-    afterDraw(chart){
-      const {ctx:c,chartArea:{width,height,top,left}}=chart;
-      c.save();
-      const cx=left+width/2, cy=top+height/2;
-      c.textAlign='center'; c.textBaseline='middle';
-      c.font='bold 22px Inter,sans-serif'; c.fillStyle='#e6edf3';
-      c.fillText(wr+'%',cx,cy-9);
-      c.font='11px Inter,sans-serif'; c.fillStyle='#8b949e';
-      c.fillText('Win Rate',cx,cy+11);
-      c.restore();
-    }
-  };
-  wlChart = new Chart(ctx,{
-    type:'doughnut',
-    data:{
-      labels:['Wins','Losses','Open'],
-      datasets:[{
-        data:[s.wins,s.losses,s.open],
-        backgroundColor:['rgba(63,185,80,.85)','rgba(248,81,73,.85)','rgba(88,166,255,.65)'],
-        borderColor:['#3fb950','#f85149','#58a6ff'],
-        borderWidth:1.5, hoverOffset:6
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false, cutout:'72%',
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:c=>{
-          const pct=total?((c.parsed/total)*100).toFixed(1):0;
-          return ` ${c.label}: ${c.parsed} (${pct}%)`;
-        }}}
-      }
-    },
-    plugins:[centerPlugin]
-  });
-  const leg=document.getElementById('wlLegend');
-  if(leg) leg.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px;text-align:center">
-      <div>
-        <div style="font-size:18px;font-weight:700;color:#3fb950">${s.wins}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Wins</div>
-        <div style="font-size:11px;color:#3fb950;margin-top:3px">${total?((s.wins/total)*100).toFixed(0):0}%</div>
-      </div>
-      <div>
-        <div style="font-size:18px;font-weight:700;color:#f85149">${s.losses}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Losses</div>
-        <div style="font-size:11px;color:#f85149;margin-top:3px">${total?((s.losses/total)*100).toFixed(0):0}%</div>
-      </div>
-      <div>
-        <div style="font-size:18px;font-weight:700;color:#58a6ff">${s.open}</div>
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">Open</div>
-        <div style="font-size:11px;color:#58a6ff;margin-top:3px">Active</div>
-      </div>
-    </div>`;
-}
 
 function renderRecent(){
   const recent = [...trades].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
