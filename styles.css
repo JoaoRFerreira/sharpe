@@ -547,6 +547,7 @@ textarea{resize:vertical;min-height:56px}
 }
 /* AUTH */
 .auth-area{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#userMenu{margin-left:auto;display:flex;align-items:center;flex-shrink:0}
 .auth-area .btn-ghost{background:transparent;border-color:rgba(255,255,255,.2);color:#cbd5e1}.auth-area .btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3);color:#fff}
 .plan-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
 .plan-free{background:rgba(255,255,255,.08);color:#94a3b8;border:1px solid rgba(255,255,255,.12)}
