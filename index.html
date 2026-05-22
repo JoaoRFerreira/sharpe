@@ -1287,14 +1287,9 @@ const sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
   auth: { detectSessionInUrl: true, persistSession: true, storageKey: 'sharpe_auth' }
 });
 
-// If already logged in, go straight to the app
-sb.auth.getSession().then(({ data }) => {
-  if (data?.session) window.location.href = 'app.html';
-});
-
+// Single auth check: INITIAL_SESSION fires exactly once with the definitive state
 sb.auth.onAuthStateChange((event, session) => {
-  // Only redirect on explicit sign-in events, not on the initial session check
-  if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+  if (event === 'INITIAL_SESSION' && session?.user) {
     window.location.href = 'app.html';
   }
 });

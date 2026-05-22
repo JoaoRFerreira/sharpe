@@ -3351,24 +3351,20 @@ sb.auth.onAuthStateChange((event, session) => {
   if(user){
     sbUser = user;
     updateAuthUI();
-    setTimeout(async () => {
-      try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
-      try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
-      renderDashboard();
-    }, 0);
+    if(event === 'INITIAL_SESSION' || event === 'SIGNED_IN'){
+      setTimeout(async () => {
+        try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
+        try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
+        renderDashboard();
+      }, 0);
+    }
   } else {
     sbUser = null; sbPlan = 'free'; sbIsAdmin = false;
     showAdminNav();
-    // Only redirect on an explicit sign-out, not on the initial session check
-    if(event === 'SIGNED_OUT') { window.location.href = 'index.html'; return; }
-    updateAuthUI();
-  }
-});
-
-// Auth guard: redirect to landing only after confirming no session exists
-sb.auth.getSession().then(({ data }) => {
-  if (!data?.session) {
-    setTimeout(() => { if (!sbUser) window.location.href = 'index.html'; }, 1500);
+    // INITIAL_SESSION with no user = not logged in; redirect to landing once
+    if(event === 'INITIAL_SESSION' || event === 'SIGNED_OUT'){
+      window.location.href = 'index.html';
+    }
   }
 });
 
