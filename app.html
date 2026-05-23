@@ -3133,6 +3133,24 @@ function renderMktStrip(results){
     </div>`).join('');
 }
 
+// ── Signal expiry check against live prices ──
+function sigStatus(s){
+  if(s.isDemo) return 'valid';
+  const lp = livePrices[s.symbol];
+  if(!lp) return 'valid';
+  const atr = s.mult ? s.atrPips / s.mult : 0;
+  if(s.dir==='LONG'){
+    if(lp <= s.stop)                      return 'stopped';
+    if(lp >= s.t1)                        return 'target';
+    if(atr > 0 && lp > s.entry + atr*0.5) return 'passed';
+  } else {
+    if(lp >= s.stop)                      return 'stopped';
+    if(lp <= s.t1)                        return 'target';
+    if(atr > 0 && lp < s.entry - atr*0.5) return 'passed';
+  }
+  return 'valid';
+}
+
 // ── Render Signal Cards ──
 function renderSignals(results, isDemo){
   lastScanResults = results;
@@ -3147,20 +3165,37 @@ function renderSignals(results, isDemo){
     document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg">${msg}</div>`;
     return;
   }
-  const filteredNote = filtered ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered} signal(s) hidden below ${autoLogConf}% confidence threshold.</div>` : '';
+
+  // Tag each signal with its current status vs live price
+  const tagged = sigs.map(r => ({...r, _status: sigStatus(r.signal)}));
+  const active  = tagged.filter(r => r._status === 'valid' || r._status === 'passed');
+  const expired = tagged.filter(r => r._status === 'stopped' || r._status === 'target');
+
+  const notes = [
+    filtered  ? `${filtered} signal(s) hidden below ${autoLogConf}% confidence threshold.` : '',
+    expired.length ? `${expired.length} signal(s) removed — stop loss hit or target already reached.` : '',
+  ].filter(Boolean).map(t=>`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${t}</div>`).join('');
+
+  if(!active.length){
+    document.getElementById('sigContainer').innerHTML=
+      notes+`<div class="no-sig-msg">No open signals — all have hit their stop or target since the last scan.</div>`;
+    return;
+  }
+
   const typeOrder = ['Forex','Crypto','Index','ETF','Commodity'];
   const groups = {};
-  sigs.forEach(r => { const t=r.signal.type||'Other'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
+  active.forEach(r => { const t=r.signal.type||'Other'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
   const groupHtml = typeOrder.filter(t=>groups[t]?.length).map(t=>`
     <div style="margin-bottom:28px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">${t}</div>
-      <div class="sig-grid">${groups[t].map(r=>sigCard(r.signal,isDemo)).join('')}</div>
+      <div class="sig-grid">${groups[t].map(r=>sigCard(r.signal,isDemo,r._status)).join('')}</div>
     </div>`).join('');
-  document.getElementById('sigContainer').innerHTML=filteredNote+groupHtml;
+  document.getElementById('sigContainer').innerHTML=notes+groupHtml;
 }
 
-function sigCard(s, isDemo){
+function sigCard(s, isDemo, status='valid'){
   const isLong=s.dir==='LONG';
+  const isPassed = status==='passed';
   const confCls=s.conf>=75?'cf-high':s.conf>=55?'cf-med':'cf-low';
   const structCls=s.structure==='bullish'?'struct-bull':s.structure==='bearish'?'struct-bear':'struct-rang';
   const structLabel=s.structure==='bullish'?'HH+HL Structure':s.structure==='bearish'?'LH+LL Structure':'Ranging Structure';
@@ -3173,8 +3208,9 @@ function sigCard(s, isDemo){
   const reasonsHtml=s.reasons&&s.reasons.length
     ?`<div class="sig-reasons"><div class="sig-reasons-title">Why this signal</div><ul>${s.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>`
     :'';
-  return `<div class="sig-card ${isLong?'bull-card':'bear-card'}">
+  return `<div class="sig-card ${isLong?'bull-card':'bear-card'}${isPassed?' sig-card-passed':''}">
     ${isDemo?'<span class="demo-badge" title="Demo data — connect API for live prices">DEMO</span>':''}
+    ${isPassed?'<div class="sig-passed-banner">⚠ Entry level passed — watch for pullback</div>':''}
     <div class="sig-top">
       <div>
         <div class="sig-sym">${s.symbol}</div>

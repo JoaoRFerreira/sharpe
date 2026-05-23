@@ -38,6 +38,10 @@ async function dbInsert(table: string, rows: unknown[]): Promise<void> {
   })
 }
 
+async function dbDelete(table: string, params: string): Promise<void> {
+  await fetch(`${SUPA_URL}/rest/v1/${table}?${params}`, { method: 'DELETE', headers: hdr() })
+}
+
 // ── Instrument catalogue ────────────────────────────────────────
 interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean; bnSymbol?:string }
 const INSTRUMENTS: Inst[] = [
@@ -309,6 +313,10 @@ Deno.serve(async (req: Request) => {
     await writeLog({run_type:'prices',prices_updated:priceRows.length,duration_ms:Date.now()-startMs,status:'ok'})
     return new Response(JSON.stringify({ok:true,prices:priceRows.length}),{headers:{...CORS,'Content-Type':'application/json'}})
   }
+
+  // ── Prune signals older than 7 days
+  const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  await dbDelete('signals', `scanned_at=lt.${cutoff}`)
 
   // ── Full scan (or seed)
   const batchId = crypto.randomUUID(), scannedAt = new Date().toISOString()

@@ -282,6 +282,8 @@ textarea{resize:vertical;min-height:56px}
 .sig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px}
 .sig-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;transition:border-color .15s}
 .sig-card.bull-card{border-left:3px solid var(--green)}.sig-card.bear-card{border-left:3px solid var(--red)}
+.sig-card.sig-card-passed{opacity:.55;filter:grayscale(.4)}
+.sig-passed-banner{font-size:11px;font-weight:600;color:#b45309;background:rgba(180,83,9,.1);border:1px solid rgba(180,83,9,.2);border-radius:6px;padding:5px 10px;margin-bottom:10px}
 .sig-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
 .sig-sym{font-size:16px;font-weight:700}
 .sig-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
