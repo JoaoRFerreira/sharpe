@@ -538,7 +538,7 @@ Deno.serve(async (req: Request) => {
           `📊 *Why this signal:*`,
           whyLines,
           ``,
-          `_Powered by Sharpe · joaorferreira.github.io/sharpe_`,
+          `_Powered by Sharpe_`,
         ].join('\n')
         await sendTelegram(pubToken, pubChannel, text)
       }
