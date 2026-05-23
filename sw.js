@@ -1,4 +1,4 @@
-const CACHE = 'sharpe-v13';
+const CACHE = 'sharpe-v14';
 const STATIC = [
   '/sharpe/',
   '/sharpe/index.html',
