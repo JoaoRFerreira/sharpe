@@ -475,6 +475,19 @@
         </div>
       </div>
     </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Auto paper trade on signal</div>
+        <div class="cfg-row-desc">When enabled, the scanner automatically opens a paper trade for every signal at or above the confidence threshold — even when the site is closed. Runs server-side every 4h.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <label class="toggle-sw"><input type="checkbox" id="autoPaperChk" onchange="saveAutoPaperSettings()"><span class="toggle-sl"></span></label>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" id="autoPaperConfInput" class="auto-conf" value="70" min="40" max="99" onchange="saveAutoPaperSettings()" style="width:52px">
+          <span style="font-size:11px;color:var(--muted)">%</span>
+        </div>
+      </div>
+    </div>
     <div class="cfg-row" id="autoExecWrap" style="display:none">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Auto-execute via connected brokers <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
@@ -5760,11 +5773,36 @@ function loadAlertSettings(){
   if(document.getElementById('alertFromEmail')&&fromEmail) document.getElementById('alertFromEmail').value=fromEmail;
 }
 
+async function saveAutoPaperSettings(){
+  if(!sbUser) return;
+  const enabled = document.getElementById('autoPaperChk')?.checked ?? false;
+  const conf    = parseInt(document.getElementById('autoPaperConfInput')?.value) || 70;
+  await Promise.all([
+    sb.from('site_config').upsert({key:'auto_paper_trade',    value: String(enabled)}, {onConflict:'key'}),
+    sb.from('site_config').upsert({key:'auto_paper_min_conf', value: String(conf)},    {onConflict:'key'}),
+  ]);
+  showToast(enabled ? `Auto paper trade ON ≥${conf}%` : 'Auto paper trade OFF', 'tw');
+}
+
+async function loadAutoPaperSettings(){
+  if(!sbUser) return;
+  const { data } = await sb.from('site_config')
+    .select('key,value')
+    .in('key', ['auto_paper_trade','auto_paper_min_conf']);
+  if(!data) return;
+  const map = Object.fromEntries(data.map(r=>[r.key,r.value]));
+  const chk  = document.getElementById('autoPaperChk');
+  const conf = document.getElementById('autoPaperConfInput');
+  if(chk)  chk.checked  = map['auto_paper_trade'] === 'true';
+  if(conf) conf.value   = map['auto_paper_min_conf'] ?? '70';
+}
+
 function initSettings(){
   const alChk=document.getElementById('autoLogChk');
   const alConf=document.getElementById('autoLogConf');
   if(alChk) alChk.checked=autoLog;
   if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
+  loadAutoPaperSettings();
   if(oandaToken&&oandaAccount){
     const ri=document.getElementById('oandaRiskInput');
     const pi=document.getElementById('oandaPracticeChk');
