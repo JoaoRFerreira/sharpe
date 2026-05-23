@@ -868,7 +868,7 @@
       <!-- Billing toggle -->
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:36px">
         <span id="billMonthLbl" style="font-size:13px;font-weight:700;color:var(--text)">Monthly</span>
-        <label class="toggle-sw" style="cursor:pointer" onclick="toggleBilling()"><input type="checkbox" id="billToggle" style="display:none"><span class="toggle-sl"></span></label>
+        <label class="toggle-sw" style="cursor:pointer" onclick="event.preventDefault();toggleBilling()"><input type="checkbox" id="billToggle" style="display:none"><span class="toggle-sl"></span></label>
         <span id="billAnnualLbl" style="font-size:13px;color:var(--muted)">Annual <span id="annualSaveBadge" style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
       </div>
       <div class="pricing-page-cards">
@@ -913,7 +913,7 @@
             <li><span class="chk chk-yes">✓</span><span>Market news with AI sentiment scoring</span></li>
             <li><span class="chk chk-yes">✓</span><span>Performance analytics (win rate, equity curve)</span></li>
             <li><span class="chk chk-no">✗</span><span>Weekly timeframe signals</span></li>
-            <li><span class="chk chk-no">✗</span><span>Crypto, ETF &amp; Index instruments</span></li>
+            <li><span class="chk chk-no">✗</span><span>Crypto instruments (BTC, ETH)</span></li>
             <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
           </ul>
           <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading →</button>
@@ -931,15 +931,15 @@
           <div class="pp-divider"></div>
           <ul class="pp-feats">
             <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
-            <li><span class="chk chk-yes">✓</span><span><strong>32 instruments</strong> — Forex, Crypto, Indices, Commodities &amp; ETFs</span></li>
+            <li><span class="chk chk-yes">✓</span><span><strong>All 16 instruments</strong> — full Forex &amp; Crypto coverage</span></li>
             <li><span class="chk chk-yes">✓</span><span>Weekly timeframe signals (1W)</span></li>
             <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
-            <li><span class="chk chk-yes">✓</span><span>10 daily trade ideas — all markets</span></li>
+            <li><span class="chk chk-yes">✓</span><span>TradingView webhook integration</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Morning AI Brief (Claude) — weekdays to Telegram</span></li>
             <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence only</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Journal export to CSV</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Webhook &amp; email signal alerts</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Risk-adjusted OANDA position sizing</span></li>
-            <li><span class="chk chk-yes">✓</span><span>Priority support + community access</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Telegram &amp; email signal alerts</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Journal export to CSV + community leaderboard</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Priority support</span></li>
           </ul>
           <button class="pp-btn pp-btn-pro" onclick="goUpgrade('pro')">Go Pro →</button>
           <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">7-day free trial · cancel anytime</div>
