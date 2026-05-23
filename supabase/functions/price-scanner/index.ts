@@ -422,61 +422,111 @@ Deno.serve(async (req: Request) => {
 
     if (signalRows.length > 0) await dbInsert('signals', signalRows)
 
-    // ── Per-user auto paper trade + Telegram alerts ─────────────
+    // ── Per-user auto paper trade + private Telegram + email ───────
     interface UserSetting {
       user_id: string
       auto_paper_trade: boolean
       auto_paper_min_conf: number
       telegram_token: string|null
       telegram_chat_id: string|null
+      resend_key: string|null
+      alert_email: string|null
     }
     const userSettings = await dbGet(
       'user_settings',
-      'select=user_id,auto_paper_trade,auto_paper_min_conf,telegram_token,telegram_chat_id'
+      'select=user_id,auto_paper_trade,auto_paper_min_conf,telegram_token,telegram_chat_id,resend_key,alert_email'
     ) as UserSetting[]
 
     const tfExpiry: Record<string,number> = { daily:3, '4h':0.5, weekly:7 }
     const sigs = signalRows as Record<string,unknown>[]
 
     for (const u of userSettings) {
-      // Auto paper entries for this user
-      if (u.auto_paper_trade) {
-        const minConf = u.auto_paper_min_conf ?? 70
-        const pendingRows = sigs
-          .filter(r => r.direction && (r.confidence as number) >= minConf)
-          .map(r => ({
-            user_id:     u.user_id,
-            symbol:      r.symbol,
-            timeframe:   r.timeframe,
-            direction:   r.direction,
-            entry_price: r.entry,
-            stop_loss:   r.stop_loss,
-            tp1:         r.tp1,
-            tp2:         r.tp2,
-            confidence:  r.confidence,
-            pattern:     r.pattern,
-            atr_pips:    r.atr_pips,
-            inst_mult:   r.inst_mult,
-            inst_dec:    r.inst_dec,
-            inst_unit:   r.inst_unit,
-            inst_type:   r.inst_type,
-            mode:        'paper',
-            expires_at:  new Date(Date.now() + (tfExpiry[r.timeframe as string] ?? 1) * 24*60*60*1000).toISOString(),
-          }))
-        if (pendingRows.length > 0) await dbInsert('pending_entries', pendingRows)
+      const minConf = u.auto_paper_min_conf ?? 70
+      const qualifying = sigs.filter(r => r.direction && (r.confidence as number) >= minConf)
+
+      // Auto paper entries
+      if (u.auto_paper_trade && qualifying.length > 0) {
+        const pendingRows = qualifying.map(r => ({
+          user_id:     u.user_id,
+          symbol:      r.symbol,
+          timeframe:   r.timeframe,
+          direction:   r.direction,
+          entry_price: r.entry,
+          stop_loss:   r.stop_loss,
+          tp1:         r.tp1,
+          tp2:         r.tp2,
+          confidence:  r.confidence,
+          pattern:     r.pattern,
+          atr_pips:    r.atr_pips,
+          inst_mult:   r.inst_mult,
+          inst_dec:    r.inst_dec,
+          inst_unit:   r.inst_unit,
+          inst_type:   r.inst_type,
+          mode:        'paper',
+          expires_at:  new Date(Date.now() + (tfExpiry[r.timeframe as string] ?? 1) * 24*60*60*1000).toISOString(),
+        }))
+        await dbInsert('pending_entries', pendingRows)
       }
 
-      // Telegram signal alerts for this user
-      if (u.telegram_token && u.telegram_chat_id) {
-        const minConf = u.auto_paper_min_conf ?? 70
-        const sigAlerts = sigs.filter(r => r.direction && (r.confidence as number) >= minConf)
-        for (const s of sigAlerts) {
+      // Private Telegram signal alerts
+      if (u.telegram_token && u.telegram_chat_id && qualifying.length > 0) {
+        for (const s of qualifying) {
           const dir   = s.direction as string
           const tf    = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
           const emoji = dir === 'LONG' ? '🟢' : '🔴'
           const text  = `${emoji} *${dir} — ${s.symbol}*\n⏱ ${tf} · 🎯 ${s.confidence}% confidence\n📍 Entry: \`${s.entry}\`\n🛡 Stop: \`${s.stop_loss}\` (${s.risk_pips} ${s.inst_unit})\n🎯 TP1: \`${s.tp1}\`\n📊 R:R 1:${s.rr} · ${s.pattern}`
           await sendTelegram(u.telegram_token, u.telegram_chat_id, text)
         }
+      }
+
+      // Email alerts via Resend
+      if (u.resend_key && u.alert_email && qualifying.length > 0) {
+        for (const s of qualifying) {
+          const dir   = s.direction as string
+          const tf    = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+          const subject = `${dir === 'LONG' ? '🟢' : '🔴'} ${dir} Signal — ${s.symbol} (${s.confidence}% conf)`
+          const html = `
+<h2 style="color:${dir==='LONG'?'#22c55e':'#ef4444'}">${dir} — ${s.symbol}</h2>
+<p><b>Timeframe:</b> ${tf} &nbsp;|&nbsp; <b>Confidence:</b> ${s.confidence}%</p>
+<table style="border-collapse:collapse;width:100%;max-width:400px">
+  <tr><td style="padding:6px 0;color:#6b7280">Entry</td><td><b>${s.entry}</b></td></tr>
+  <tr><td style="padding:6px 0;color:#6b7280">Stop Loss</td><td><b>${s.stop_loss}</b> (${s.risk_pips} ${s.inst_unit})</td></tr>
+  <tr><td style="padding:6px 0;color:#6b7280">TP1</td><td><b>${s.tp1}</b></td></tr>
+  <tr><td style="padding:6px 0;color:#6b7280">R:R</td><td><b>1:${s.rr}</b></td></tr>
+  <tr><td style="padding:6px 0;color:#6b7280">Pattern</td><td>${s.pattern}</td></tr>
+</table>
+<p style="color:#6b7280;font-size:12px;margin-top:16px">Sent by Sharpe · <a href="https://joaorferreira.github.io/sharpe/app.html">Open app</a></p>`
+          try {
+            await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${u.resend_key}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                from: 'Sharpe Signals <signals@resend.dev>',
+                to:   [u.alert_email],
+                subject,
+                html,
+              }),
+            })
+          } catch { /* non-critical */ }
+        }
+      }
+    }
+
+    // ── Public Telegram channel (anonymized — no entry/stop/TP) ────
+    const pubCfg = await dbGet('site_config', 'select=key,value&key=in.(tg_public_token,tg_public_channel_id)')
+    const pubMap: Record<string,string> = {}
+    pubCfg.forEach(r => { pubMap[(r as Record<string,string>).key] = (r as Record<string,string>).value })
+    const pubToken   = pubMap['tg_public_token'] ?? ''
+    const pubChannel = pubMap['tg_public_channel_id'] ?? ''
+
+    if (pubToken && pubChannel) {
+      const pubSigs = sigs.filter(r => r.direction && (r.confidence as number) >= 70)
+      for (const s of pubSigs) {
+        const dir   = s.direction as string
+        const tf    = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+        const emoji = dir === 'LONG' ? '🟢' : '🔴'
+        const text  = `${emoji} *${dir} Signal — ${s.symbol}* (${tf})\n🎯 Confidence: ${s.confidence}% · R:R 1:${s.rr}\n📊 ${s.pattern}\n\n_Powered by Sharpe · joaorferreira.github.io/sharpe_`
+        await sendTelegram(pubToken, pubChannel, text)
       }
     }
   } catch(e) {
