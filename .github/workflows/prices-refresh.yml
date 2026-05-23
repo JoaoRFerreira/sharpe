@@ -1,26 +1,26 @@
-name: Signal Scanner — Full Scan
+name: Price Refresh — Crypto
 
 on:
   schedule:
-    # Every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
-    # 14 instruments × 3 timeframes × 3 candles = 126 TD credits/run × 6 = 756/day (of 800 free)
-    - cron: '0 */4 * * *'
+    # Every hour at :30 (offset from full scan at :00)
+    # Binance only — 0 Twelve Data credits used
+    - cron: '30 * * * *'
   workflow_dispatch:
 
 jobs:
-  scan:
-    name: Full market scan (Daily + 4H + Weekly)
+  prices:
+    name: Refresh crypto prices (Binance)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Invoke price-scanner edge function
+      - name: Invoke price-scanner (prices-only mode)
         run: |
           STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPA_ANON_KEY }}" \
             -H "Content-Type: application/json" \
             -d '{}' \
-            "${{ secrets.SUPA_URL }}/functions/v1/price-scanner")
+            "${{ secrets.SUPA_URL }}/functions/v1/price-scanner?pricesOnly=true")
           echo "HTTP $STATUS"
           cat /tmp/response.json
           [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]

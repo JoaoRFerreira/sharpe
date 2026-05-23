@@ -319,8 +319,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     for (const {tf, tdInterval, bnInterval} of [
-      {tf:'daily', tdInterval:'1day', bnInterval:'1d'},
-      {tf:'4h',    tdInterval:'4h',   bnInterval:'4h'}
+      {tf:'daily',  tdInterval:'1day',  bnInterval:'1d'},
+      {tf:'4h',     tdInterval:'4h',    bnInterval:'4h'},
+      {tf:'weekly', tdInterval:'1week', bnInterval:'1w'},
     ]) {
       for (const inst of INSTRUMENTS) {
         try {
