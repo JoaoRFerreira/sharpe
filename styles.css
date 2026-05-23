@@ -900,3 +900,23 @@ textarea{resize:vertical;min-height:56px}
 
 /* ── NAV PLAN TAG ─────────────────────────────────────────────── */
 .nav-plan-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;background:rgba(37,99,235,.18);color:var(--blue);border-radius:3px;padding:1px 5px;vertical-align:middle;margin-left:4px;pointer-events:none}
+
+/* ── TRACK RECORD ──────────────────────────────────────────────── */
+.tr-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:900px){.tr-kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:500px){.tr-kpi-row{grid-template-columns:repeat(2,1fr)}}
+
+/* ── SIGNAL REASON CHIPS ───────────────────────────────────────── */
+.sig-reasons{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.sig-reasons-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px}
+.sig-reasons-chips{display:flex;flex-direction:column;gap:5px}
+.sig-reason-chip{font-size:11px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;line-height:1.4}
+
+/* ── LANDING PIPELINE ──────────────────────────────────────────── */
+.lp-pipeline{display:flex;align-items:flex-start;gap:0;flex-wrap:wrap;justify-content:center}
+.lp-pipe-step{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:18px 16px;flex:1;min-width:160px;max-width:200px}
+.lp-pipe-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.lp-pipe-title{font-size:13px;font-weight:700;color:#f1f5f9;margin-bottom:6px}
+.lp-pipe-desc{font-size:11px;color:#94a3b8;line-height:1.5}
+.lp-pipe-arrow{font-size:20px;color:#3b82f6;padding:20px 8px;align-self:center;flex-shrink:0}
+@media(max-width:768px){.lp-pipe-arrow{display:none}.lp-pipe-step{min-width:140px}}

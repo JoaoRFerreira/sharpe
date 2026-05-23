@@ -23,6 +23,8 @@
     <button onclick="nav('journal',this)">Journal</button>
     <button onclick="nav('signals',this)">Signals <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Essential</span></button>
     <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
+    <button onclick="nav('trackrecord',this)">Track Record</button>
+    <button onclick="nav('backtest',this)">Backtest</button>
     <button onclick="nav('ideas',this)">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
     <button onclick="nav('simulator',this)">Simulator</button>
     <button onclick="nav('news',this)">News</button>
@@ -563,6 +565,63 @@
       <span class="api-dot demo" id="bnDot"></span>
       <span class="api-lbl" id="bnLbl">Not connected — get free testnet keys at <a href="https://testnet.binance.vision" target="_blank" style="color:var(--blue)">testnet.binance.vision</a></span>
     </div>
+  </div>
+
+  <!-- Telegram Alerts -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">Telegram Alerts</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Get instant signal alerts and position updates in Telegram — works even when the site is closed. <a href="https://t.me/BotFather" target="_blank" style="color:var(--blue)">Create a bot via @BotFather →</a></div>
+    <div class="oanda-grid">
+      <div class="fg">
+        <label>Bot Token</label>
+        <input type="password" id="tgTokenInput" placeholder="123456789:AAF…">
+      </div>
+      <div class="fg">
+        <label>Chat ID <span style="font-size:10px;color:var(--muted)">(message @userinfobot on Telegram to get yours)</span></label>
+        <input type="text" id="tgChatIdInput" placeholder="e.g. 123456789">
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;gap:10px">
+        <button class="btn btn-primary" onclick="saveTelegramSettings()">Connect</button>
+        <button class="btn btn-ghost" onclick="testTelegramConnection()">Send test</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <span class="api-dot demo" id="tgDot"></span>
+      <span class="api-lbl" id="tgLbl">Not connected</span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Alerts sent: new signals · position opened · position closed with P&amp;L</div>
+  </div>
+
+  <!-- Risk Management -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">Risk Management Rules</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Applied server-side every time the price monitor considers opening a new position.</div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Max concurrent open positions</div>
+        <div class="cfg-row-desc">Price monitor will not open new positions once this limit is reached.</div>
+      </div>
+      <input type="number" id="riskMaxPosInput" value="5" min="1" max="20" style="width:64px;text-align:center" onchange="saveRiskSettings()">
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Daily loss limit (pips)</div>
+        <div class="cfg-row-desc">Stop opening new positions if cumulative daily loss exceeds this amount.</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <label class="toggle-sw"><input type="checkbox" id="riskDailyLossChk" onchange="saveRiskSettings()"><span class="toggle-sl"></span></label>
+        <input type="number" id="riskDailyLossInput" value="100" min="10" max="500" style="width:72px;text-align:center" onchange="saveRiskSettings()">
+        <span style="font-size:11px;color:var(--muted)">pips</span>
+      </div>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Correlation guard</div>
+        <div class="cfg-row-desc">Skip signals if a correlated pair is already open (e.g. EUR/USD blocks EUR/JPY and EUR/GBP).</div>
+      </div>
+      <label class="toggle-sw"><input type="checkbox" id="riskCorrChk" onchange="saveRiskSettings()"><span class="toggle-sl"></span></label>
+    </div>
+    <div style="margin-top:4px"><span id="riskSaveStatus" style="font-size:11px;color:var(--muted)"></span></div>
   </div>
 
   <!-- Webhook & Email Alerts -->
@@ -1197,6 +1256,109 @@
     </div>
   </div>
 </section>
+
+<!-- TRACK RECORD -->
+<section class="section" id="trackrecord">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px">
+    <div class="section-title" style="margin:0">Track Record</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="trFilterInst" onchange="loadTrackRecord()" style="font-size:12px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--card)">
+        <option value="">All instruments</option>
+      </select>
+      <select id="trFilterTf" onchange="loadTrackRecord()" style="font-size:12px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--card)">
+        <option value="">All timeframes</option>
+        <option value="daily">Daily</option>
+        <option value="4h">4H</option>
+        <option value="weekly">Weekly</option>
+      </select>
+    </div>
+  </div>
+  <div class="tr-kpi-row" id="trKpiRow">
+    <div class="kpi-card kpi-blue"><div class="kpi-lbl">Total Closed</div><div class="kpi-val" id="trTotal">—</div><div class="kpi-sub">paper + live</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-lbl">Win Rate</div><div class="kpi-val" id="trWinRate">—</div><div class="kpi-sub">TP1 hit</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-lbl">Avg R:R Achieved</div><div class="kpi-val" id="trAvgRR">—</div><div class="kpi-sub">actual vs theoretical</div></div>
+    <div class="kpi-card kpi-green"><div class="kpi-lbl">Total Pips</div><div class="kpi-val" id="trTotalPips">—</div><div class="kpi-sub">net P&amp;L</div></div>
+    <div class="kpi-card kpi-red"><div class="kpi-lbl">Max Drawdown</div><div class="kpi-val" id="trMaxDD">—</div><div class="kpi-sub">pips, peak-to-trough</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-lbl">Profit Factor</div><div class="kpi-val" id="trPF">—</div><div class="kpi-sub">gross win / gross loss</div></div>
+  </div>
+  <div class="chart-card" style="margin-bottom:16px">
+    <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Cumulative P&amp;L (pips)</h3>
+    <div style="position:relative;height:220px"><canvas id="trEqChart"></canvas></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="chart-card">
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Win Rate by Pattern</h3>
+      <div id="trPatternBreakdown" style="font-size:12px"></div>
+    </div>
+    <div class="chart-card">
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">P&amp;L by Instrument</h3>
+      <div id="trInstBreakdown" style="font-size:12px"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Closed Trades</h3>
+    <div id="trTradeList" style="overflow-x:auto"></div>
+  </div>
+</section>
+
+<!-- BACKTEST -->
+<section class="section" id="backtest">
+  <div class="section-title">Backtesting</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Replay the signal strategy on historical candles already in the database. Requires seeded candle history (250 bars per instrument/timeframe).</div>
+  <div class="cfg-card" style="margin-bottom:20px">
+    <div class="cfg-card-hdr">Run Backtest</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="fg" style="min-width:180px">
+        <label>Instrument</label>
+        <select id="btInst" style="width:100%">
+          <option value="EUR/USD">EUR/USD</option>
+          <option value="GBP/USD">GBP/USD</option>
+          <option value="USD/JPY">USD/JPY</option>
+          <option value="AUD/USD">AUD/USD</option>
+          <option value="USD/CAD">USD/CAD</option>
+          <option value="NZD/USD">NZD/USD</option>
+          <option value="USD/CHF">USD/CHF</option>
+          <option value="EUR/GBP">EUR/GBP</option>
+          <option value="EUR/JPY">EUR/JPY</option>
+          <option value="GBP/JPY">GBP/JPY</option>
+          <option value="EUR/CHF">EUR/CHF</option>
+          <option value="AUD/JPY">AUD/JPY</option>
+          <option value="XAU/USD">XAU/USD</option>
+          <option value="BTC/USD">BTC/USD</option>
+          <option value="ETH/USD">ETH/USD</option>
+        </select>
+      </div>
+      <div class="fg" style="min-width:140px">
+        <label>Timeframe</label>
+        <select id="btTf" style="width:100%">
+          <option value="daily">Daily</option>
+          <option value="4h">4H</option>
+          <option value="weekly">Weekly</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="runBacktest()" id="btRunBtn">Run Backtest</button>
+    </div>
+    <div id="btStatus" style="font-size:12px;color:var(--muted);margin-top:10px"></div>
+  </div>
+  <div id="btResults" style="display:none">
+    <div class="tr-kpi-row" style="margin-bottom:16px">
+      <div class="kpi-card kpi-blue"><div class="kpi-lbl">Signals Found</div><div class="kpi-val" id="btTotal">—</div></div>
+      <div class="kpi-card kpi-green"><div class="kpi-lbl">Win Rate</div><div class="kpi-val" id="btWinRate">—</div></div>
+      <div class="kpi-card kpi-blue"><div class="kpi-lbl">Avg R:R</div><div class="kpi-val" id="btAvgRR">—</div></div>
+      <div class="kpi-card kpi-green"><div class="kpi-lbl">Total Pips</div><div class="kpi-val" id="btPips">—</div></div>
+      <div class="kpi-card kpi-red"><div class="kpi-lbl">Max Drawdown</div><div class="kpi-val" id="btDD">—</div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Backtest Equity Curve</h3>
+      <div style="position:relative;height:220px"><canvas id="btEqChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Signal Log</h3>
+      <div id="btTradeList" style="overflow-x:auto;font-size:12px"></div>
+    </div>
+  </div>
+</section>
+
 </div><!-- /main -->
 
 
@@ -1489,7 +1651,7 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
-const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','ideas','news','learning','settings','admin']);
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','ideas','news','learning','settings','admin']);
 let _hashNav = false;
 const _sectionInited = new Set();
 
@@ -1517,6 +1679,7 @@ function nav(id, btn){
     if(id==='positions') initPositions();
     if(id==='ideas') renderIdeas();
     if(id==='settings') initSettings();
+    if(id==='trackrecord') loadTrackRecord();
     if(id==='simulator') calcRoR();
     _sectionInited.add(id);
   }
@@ -3247,7 +3410,7 @@ function sigCard(s, isDemo, status='valid'){
     :'';
   const klBadge=s.atKeyLevel?'<span class="kl-badge">⚑ Key S/R</span>':'';
   const reasonsHtml=s.reasons&&s.reasons.length
-    ?`<div class="sig-reasons"><div class="sig-reasons-title">Why this signal</div><ul>${s.reasons.map(r=>`<li>${r}</li>`).join('')}</ul></div>`
+    ?`<div class="sig-reasons"><div class="sig-reasons-title">Why this signal</div><div class="sig-reasons-chips">${s.reasons.map(r=>`<div class="sig-reason-chip">✓ ${r}</div>`).join('')}</div></div>`
     :'';
   return `<div class="sig-card ${isLong?'bull-card':'bear-card'}${isPassed?' sig-card-passed':''}">
     ${isDemo?'<span class="demo-badge" title="Demo data — connect API for live prices">DEMO</span>':''}
@@ -3303,8 +3466,9 @@ function sigCard(s, isDemo, status='valid'){
     </div>
     ${reasonsHtml}
     <div class="sig-actions">
-      <button class="btn btn-primary" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Add to Journal</button>
-      <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Open in Simulator</button>
+      ${!isDemo?`<button class="btn btn-primary" onclick='createPendingEntry(${JSON.stringify(s)},sigTf,"paper")'>Paper Trade</button>`:''}
+      <button class="btn btn-ghost" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Journal</button>
+      <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Simulator</button>
     </div>
   </div>`;
 }
@@ -3620,7 +3784,7 @@ async function processAutoActions(results, isDemo=false){
     }
     // Paper trading: always create pending entry when auto-log is on
     if(!isDemo && paperTrading && autoLog && sig.conf>=autoLogConf && !alreadyLogged){
-      createPendingEntry(sig, 'paper').catch(()=>{});
+      createPendingEntry(sig, sigTf, 'paper').catch(()=>{});
     }
     if(!isDemo&&autoExecute&&!alreadyLogged){
       const isCrypto = sig.type==='Crypto';
@@ -3911,12 +4075,13 @@ function renderPositions(open, closed, pending){
 // ── Create pending entry when signal fires ───────────────────────
 let paperTrading = localStorage.getItem('paper_trading') !== 'false';
 
-async function createPendingEntry(sig, mode='paper'){
+async function createPendingEntry(sig, tf, mode='paper'){
+  tf = tf || sigTf;
   const tfExpiry = { '1day':3, '4h':0.5, '1week':7 };
-  const days = tfExpiry[sigTf] ?? 1;
+  const days = tfExpiry[tf] ?? 1;
   const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
   await sb.from('pending_entries').insert({
-    symbol:sig.symbol, timeframe:sigTf, direction:sig.dir,
+    symbol:sig.symbol, timeframe:tf, direction:sig.dir,
     entry_price:sig.entry, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
     confidence:sig.conf, pattern:sig.pat, atr_pips:sig.atrPips,
     inst_mult:sig.mult, inst_dec:sig.dec, inst_unit:sig.unit, inst_type:sig.type,
@@ -3942,6 +4107,252 @@ function updateSigStatusBar(scannedAt){
     }
   }
   if(alStatus) alStatus.textContent = autoLog ? `Auto-log ≥${autoLogConf}%` : 'Auto-log';
+}
+
+// ── TELEGRAM ───────────────────────────────────────────────────
+async function saveTelegramSettings(){
+  const token  = document.getElementById('tgTokenInput').value.trim();
+  const chatId = document.getElementById('tgChatIdInput').value.trim();
+  if(!token||!chatId){ showToast('Enter both bot token and chat ID','tl'); return; }
+  const dot=document.getElementById('tgDot'), lbl=document.getElementById('tgLbl');
+  dot.className='api-dot demo'; lbl.textContent='Verifying…';
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${token}/getMe`);
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.description||'Invalid token');
+    await Promise.all([
+      sb.from('site_config').upsert({key:'telegram_token',  value:token},{onConflict:'key'}),
+      sb.from('site_config').upsert({key:'telegram_chat_id',value:chatId},{onConflict:'key'}),
+    ]);
+    document.getElementById('tgTokenInput').value='';
+    const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=chatId;
+    dot.className='api-dot ok'; lbl.textContent=`Connected · @${d.result.username}`;
+    showToast('Telegram connected','tw');
+  } catch(e){ dot.className='api-dot err'; lbl.textContent='Failed: '+e.message; }
+}
+
+async function testTelegramConnection(){
+  const {data}=await sb.from('site_config').select('key,value').in('key',['telegram_token','telegram_chat_id']);
+  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
+  if(!cfg.telegram_token||!cfg.telegram_chat_id){ showToast('Connect Telegram first','tl'); return; }
+  const r=await fetch(`https://api.telegram.org/bot${cfg.telegram_token}/sendMessage`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:cfg.telegram_chat_id,
+      text:'✅ *Sharpe connected!*\n\nAlerts you will receive:\n• New signals\n• Position opened\n• Position closed with P&L',
+      parse_mode:'Markdown'})
+  });
+  const d=await r.json();
+  if(d.ok) showToast('Test message sent!','tw'); else showToast('Failed: '+d.description,'tl');
+}
+
+async function loadTelegramSettings(){
+  if(!sbUser) return;
+  const {data}=await sb.from('site_config').select('key,value').in('key',['telegram_token','telegram_chat_id']);
+  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
+  const dot=document.getElementById('tgDot'), lbl=document.getElementById('tgLbl');
+  if(cfg.telegram_token&&cfg.telegram_chat_id){
+    if(dot) dot.className='api-dot ok';
+    if(lbl) lbl.textContent='Connected · Chat ID saved';
+    const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=cfg.telegram_chat_id;
+  }
+}
+
+// ── RISK MANAGEMENT ─────────────────────────────────────────────
+async function saveRiskSettings(){
+  const maxPos   = document.getElementById('riskMaxPosInput')?.value||'5';
+  const dloss    = document.getElementById('riskDailyLossInput')?.value||'100';
+  const dlossOn  = document.getElementById('riskDailyLossChk')?.checked||false;
+  const corrOn   = document.getElementById('riskCorrChk')?.checked||false;
+  await Promise.all([
+    sb.from('site_config').upsert({key:'risk_max_positions',      value:maxPos},       {onConflict:'key'}),
+    sb.from('site_config').upsert({key:'risk_max_daily_loss_pips',value:dloss},        {onConflict:'key'}),
+    sb.from('site_config').upsert({key:'risk_daily_loss_enabled', value:String(dlossOn)},{onConflict:'key'}),
+    sb.from('site_config').upsert({key:'risk_correlation_guard',  value:String(corrOn)}, {onConflict:'key'}),
+  ]);
+  const s=document.getElementById('riskSaveStatus');
+  if(s){ s.textContent='Saved ✓'; setTimeout(()=>s.textContent='',2000); }
+}
+
+async function loadRiskSettings(){
+  if(!sbUser) return;
+  const {data}=await sb.from('site_config').select('key,value')
+    .in('key',['risk_max_positions','risk_max_daily_loss_pips','risk_daily_loss_enabled','risk_correlation_guard']);
+  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
+  const mp=document.getElementById('riskMaxPosInput');       if(mp) mp.value=cfg.risk_max_positions||'5';
+  const dl=document.getElementById('riskDailyLossInput');    if(dl) dl.value=cfg.risk_max_daily_loss_pips||'100';
+  const dlc=document.getElementById('riskDailyLossChk');     if(dlc) dlc.checked=cfg.risk_daily_loss_enabled==='true';
+  const cc=document.getElementById('riskCorrChk');           if(cc) cc.checked=cfg.risk_correlation_guard==='true';
+}
+
+// ── TRACK RECORD ────────────────────────────────────────────────
+let trEqChart = null;
+async function loadTrackRecord(){
+  if(!sbUser) return;
+  const inst=document.getElementById('trFilterInst')?.value||'';
+  const tf  =document.getElementById('trFilterTf')?.value||'';
+  let query = sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:true});
+  if(inst) query=query.eq('symbol',inst);
+  if(tf)   query=query.eq('timeframe',tf);
+  const {data:rows}=await query;
+  if(!rows||!rows.length){
+    document.getElementById('trTotal').textContent='0';
+    ['trWinRate','trAvgRR','trTotalPips','trMaxDD','trPF'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
+    document.getElementById('trPatternBreakdown').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">No closed trades yet.</div>';
+    document.getElementById('trInstBreakdown').innerHTML='';
+    document.getElementById('trTradeList').innerHTML='';
+    return;
+  }
+  // Populate instrument filter
+  const instSel=document.getElementById('trFilterInst');
+  if(instSel&&instSel.options.length<=1){
+    const syms=[...new Set(rows.map(r=>r.symbol))].sort();
+    syms.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; instSel.appendChild(o); });
+  }
+  const wins=rows.filter(r=>r.close_reason==='tp1').length;
+  const total=rows.length;
+  const winRate=(wins/total*100).toFixed(1);
+  const totalPips=rows.reduce((s,r)=>s+(r.pnl_pips||0),0);
+  const grossWin=rows.filter(r=>(r.pnl_pips||0)>0).reduce((s,r)=>s+r.pnl_pips,0);
+  const grossLoss=Math.abs(rows.filter(r=>(r.pnl_pips||0)<0).reduce((s,r)=>s+r.pnl_pips,0));
+  const pf=grossLoss>0?(grossWin/grossLoss).toFixed(2):'∞';
+  // Avg R:R (only winners)
+  const winRows=rows.filter(r=>r.close_reason==='tp1'&&r.entry_price&&r.tp1&&r.stop_loss);
+  const avgRR=winRows.length?(winRows.reduce((s,r)=>{
+    const rr=Math.abs(r.tp1-r.entry_price)/Math.abs(r.entry_price-r.stop_loss);
+    return s+rr;
+  },0)/winRows.length).toFixed(2):'—';
+  // Max drawdown
+  let peak=0,dd=0,cumPips=0;
+  rows.forEach(r=>{ cumPips+=(r.pnl_pips||0); if(cumPips>peak) peak=cumPips; dd=Math.max(dd,peak-cumPips); });
+  document.getElementById('trTotal').textContent=total;
+  document.getElementById('trWinRate').textContent=winRate+'%';
+  document.getElementById('trAvgRR').textContent=avgRR==='—'?'—':'1:'+avgRR;
+  document.getElementById('trTotalPips').textContent=(totalPips>=0?'+':'')+totalPips.toFixed(1);
+  document.getElementById('trTotalPips').style.color=totalPips>=0?'var(--green)':'var(--red)';
+  document.getElementById('trMaxDD').textContent='-'+dd.toFixed(1);
+  document.getElementById('trPF').textContent=pf;
+  // Equity curve
+  const labels=[], cumData=[];
+  let cum=0;
+  rows.forEach((r,i)=>{ cum+=(r.pnl_pips||0); labels.push(i+1); cumData.push(+cum.toFixed(1)); });
+  const tce=document.getElementById('trEqChart');
+  if(tce){ if(trEqChart) trEqChart.destroy();
+    trEqChart=new Chart(tce.getContext('2d'),{type:'line',data:{labels,datasets:[{data:cumData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.35,pointRadius:2,borderWidth:2}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:11}}}}}});
+  }
+  // Pattern breakdown
+  const patMap={};
+  rows.forEach(r=>{ const p=r.pattern||'Unknown'; if(!patMap[p]) patMap[p]={wins:0,total:0}; patMap[p].total++; if(r.close_reason==='tp1') patMap[p].wins++; });
+  document.getElementById('trPatternBreakdown').innerHTML=Object.entries(patMap).sort((a,b)=>b[1].total-a[1].total).map(([p,v])=>{
+    const wr=(v.wins/v.total*100).toFixed(0);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span>${p}</span><span style="display:flex;gap:10px"><span style="color:var(--muted)">${v.total} trades</span><strong style="color:${+wr>=50?'var(--green)':'var(--red)'}">${wr}%</strong></span></div>`;
+  }).join('')||'<div style="color:var(--muted);padding:8px 0">No data</div>';
+  // Instrument breakdown
+  const instMap={};
+  rows.forEach(r=>{ const s=r.symbol; if(!instMap[s]) instMap[s]={pips:0,total:0,wins:0}; instMap[s].total++; instMap[s].pips+=(r.pnl_pips||0); if(r.close_reason==='tp1') instMap[s].wins++; });
+  document.getElementById('trInstBreakdown').innerHTML=Object.entries(instMap).sort((a,b)=>b[1].pips-a[1].pips).map(([s,v])=>{
+    const pip=v.pips.toFixed(1);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span>${s}</span><span style="display:flex;gap:10px"><span style="color:var(--muted)">${v.total}T ${(v.wins/v.total*100).toFixed(0)}%W</span><strong style="color:${v.pips>=0?'var(--green)':'var(--red)'}">${v.pips>=0?'+':''}${pip}</strong></span></div>`;
+  }).join('')||'<div style="color:var(--muted);padding:8px 0">No data</div>';
+  // Trade list
+  document.getElementById('trTradeList').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="border-bottom:2px solid var(--border)">${['Symbol','TF','Dir','Pattern','Entry','Close','P&L','Reason','Date'].map(h=>`<th style="text-align:left;padding:6px 8px;color:var(--muted);font-weight:600">${h}</th>`).join('')}</tr></thead>
+    <tbody>${rows.slice().reverse().map(r=>{
+      const pip=(r.pnl_pips||0); const won=r.close_reason==='tp1';
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px 8px;font-weight:600">${r.symbol}</td>
+        <td style="padding:6px 8px;color:var(--muted)">${r.timeframe||'—'}</td>
+        <td style="padding:6px 8px;color:${r.direction==='LONG'?'var(--green)':'var(--red)'}">${r.direction}</td>
+        <td style="padding:6px 8px;color:var(--muted);font-size:11px">${r.pattern||'—'}</td>
+        <td style="padding:6px 8px">${r.entry_price??'—'}</td>
+        <td style="padding:6px 8px">${r.close_price??'—'}</td>
+        <td style="padding:6px 8px;font-weight:700;color:${pip>=0?'var(--green)':'var(--red)'}">${pip>=0?'+':''}${pip.toFixed(1)}</td>
+        <td style="padding:6px 8px"><span style="background:${won?'var(--green-dim)':'var(--red-dim)'};color:${won?'var(--green)':'var(--red)'};padding:2px 6px;border-radius:4px;font-size:10px">${won?'TP1':'Stop'}</span></td>
+        <td style="padding:6px 8px;color:var(--muted)">${r.closed_at?new Date(r.closed_at).toLocaleDateString():'—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── BACKTEST ────────────────────────────────────────────────────
+const BT_INSTRUMENTS={
+  'EUR/USD':{mult:10000,dec:5,unit:'pips'},'GBP/USD':{mult:10000,dec:5,unit:'pips'},
+  'USD/JPY':{mult:100,dec:3,unit:'pips'},'AUD/USD':{mult:10000,dec:5,unit:'pips'},
+  'USD/CAD':{mult:10000,dec:5,unit:'pips'},'NZD/USD':{mult:10000,dec:5,unit:'pips'},
+  'USD/CHF':{mult:10000,dec:5,unit:'pips'},'EUR/GBP':{mult:10000,dec:5,unit:'pips'},
+  'EUR/JPY':{mult:100,dec:3,unit:'pips'},'GBP/JPY':{mult:100,dec:3,unit:'pips'},
+  'EUR/CHF':{mult:10000,dec:5,unit:'pips'},'AUD/JPY':{mult:100,dec:3,unit:'pips'},
+  'XAU/USD':{mult:10,dec:2,unit:'pts'},'BTC/USD':{mult:1,dec:0,unit:'pts'},'ETH/USD':{mult:1,dec:2,unit:'pts'},
+};
+let btChart=null;
+
+async function runBacktest(){
+  const inst=document.getElementById('btInst').value;
+  const tf  =document.getElementById('btTf').value;
+  const btn =document.getElementById('btRunBtn');
+  const stat=document.getElementById('btStatus');
+  btn.disabled=true; stat.textContent='Loading candles…';
+  const {data:rows}=await sb.from('candles').select('open,high,low,close,volume')
+    .eq('symbol',inst).eq('timeframe',tf).order('ts',{ascending:true}).limit(250);
+  if(!rows||rows.length<222){ stat.textContent=`Not enough candles (${rows?.length||0}/250). Run ⬇ Seed Candles from Admin first.`; btn.disabled=false; return; }
+  stat.textContent=`Running on ${rows.length} candles…`;
+  const candles=rows.map(r=>({open:+r.open,high:+r.high,low:+r.low,close:+r.close,volume:+r.volume}));
+  const instCfg=BT_INSTRUMENTS[inst]||{mult:10000,dec:5,unit:'pips'};
+  const instObj={symbol:inst,type:'forex',mult:instCfg.mult,dec:instCfg.dec,unit:instCfg.unit,proOnly:false};
+  const trades=[]; const LOOKAHEAD=20;
+  for(let i=0;i<=candles.length-220-LOOKAHEAD;i++){
+    const window=candles.slice(i,i+220);
+    const result=analyseCandles(window,instObj);
+    if(!result?.signal) continue;
+    const sig=result.signal;
+    // Look forward for SL/TP
+    const fwd=candles.slice(i+220,i+220+LOOKAHEAD);
+    let outcome=null;
+    for(const fc of fwd){
+      const isLong=sig.dir==='LONG';
+      const hitSL=isLong?fc.low<=sig.stop:fc.high>=sig.stop;
+      const hitTP=isLong?fc.high>=sig.t1:fc.low<=sig.t1;
+      if(hitTP&&hitSL){outcome=sig.riskPips*(sig.rr||1.5);break;} // tp assumed first if both on same candle (conservative)
+      if(hitTP){outcome=sig.riskPips*(sig.rr||1.5);break;}
+      if(hitSL){outcome=-sig.riskPips;break;}
+    }
+    if(outcome===null) continue; // still open within lookahead — skip
+    trades.push({idx:i,dir:sig.dir,pat:sig.pat,conf:sig.conf,entry:sig.entry,stop:sig.stop,tp:sig.t1,pips:+outcome.toFixed(1),won:outcome>0});
+  }
+  btn.disabled=false;
+  if(!trades.length){ stat.textContent='No completed signals found in this candle history.'; return; }
+  stat.textContent=`Found ${trades.length} signals.`;
+  const wins=trades.filter(t=>t.won).length;
+  const totalPips=trades.reduce((s,t)=>s+t.pips,0);
+  let peak=0,dd=0,cum=0;
+  trades.forEach(t=>{ cum+=t.pips; if(cum>peak) peak=cum; dd=Math.max(dd,peak-cum); });
+  document.getElementById('btTotal').textContent=trades.length;
+  document.getElementById('btWinRate').textContent=(wins/trades.length*100).toFixed(1)+'%';
+  const winRR=trades.filter(t=>t.won);
+  document.getElementById('btAvgRR').textContent=winRR.length?('1:'+(winRR.reduce((s,t)=>s+t.pips,0)/winRR.reduce((s,t)=>s+t.pips/t.pips*Math.abs(t.pips/(t.pips/t.pips)),0)/winRR.length).toFixed(1)):'—';
+  document.getElementById('btPips').textContent=(totalPips>=0?'+':'')+totalPips.toFixed(1);
+  document.getElementById('btPips').style.color=totalPips>=0?'var(--green)':'var(--red)';
+  document.getElementById('btDD').textContent='-'+dd.toFixed(1);
+  // Equity curve
+  const bte=document.getElementById('btEqChart');
+  if(bte){ if(btChart) btChart.destroy();
+    let c=0; const btData=trades.map(t=>{c+=t.pips;return +c.toFixed(1);});
+    btChart=new Chart(bte.getContext('2d'),{type:'line',data:{labels:trades.map((_,i)=>i+1),datasets:[{data:btData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',fill:true,tension:.35,pointRadius:2,borderWidth:2}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:11}}}}}});
+  }
+  // Trade list
+  document.getElementById('btTradeList').innerHTML=`<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="border-bottom:2px solid var(--border)">${['#','Dir','Pattern','Conf','Entry','Stop','TP','Outcome'].map(h=>`<th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:600">${h}</th>`).join('')}</tr></thead>
+    <tbody>${trades.map((t,i)=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;color:var(--muted)">${i+1}</td>
+      <td style="padding:5px 8px;color:${t.dir==='LONG'?'var(--green)':'var(--red)'}">${t.dir}</td>
+      <td style="padding:5px 8px">${t.pat}</td>
+      <td style="padding:5px 8px">${t.conf}%</td>
+      <td style="padding:5px 8px">${t.entry}</td>
+      <td style="padding:5px 8px">${t.stop}</td>
+      <td style="padding:5px 8px">${t.tp}</td>
+      <td style="padding:5px 8px;font-weight:700;color:${t.won?'var(--green)':'var(--red)'}">${t.won?'+':''}${t.pips} ${instCfg.unit}</td>
+    </tr>`).join('')}</tbody></table>`;
+  document.getElementById('btResults').style.display='block';
 }
 
 // ── NEWS ───────────────────────────────────────────────────────
@@ -5813,6 +6224,8 @@ function initSettings(){
   if(alChk) alChk.checked=autoLog;
   if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
   loadAutoPaperSettings();
+  loadTelegramSettings();
+  loadRiskSettings();
   if(oandaToken&&oandaAccount){
     const ri=document.getElementById('oandaRiskInput');
     const pi=document.getElementById('oandaPracticeChk');

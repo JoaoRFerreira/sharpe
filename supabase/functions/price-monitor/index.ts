@@ -74,6 +74,16 @@ function toBnSymbol(symbol: string): string {
   return symbol.split('/')[0] + 'USDT'
 }
 
+async function sendTelegram(token: string, chatId: string, text: string): Promise<void> {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    })
+  } catch { /* non-critical */ }
+}
+
 // ── OANDA helpers ─────────────────────────────────────────────────
 function oandaBase(practice: boolean): string {
   return practice ? 'https://api-fxpractice.oanda.com/v3' : 'https://api-fxtrade.oanda.com/v3'
@@ -142,19 +152,43 @@ Deno.serve(async (req) => {
     const pm: Record<string, number> = {}
     priceRows.forEach(r => { pm[r.symbol as string] = parseFloat(r.price as string) })
 
-    // ── Load broker keys from site_config (for live mode) ──────────
+    // ── Load all config from site_config ────────────────────────────
     const cfgRows = await dbGet('site_config',
-      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt,oanda_token,oanda_account,oanda_practice,oanda_risk_pct)')
+      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt,oanda_token,oanda_account,oanda_practice,oanda_risk_pct,telegram_token,telegram_chat_id,risk_max_positions,risk_max_daily_loss_pips,risk_daily_loss_enabled,risk_correlation_guard)')
     const cfg: Record<string, string> = {}
     cfgRows.forEach(r => { cfg[r.key as string] = r.value as string })
     const bnApiKey   = cfg['bn_api_key'] ?? ''
     const bnSecret   = cfg['bn_secret']  ?? ''
     const bnTestnet  = cfg['bn_testnet'] !== 'false'
     const bnRiskUsdt = parseFloat(cfg['bn_risk_usdt'] ?? '50')
-    const oandaToken   = cfg['oanda_token']   ?? ''
-    const oandaAccount = cfg['oanda_account'] ?? ''
+    const oandaToken    = cfg['oanda_token']    ?? ''
+    const oandaAccount  = cfg['oanda_account']  ?? ''
     const oandaPractice = cfg['oanda_practice'] !== 'false'
     const oandaRiskPct  = parseFloat(cfg['oanda_risk_pct'] ?? '1')
+    const tgToken = cfg['telegram_token']    ?? ''
+    const tgChat  = cfg['telegram_chat_id']  ?? ''
+    const maxPositions     = parseInt(cfg['risk_max_positions'] ?? '99')
+    const maxDailyLossPips = parseFloat(cfg['risk_max_daily_loss_pips'] ?? '0')
+    const dailyLossEnabled = cfg['risk_daily_loss_enabled'] === 'true'
+    const correlationGuard = cfg['risk_correlation_guard']  === 'true'
+
+    // ── Risk: pre-load open state ───────────────────────────────────
+    const openNow = await dbGet('open_positions', 'status=eq.open&select=id,symbol')
+    let openCount = openNow.length
+    const openSymbols = new Set((openNow as Record<string,string>[]).map(p => p.symbol))
+    const CORR_GROUPS = [
+      ['EUR/USD','EUR/GBP','EUR/JPY','EUR/CHF'],
+      ['GBP/USD','GBP/JPY'],
+      ['USD/JPY','EUR/JPY','GBP/JPY','AUD/JPY'],
+      ['AUD/USD','AUD/JPY'],
+    ]
+    // Daily P&L
+    let todayLoss = 0
+    if (dailyLossEnabled && maxDailyLossPips > 0) {
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0)
+      const todayClosed = await dbGet('open_positions', `status=eq.closed&closed_at=gte.${todayStart.toISOString()}&select=pnl_pips`) as Record<string,number>[]
+      todayLoss = todayClosed.reduce((s, p) => s + (p.pnl_pips || 0), 0)
+    }
 
     // ── 1. Process pending entries ──────────────────────────────────
     const pending = await dbGet('pending_entries', 'status=eq.pending&select=*')
@@ -181,6 +215,14 @@ Deno.serve(async (req) => {
 
       if (!inZone) continue
 
+      // ── Risk management checks ──────────────────────────────────
+      if (openCount >= maxPositions) continue
+      if (dailyLossEnabled && maxDailyLossPips > 0 && todayLoss <= -maxDailyLossPips) continue
+      if (correlationGuard) {
+        const corrGroup = CORR_GROUPS.find(g => g.includes(symbol))
+        if (corrGroup && corrGroup.some(s => s !== symbol && openSymbols.has(s))) continue
+      }
+
       // Open position
       await dbInsert('open_positions', [{
         entry_id:    e.id,
@@ -200,7 +242,16 @@ Deno.serve(async (req) => {
         mode:        e.mode,
       }])
       await dbPatch('pending_entries', { status: 'filled' }, `id=eq.${e.id}`)
+      openCount++; openSymbols.add(symbol)
       opened++
+
+      // ── Telegram: position opened ──────────────────────────────
+      if (tgToken && tgChat) {
+        const modeTag = e.mode === 'live' ? '💰 Live' : '📋 Paper'
+        const dEmoji  = isLong ? '🟢' : '🔴'
+        await sendTelegram(tgToken, tgChat,
+          `${dEmoji} *Position Opened — ${symbol} ${isLong?'LONG':'SHORT'}*\n${modeTag}\n📍 Entry: \`${price}\`\n🛡 Stop: \`${e.stop_loss}\`\n🎯 TP1: \`${e.tp1}\`\n🕯 ${e.pattern||'—'} · ${e.confidence}% conf`)
+      }
 
       // ── Live Binance execution ──────────────────────────────────
       if (e.mode === 'live' && e.inst_type === 'crypto' && bnApiKey && bnSecret) {
@@ -287,14 +338,24 @@ Deno.serve(async (req) => {
         ? (price - (pos.entry_price as number)) * (pos.inst_mult as number)
         : ((pos.entry_price as number) - price) * (pos.inst_mult as number)
 
+      const pnlRounded = parseFloat(pnlPips.toFixed(1))
       await dbPatch('open_positions', {
         status:       'closed',
         closed_at:    now.toISOString(),
         close_price:  price,
         close_reason: reason,
-        pnl_pips:     parseFloat(pnlPips.toFixed(1)),
+        pnl_pips:     pnlRounded,
       }, `id=eq.${pos.id}`)
       closed++
+
+      // ── Telegram: position closed ──────────────────────────────
+      if (tgToken && tgChat) {
+        const won = reason === 'tp1'
+        const emoji = won ? '✅' : '❌'
+        const sign = pnlRounded >= 0 ? '+' : ''
+        await sendTelegram(tgToken, tgChat,
+          `${emoji} *Position Closed — ${pos.symbol as string} ${pos.direction as string}*\n${won ? '🎯 Target hit!' : '🛡 Stop loss hit'}\n💰 P&L: \`${sign}${pnlRounded} ${(pos.inst_unit as string)||'pips'}\`\n📋 ${pos.mode === 'live' ? 'Live' : 'Paper'}`)
+      }
     }
 
     return new Response(JSON.stringify({ ok: true, opened, expired, closed, ts: now.toISOString() }), {

@@ -275,6 +275,16 @@ async function loadCandles(symbol: string, tf: string): Promise<Candle[]> {
   return rows.reverse().map(r=>({open:+r.open,high:+r.high,low:+r.low,close:+r.close,volume:+r.volume}))
 }
 
+async function sendTelegram(token: string, chatId: string, text: string): Promise<void> {
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+    })
+  } catch { /* non-critical */ }
+}
+
 async function writeLog(entry: Record<string,unknown>): Promise<void> {
   await fetch(`${SUPA_URL}/rest/v1/scan_log`, {
     method: 'POST',
@@ -441,6 +451,25 @@ Deno.serve(async (req: Request) => {
           expires_at:  new Date(Date.now() + (tfExpiry[r.timeframe as string] ?? 1) * 24*60*60*1000).toISOString(),
         }))
       if (pendingRows.length > 0) await dbInsert('pending_entries', pendingRows)
+    }
+
+    // ── Telegram signal alerts ──────────────────────────────────
+    const tgCfg = await dbGet('site_config', 'select=key,value&key=in.(telegram_token,telegram_chat_id)')
+    const tgMap: Record<string,string> = {}
+    tgCfg.forEach(r => { tgMap[(r as Record<string,string>).key] = (r as Record<string,string>).value })
+    const tgToken = tgMap['telegram_token'] ?? ''
+    const tgChat  = tgMap['telegram_chat_id'] ?? ''
+
+    if (tgToken && tgChat) {
+      const minConf = parseInt(autoCfgMap['auto_paper_min_conf'] ?? '70')
+      const sigAlerts = (signalRows as Record<string,unknown>[]).filter(r => r.direction && (r.confidence as number) >= minConf)
+      for (const s of sigAlerts) {
+        const dir = s.direction as string
+        const tf  = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+        const emoji = dir === 'LONG' ? '🟢' : '🔴'
+        const text = `${emoji} *${dir} — ${s.symbol}*\n⏱ ${tf} · 🎯 ${s.confidence}% confidence\n📍 Entry: \`${s.entry}\`\n🛡 Stop: \`${s.stop_loss}\` (${s.risk_pips} ${s.inst_unit})\n🎯 TP1: \`${s.tp1}\`\n📊 R:R 1:${s.rr} · ${s.pattern}`
+        await sendTelegram(tgToken, tgChat, text)
+      }
     }
   } catch(e) {
     scanError = e instanceof Error ? e.message : String(e)

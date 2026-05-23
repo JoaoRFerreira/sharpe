@@ -47,9 +47,9 @@
   <div class="lp-hero">
     <div class="lp-hero-inner">
       <div class="lp-hero-text">
-        <div class="lp-eyebrow">Trading Intelligence Platform</div>
-        <h1 class="lp-headline">Trade Smarter.<br><span class="acc">Grow Consistently.</span></h1>
-        <p class="lp-sub">Sharpe gives independent traders institutional-grade analytics, journaling, and real-time signals — all in one place.</p>
+        <div class="lp-eyebrow">Automated Swing Trading · No Code Required</div>
+        <h1 class="lp-headline">Signals. Paper Trades.<br><span class="acc">Fully Hands-Off.</span></h1>
+        <p class="lp-sub">Sharpe scans 16 forex and crypto pairs every 4 hours, generates signals from real price-action analysis, and automatically opens and closes paper trades — even when your browser is closed.</p>
         <div class="lp-cta-row">
           <button class="lp-btn-primary" onclick="openAuthModal('signup')">Start for Free</button>
           <button class="lp-btn-outline" onclick="navLanding('pricing-page')">See Pricing →</button>
@@ -158,31 +158,53 @@
     </div>
   </div>
 
-  <!-- HOW IT WORKS -->
+  <!-- AUTOMATED PIPELINE -->
   <div class="lp-sec-dark">
     <div class="lp-sec">
       <div class="lp-sec-hdr">
-        <div class="lp-tag">How It Works</div>
-        <h2>From a trade to a lesson in 3 steps</h2>
-        <p>Sharpe turns every trade — win or loss — into an insight that makes you better.</p>
+        <div class="lp-tag">The Automated Pipeline</div>
+        <h2>Set it once. It runs itself.</h2>
+        <p>Every step from signal detection to trade close happens server-side. Your browser never needs to be open.</p>
+      </div>
+      <div class="lp-pipeline">
+        <div class="lp-pipe-step"><div class="lp-pipe-num">1</div><div class="lp-pipe-title">Scanner runs every 4h</div><div class="lp-pipe-desc">16 instruments × 3 timeframes. EMA, RSI, ATR, candlestick patterns. Runs on GitHub Actions — no server costs.</div></div>
+        <div class="lp-pipe-arrow">→</div>
+        <div class="lp-pipe-step"><div class="lp-pipe-num">2</div><div class="lp-pipe-title">Signal generated</div><div class="lp-pipe-desc">Each signal includes direction, entry zone, stop loss, take profit, confidence score, and plain-English explanation.</div></div>
+        <div class="lp-pipe-arrow">→</div>
+        <div class="lp-pipe-step"><div class="lp-pipe-num">3</div><div class="lp-pipe-title">Paper trade opened</div><div class="lp-pipe-desc">If confidence meets your threshold, a pending entry is created automatically. No click required.</div></div>
+        <div class="lp-pipe-arrow">→</div>
+        <div class="lp-pipe-step"><div class="lp-pipe-num">4</div><div class="lp-pipe-title">Price monitor checks every 5min</div><div class="lp-pipe-desc">When price enters the entry zone, the position opens. When SL or TP is hit, it closes automatically.</div></div>
+        <div class="lp-pipe-arrow">→</div>
+        <div class="lp-pipe-step"><div class="lp-pipe-num">5</div><div class="lp-pipe-title">Telegram alert sent</div><div class="lp-pipe-desc">You get notified instantly when a position opens or closes — with the P&L result.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div style="background:rgba(255,255,255,.55);backdrop-filter:blur(8px)">
+    <div class="lp-sec">
+      <div class="lp-sec-hdr">
+        <div class="lp-tag">Why Sharpe is Different</div>
+        <h2>The transparency other signal services avoid.</h2>
+        <p>Most signal providers hide their losing trades. Sharpe shows every signal outcome — wins and losses — in a public track record.</p>
       </div>
       <div class="lp-steps">
         <div class="lp-step">
           <div class="lp-step-num">1</div>
-          <h3>Log Your Trades</h3>
-          <p>Add trades manually or let Auto Signals log them for you. Include entry reasons, SL/TP, and screenshots.</p>
+          <h3>Real Track Record</h3>
+          <p>Every signal generated is logged. Every paper trade closed shows the actual P&L. Win rate, drawdown, profit factor — all live and unfiltered.</p>
           <div class="lp-step-img"><svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:80px;margin-top:18px;opacity:.9"><rect width="160" height="80" rx="8" fill="#f7f9ff"/><line x1="12" y1="12" x2="148" y2="12" stroke="#dde4f0" stroke-width="1"/><line x1="12" y1="28" x2="148" y2="28" stroke="#dde4f0" stroke-width="1"/><line x1="12" y1="44" x2="148" y2="44" stroke="#dde4f0" stroke-width="1"/><rect x="12" y="15" width="18" height="10" rx="2" fill="#dbeafe"/><rect x="36" y="15" width="40" height="10" rx="2" fill="#dbeafe"/><rect x="82" y="15" width="28" height="10" rx="2" fill="#dbeafe"/><rect x="116" y="15" width="16" height="10" rx="2" fill="#dcfce7"/><rect x="12" y="31" width="18" height="10" rx="2" fill="#dbeafe"/><rect x="36" y="31" width="40" height="10" rx="2" fill="#dbeafe"/><rect x="82" y="31" width="28" height="10" rx="2" fill="#dbeafe"/><rect x="116" y="31" width="16" height="10" rx="2" fill="#fee2e2"/><circle cx="138" cy="58" r="14" fill="#2563eb"/><line x1="134" y1="58" x2="142" y2="58" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="138" y1="54" x2="138" y2="62" stroke="white" stroke-width="2" stroke-linecap="round"/></svg></div>
         </div>
         <div class="lp-step">
           <div class="lp-step-num">2</div>
-          <h3>Analyze Your Edge</h3>
-          <p>See your win rate by market, direction, and time of day. Identify your most profitable setups and worst habits.</p>
+          <h3>Built-in Backtesting</h3>
+          <p>Replay the signal strategy on historical candle data already stored in the database. See win rate, drawdown, and equity curve before trusting a live signal.</p>
           <div class="lp-step-img"><svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:80px;margin-top:18px;opacity:.9"><rect width="160" height="80" rx="8" fill="#f7f9ff"/><polyline points="12,64 30,48 50,52 70,32 90,38 110,18 130,24 148,14" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polygon points="12,64 30,48 50,52 70,32 90,38 110,18 130,24 148,14 148,68 12,68" fill="#2563eb" opacity="0.06"/><circle cx="110" cy="18" r="4" fill="#059669" stroke="white" stroke-width="1.5"/><line x1="12" y1="68" x2="148" y2="68" stroke="#dde4f0" stroke-width="1"/></svg></div>
         </div>
         <div class="lp-step">
           <div class="lp-step-num">3</div>
-          <h3>Grow Your Account</h3>
-          <p>Use daily ideas and real-time signals to find new opportunities. Execute with confidence backed by data.</p>
+          <h3>Paper → Live in One Toggle</h3>
+          <p>Validate signals on paper first. When you're confident, flip the switch to live. OANDA handles forex; Binance handles crypto — all executed server-side.</p>
           <div class="lp-step-img"><svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:80px;margin-top:18px;opacity:.9"><rect width="160" height="80" rx="8" fill="#f7f9ff"/><rect x="18" y="42" width="16" height="26" rx="2" fill="#dbeafe" stroke="#2563eb" stroke-width="1"/><rect x="44" y="32" width="16" height="36" rx="2" fill="#dbeafe" stroke="#2563eb" stroke-width="1"/><rect x="70" y="22" width="16" height="46" rx="2" fill="#bfdbfe" stroke="#2563eb" stroke-width="1"/><rect x="96" y="12" width="16" height="56" rx="2" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5"/><rect x="122" y="6" width="16" height="62" rx="2" fill="#059669" stroke="#059669" stroke-width="1.5"/><line x1="12" y1="70" x2="148" y2="70" stroke="#dde4f0" stroke-width="1"/></svg></div>
         </div>
       </div>
