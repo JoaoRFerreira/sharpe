@@ -297,18 +297,51 @@ Deno.serve(async (req: Request) => {
   const cfgRows = await dbGet('site_config','select=value&key=eq.twelve_data_key&limit=1') as {value:string}[]
   const apiKey  = cfgRows[0]?.value ?? ''
 
-  // ── Price-only mode: update crypto via Binance, no Twelve Data credits used
+  // ── Price-only mode: update crypto via Binance + forex via open.er-api.com
   if (pricesOnly) {
-    const bnInsts = INSTRUMENTS.filter(i=>i.bnSymbol)
+    const now = new Date().toISOString()
     const priceRows: {symbol:string;price:number;change_pct:number;updated_at:string}[] = []
+
+    // Crypto prices from Binance
+    const bnInsts = INSTRUMENTS.filter(i=>i.bnSymbol)
     await Promise.all(bnInsts.map(async inst=>{
       try {
         const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`)
         if (!r.ok) return
         const d = await r.json()
-        if (d.price) priceRows.push({symbol:inst.symbol,price:parseFloat(d.price),change_pct:0,updated_at:new Date().toISOString()})
+        if (d.price) priceRows.push({symbol:inst.symbol,price:parseFloat(d.price),change_pct:0,updated_at:now})
       } catch { /* skip */ }
     }))
+
+    // Forex + commodity prices from open.er-api.com (free, no key, 1500 req/month)
+    try {
+      const r = await fetch('https://open.er-api.com/v6/latest/USD')
+      if (r.ok) {
+        const d = await r.json() as {rates:Record<string,number>}
+        const rates = d.rates
+        const fxMap: Record<string,()=>number|undefined> = {
+          'EUR/USD': () => rates.EUR ? 1/rates.EUR : undefined,
+          'GBP/USD': () => rates.GBP ? 1/rates.GBP : undefined,
+          'USD/JPY': () => rates.JPY,
+          'AUD/USD': () => rates.AUD ? 1/rates.AUD : undefined,
+          'USD/CAD': () => rates.CAD,
+          'NZD/USD': () => rates.NZD ? 1/rates.NZD : undefined,
+          'USD/CHF': () => rates.CHF,
+          'EUR/GBP': () => (rates.GBP&&rates.EUR) ? rates.GBP/rates.EUR : undefined,
+          'EUR/JPY': () => (rates.JPY&&rates.EUR) ? rates.JPY/rates.EUR : undefined,
+          'GBP/JPY': () => (rates.JPY&&rates.GBP) ? rates.JPY/rates.GBP : undefined,
+          'EUR/CHF': () => (rates.CHF&&rates.EUR) ? rates.CHF/rates.EUR : undefined,
+          'AUD/JPY': () => (rates.JPY&&rates.AUD) ? rates.JPY/rates.AUD : undefined,
+          'XAU/USD': () => rates.XAU ? 1/rates.XAU : undefined,
+          'XAG/USD': () => rates.XAG ? 1/rates.XAG : undefined,
+        }
+        for (const [symbol, calc] of Object.entries(fxMap)) {
+          const price = calc()
+          if (price) priceRows.push({symbol, price, change_pct:0, updated_at:now})
+        }
+      }
+    } catch { /* skip forex */ }
+
     if (priceRows.length) await dbUpsert('live_prices', priceRows, 'symbol')
     await writeLog({run_type:'prices',prices_updated:priceRows.length,duration_ms:Date.now()-startMs,status:'ok'})
     return new Response(JSON.stringify({ok:true,prices:priceRows.length}),{headers:{...CORS,'Content-Type':'application/json'}})
