@@ -522,10 +522,24 @@ Deno.serve(async (req: Request) => {
     if (pubToken && pubChannel) {
       const pubSigs = sigs.filter(r => r.direction && (r.confidence as number) >= 70)
       for (const s of pubSigs) {
-        const dir   = s.direction as string
-        const tf    = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
-        const emoji = dir === 'LONG' ? '🟢' : '🔴'
-        const text  = `${emoji} *${dir} Signal — ${s.symbol}* (${tf})\n🎯 Confidence: ${s.confidence}% · R:R 1:${s.rr}\n📊 ${s.pattern}\n\n_Powered by Sharpe · joaorferreira.github.io/sharpe_`
+        const dir    = s.direction as string
+        const tf     = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+        const emoji  = dir === 'LONG' ? '🟢' : '🔴'
+        const reasons = (s.reasons as string[]) ?? []
+        const whyLines = reasons.map(r => `• ${r}`).join('\n')
+        const text = [
+          `${emoji} *${dir} — ${s.symbol}* (${tf})`,
+          `🎯 Confidence: ${s.confidence}% · R:R 1:${s.rr} · ${s.pattern}`,
+          ``,
+          `📍 Entry: \`${s.entry}\``,
+          `🛡 SL: \`${s.stop_loss}\` (${s.risk_pips} ${s.inst_unit})`,
+          `🎯 TP1: \`${s.tp1}\`  |  TP2: \`${s.tp2}\``,
+          ``,
+          `📊 *Why this signal:*`,
+          whyLines,
+          ``,
+          `_Powered by Sharpe · joaorferreira.github.io/sharpe_`,
+        ].join('\n')
         await sendTelegram(pubToken, pubChannel, text)
       }
     }
