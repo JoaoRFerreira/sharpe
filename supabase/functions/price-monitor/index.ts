@@ -74,6 +74,56 @@ function toBnSymbol(symbol: string): string {
   return symbol.split('/')[0] + 'USDT'
 }
 
+// ── OANDA helpers ─────────────────────────────────────────────────
+function oandaBase(practice: boolean): string {
+  return practice ? 'https://api-fxpractice.oanda.com/v3' : 'https://api-fxtrade.oanda.com/v3'
+}
+
+async function oandaGetBalance(token: string, accountId: string, practice: boolean): Promise<number> {
+  const r = await fetch(`${oandaBase(practice)}/accounts/${accountId}/summary`, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept-Datetime-Format': 'RFC3339' }
+  })
+  if (!r.ok) return 0
+  const d = await r.json()
+  return parseFloat(d.account?.balance ?? '0')
+}
+
+function calcOandaUnits(entryPrice: number, stopPrice: number, balance: number, riskPct: number, symbol: string): number {
+  const riskAmt = balance * (riskPct / 100)
+  const stopDist = Math.abs(entryPrice - stopPrice)
+  if (!stopDist) return 1000
+  const usdBase = ['USD/JPY', 'USD/CAD', 'USD/CHF'].includes(symbol)
+  const units = usdBase
+    ? Math.floor(riskAmt * entryPrice / stopDist)
+    : Math.floor(riskAmt / stopDist)
+  return Math.max(1000, Math.min(units, 500000))
+}
+
+async function oandaPlaceOrder(
+  token: string, accountId: string, practice: boolean,
+  symbol: string, units: number, isLong: boolean,
+  stopPrice: number, tpPrice: number, dec: number,
+  conf: number, pattern: string
+): Promise<string> {
+  const body = { order: {
+    type: 'MARKET',
+    instrument: symbol.replace('/', '_'),
+    units: (isLong ? units : -units).toString(),
+    stopLossOnFill:   { price: stopPrice.toFixed(dec) },
+    takeProfitOnFill: { price: tpPrice.toFixed(dec) },
+    tradeClientExtensions: { comment: `AutoSignal conf:${conf}% ${pattern}` },
+  }}
+  const r = await fetch(`${oandaBase(practice)}/accounts/${accountId}/orders`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept-Datetime-Format': 'RFC3339' },
+    body: JSON.stringify(body),
+  })
+  const d = await r.json()
+  if (d.orderFillTransaction) return String(d.orderFillTransaction.tradeOpened?.tradeID ?? d.orderFillTransaction.id)
+  if (d.orderCreateTransaction) return String(d.orderCreateTransaction.id)
+  throw new Error(d.errorMessage ?? d.errorCode ?? JSON.stringify(d).slice(0, 120))
+}
+
 function calcBnQty(entryPrice: number, stopLoss: number, riskUsdt: number): string {
   const stopDist = Math.abs(entryPrice - stopLoss)
   if (!stopDist) return '0.001'
@@ -92,14 +142,19 @@ Deno.serve(async (req) => {
     const pm: Record<string, number> = {}
     priceRows.forEach(r => { pm[r.symbol as string] = parseFloat(r.price as string) })
 
-    // ── Load Binance keys from site_config (for live mode) ──────────
-    const cfgRows = await dbGet('site_config', 'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt)')
+    // ── Load broker keys from site_config (for live mode) ──────────
+    const cfgRows = await dbGet('site_config',
+      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt,oanda_token,oanda_account,oanda_practice,oanda_risk_pct)')
     const cfg: Record<string, string> = {}
     cfgRows.forEach(r => { cfg[r.key as string] = r.value as string })
-    const bnApiKey  = cfg['bn_api_key'] ?? ''
-    const bnSecret  = cfg['bn_secret']  ?? ''
-    const bnTestnet = cfg['bn_testnet'] !== 'false'
+    const bnApiKey   = cfg['bn_api_key'] ?? ''
+    const bnSecret   = cfg['bn_secret']  ?? ''
+    const bnTestnet  = cfg['bn_testnet'] !== 'false'
     const bnRiskUsdt = parseFloat(cfg['bn_risk_usdt'] ?? '50')
+    const oandaToken   = cfg['oanda_token']   ?? ''
+    const oandaAccount = cfg['oanda_account'] ?? ''
+    const oandaPractice = cfg['oanda_practice'] !== 'false'
+    const oandaRiskPct  = parseFloat(cfg['oanda_risk_pct'] ?? '1')
 
     // ── 1. Process pending entries ──────────────────────────────────
     const pending = await dbGet('pending_entries', 'status=eq.pending&select=*')
@@ -168,7 +223,7 @@ Deno.serve(async (req) => {
           const orderId   = (order as Record<string, string>).orderId ?? ''
 
           // 2. OCO exit order (TP + SL)
-          const tpPrice  = isLong ? e.tp1 as number : e.tp1 as number
+          const tpPrice  = e.tp1 as number
           const slPrice  = e.stop_loss as number
           const slLimit  = isLong
             ? +(slPrice * 0.999).toFixed(e.inst_dec as number)
@@ -189,6 +244,23 @@ Deno.serve(async (req) => {
             `entry_id=eq.${e.id}`)
         } catch (err) {
           console.error('Binance execution error:', err)
+        }
+      }
+
+      // ── Live OANDA execution (forex + commodities) ──────────────
+      if (e.mode === 'live' && (e.inst_type === 'forex' || e.inst_type === 'commodity') && oandaToken && oandaAccount) {
+        try {
+          const balance = await oandaGetBalance(oandaToken, oandaAccount, oandaPractice)
+          const units   = calcOandaUnits(price, e.stop_loss as number, balance, oandaRiskPct, symbol)
+          const tradeId = await oandaPlaceOrder(
+            oandaToken, oandaAccount, oandaPractice,
+            symbol, units, isLong,
+            e.stop_loss as number, e.tp1 as number, e.inst_dec as number,
+            e.confidence as number, (e.pattern as string) ?? '',
+          )
+          await dbPatch('open_positions', { broker_order_id: tradeId }, `entry_id=eq.${e.id}`)
+        } catch (err) {
+          console.error('OANDA execution error:', err)
         }
       }
     }

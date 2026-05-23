@@ -3481,12 +3481,19 @@ async function connectOanda(){
     oandaBalance=parseFloat(d.account.balance);
     const riskAmt=(oandaBalance*oandaRisk/100).toFixed(2);
     dot.className='api-dot ok';
-    lbl.textContent=`${oandaPractice?'Practice':'Live'} · Balance: ${oandaBalance.toFixed(2)} ${d.account.currency} · Risk ${oandaRisk}% = ${riskAmt} per trade`;
+    lbl.textContent=`${oandaPractice?'Practice':'Live'} · Balance: ${oandaBalance.toFixed(2)} ${d.account.currency} · Risk ${oandaRisk}% = ${riskAmt} per trade · Server-side execution enabled`;
     document.getElementById('oandaTokenInput').value='';
     document.getElementById('oandaAccountInput').placeholder=account;
     document.getElementById('autoExecWrap').style.display='flex';
     document.getElementById('autoExecChk').checked=autoExecute;
     localStorage.setItem('sharpe_broker_connected','1');
+    // Save to site_config so price-monitor edge function can execute orders server-side
+    await sb.from('site_config').upsert([
+      {key:'oanda_token',   value: token},
+      {key:'oanda_account', value: account},
+      {key:'oanda_practice',value: String(oandaPractice)},
+      {key:'oanda_risk_pct',value: String(risk)},
+    ], {onConflict:'key'});
   } catch(e){
     dot.className='api-dot err';
     lbl.textContent='Failed: '+e.message;
@@ -3660,7 +3667,10 @@ function setAutoExec(v){
   }
   autoExecute=v; localStorage.setItem('auto_execute',v);
 }
-function setOandaPractice(v){ oandaPractice=v; localStorage.setItem('oanda_practice',v); }
+function setOandaPractice(v){
+  oandaPractice=v; localStorage.setItem('oanda_practice',v);
+  if(oandaToken) sb.from('site_config').upsert({key:'oanda_practice',value:String(v)},{onConflict:'key'});
+}
 function updateAutoConf(){
   autoLogConf=parseInt(document.getElementById('autoLogConf').value)||75;
   localStorage.setItem('auto_log_conf',autoLogConf);
