@@ -1,0 +1,17 @@
+name: Morning AI Market Brief
+on:
+  schedule:
+    - cron: '0 7 * * 1-5'   # Mon–Fri 07:00 UTC
+  workflow_dispatch:
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger morning-brief edge function
+        run: |
+          curl -s -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/morning-brief" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'

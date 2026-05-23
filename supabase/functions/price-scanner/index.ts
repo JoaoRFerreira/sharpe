@@ -422,53 +422,61 @@ Deno.serve(async (req: Request) => {
 
     if (signalRows.length > 0) await dbInsert('signals', signalRows)
 
-    // ── Auto paper trade ────────────────────────────────────────
-    const autoCfg = await dbGet('site_config', 'select=key,value&key=in.(auto_paper_trade,auto_paper_min_conf)')
-    const autoCfgMap: Record<string,string> = {}
-    autoCfg.forEach(r => { autoCfgMap[(r as Record<string,string>).key] = (r as Record<string,string>).value })
-
-    if (autoCfgMap['auto_paper_trade'] === 'true') {
-      const minConf = parseInt(autoCfgMap['auto_paper_min_conf'] ?? '70')
-      const tfExpiry: Record<string,number> = { daily:3, '4h':0.5, weekly:7 }
-      const pendingRows = (signalRows as Record<string,unknown>[])
-        .filter(r => r.direction && (r.confidence as number) >= minConf)
-        .map(r => ({
-          symbol:      r.symbol,
-          timeframe:   r.timeframe,
-          direction:   r.direction,
-          entry_price: r.entry,
-          stop_loss:   r.stop_loss,
-          tp1:         r.tp1,
-          tp2:         r.tp2,
-          confidence:  r.confidence,
-          pattern:     r.pattern,
-          atr_pips:    r.atr_pips,
-          inst_mult:   r.inst_mult,
-          inst_dec:    r.inst_dec,
-          inst_unit:   r.inst_unit,
-          inst_type:   r.inst_type,
-          mode:        'paper',
-          expires_at:  new Date(Date.now() + (tfExpiry[r.timeframe as string] ?? 1) * 24*60*60*1000).toISOString(),
-        }))
-      if (pendingRows.length > 0) await dbInsert('pending_entries', pendingRows)
+    // ── Per-user auto paper trade + Telegram alerts ─────────────
+    interface UserSetting {
+      user_id: string
+      auto_paper_trade: boolean
+      auto_paper_min_conf: number
+      telegram_token: string|null
+      telegram_chat_id: string|null
     }
+    const userSettings = await dbGet(
+      'user_settings',
+      'select=user_id,auto_paper_trade,auto_paper_min_conf,telegram_token,telegram_chat_id'
+    ) as UserSetting[]
 
-    // ── Telegram signal alerts ──────────────────────────────────
-    const tgCfg = await dbGet('site_config', 'select=key,value&key=in.(telegram_token,telegram_chat_id)')
-    const tgMap: Record<string,string> = {}
-    tgCfg.forEach(r => { tgMap[(r as Record<string,string>).key] = (r as Record<string,string>).value })
-    const tgToken = tgMap['telegram_token'] ?? ''
-    const tgChat  = tgMap['telegram_chat_id'] ?? ''
+    const tfExpiry: Record<string,number> = { daily:3, '4h':0.5, weekly:7 }
+    const sigs = signalRows as Record<string,unknown>[]
 
-    if (tgToken && tgChat) {
-      const minConf = parseInt(autoCfgMap['auto_paper_min_conf'] ?? '70')
-      const sigAlerts = (signalRows as Record<string,unknown>[]).filter(r => r.direction && (r.confidence as number) >= minConf)
-      for (const s of sigAlerts) {
-        const dir = s.direction as string
-        const tf  = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
-        const emoji = dir === 'LONG' ? '🟢' : '🔴'
-        const text = `${emoji} *${dir} — ${s.symbol}*\n⏱ ${tf} · 🎯 ${s.confidence}% confidence\n📍 Entry: \`${s.entry}\`\n🛡 Stop: \`${s.stop_loss}\` (${s.risk_pips} ${s.inst_unit})\n🎯 TP1: \`${s.tp1}\`\n📊 R:R 1:${s.rr} · ${s.pattern}`
-        await sendTelegram(tgToken, tgChat, text)
+    for (const u of userSettings) {
+      // Auto paper entries for this user
+      if (u.auto_paper_trade) {
+        const minConf = u.auto_paper_min_conf ?? 70
+        const pendingRows = sigs
+          .filter(r => r.direction && (r.confidence as number) >= minConf)
+          .map(r => ({
+            user_id:     u.user_id,
+            symbol:      r.symbol,
+            timeframe:   r.timeframe,
+            direction:   r.direction,
+            entry_price: r.entry,
+            stop_loss:   r.stop_loss,
+            tp1:         r.tp1,
+            tp2:         r.tp2,
+            confidence:  r.confidence,
+            pattern:     r.pattern,
+            atr_pips:    r.atr_pips,
+            inst_mult:   r.inst_mult,
+            inst_dec:    r.inst_dec,
+            inst_unit:   r.inst_unit,
+            inst_type:   r.inst_type,
+            mode:        'paper',
+            expires_at:  new Date(Date.now() + (tfExpiry[r.timeframe as string] ?? 1) * 24*60*60*1000).toISOString(),
+          }))
+        if (pendingRows.length > 0) await dbInsert('pending_entries', pendingRows)
+      }
+
+      // Telegram signal alerts for this user
+      if (u.telegram_token && u.telegram_chat_id) {
+        const minConf = u.auto_paper_min_conf ?? 70
+        const sigAlerts = sigs.filter(r => r.direction && (r.confidence as number) >= minConf)
+        for (const s of sigAlerts) {
+          const dir   = s.direction as string
+          const tf    = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+          const emoji = dir === 'LONG' ? '🟢' : '🔴'
+          const text  = `${emoji} *${dir} — ${s.symbol}*\n⏱ ${tf} · 🎯 ${s.confidence}% confidence\n📍 Entry: \`${s.entry}\`\n🛡 Stop: \`${s.stop_loss}\` (${s.risk_pips} ${s.inst_unit})\n🎯 TP1: \`${s.tp1}\`\n📊 R:R 1:${s.rr} · ${s.pattern}`
+          await sendTelegram(u.telegram_token, u.telegram_chat_id, text)
+        }
       }
     }
   } catch(e) {

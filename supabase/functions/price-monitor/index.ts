@@ -152,51 +152,67 @@ Deno.serve(async (req) => {
     const pm: Record<string, number> = {}
     priceRows.forEach(r => { pm[r.symbol as string] = parseFloat(r.price as string) })
 
-    // ── Load all config from site_config ────────────────────────────
+    // ── Load Binance config from site_config (shared admin keys) ───
     const cfgRows = await dbGet('site_config',
-      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt,oanda_token,oanda_account,oanda_practice,oanda_risk_pct,telegram_token,telegram_chat_id,risk_max_positions,risk_max_daily_loss_pips,risk_daily_loss_enabled,risk_correlation_guard)')
+      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt)')
     const cfg: Record<string, string> = {}
     cfgRows.forEach(r => { cfg[r.key as string] = r.value as string })
     const bnApiKey   = cfg['bn_api_key'] ?? ''
     const bnSecret   = cfg['bn_secret']  ?? ''
     const bnTestnet  = cfg['bn_testnet'] !== 'false'
     const bnRiskUsdt = parseFloat(cfg['bn_risk_usdt'] ?? '50')
-    const oandaToken    = cfg['oanda_token']    ?? ''
-    const oandaAccount  = cfg['oanda_account']  ?? ''
-    const oandaPractice = cfg['oanda_practice'] !== 'false'
-    const oandaRiskPct  = parseFloat(cfg['oanda_risk_pct'] ?? '1')
-    const tgToken = cfg['telegram_token']    ?? ''
-    const tgChat  = cfg['telegram_chat_id']  ?? ''
-    const maxPositions     = parseInt(cfg['risk_max_positions'] ?? '99')
-    const maxDailyLossPips = parseFloat(cfg['risk_max_daily_loss_pips'] ?? '0')
-    const dailyLossEnabled = cfg['risk_daily_loss_enabled'] === 'true'
-    const correlationGuard = cfg['risk_correlation_guard']  === 'true'
 
-    // ── Risk: pre-load open state ───────────────────────────────────
-    const openNow = await dbGet('open_positions', 'status=eq.open&select=id,symbol')
-    let openCount = openNow.length
-    const openSymbols = new Set((openNow as Record<string,string>[]).map(p => p.symbol))
+    // ── Load per-user settings for Telegram + risk + OANDA ─────────
+    interface UserSetting {
+      user_id: string
+      telegram_token: string|null
+      telegram_chat_id: string|null
+      risk_max_positions: number
+      risk_max_daily_loss_pips: number
+      risk_daily_loss_enabled: boolean
+      risk_correlation_guard: boolean
+      oanda_token: string|null
+      oanda_account: string|null
+      oanda_practice: boolean
+      oanda_risk_pct: number
+    }
+    const userSettingsRows = await dbGet('user_settings',
+      'select=user_id,telegram_token,telegram_chat_id,risk_max_positions,risk_max_daily_loss_pips,risk_daily_loss_enabled,risk_correlation_guard,oanda_token,oanda_account,oanda_practice,oanda_risk_pct'
+    ) as UserSetting[]
+    const userSettingsMap = new Map<string, UserSetting>(userSettingsRows.map(u => [u.user_id, u]))
+
+    // ── Risk: pre-load open state (per-user) ───────────────────────
+    const openNow = await dbGet('open_positions', 'status=eq.open&select=id,symbol,user_id') as Record<string,string>[]
+    // openCount / openSymbols are per-user — resolved inline during pending loop
     const CORR_GROUPS = [
       ['EUR/USD','EUR/GBP','EUR/JPY','EUR/CHF'],
       ['GBP/USD','GBP/JPY'],
       ['USD/JPY','EUR/JPY','GBP/JPY','AUD/JPY'],
       ['AUD/USD','AUD/JPY'],
     ]
-    // Daily P&L
-    let todayLoss = 0
-    if (dailyLossEnabled && maxDailyLossPips > 0) {
-      const todayStart = new Date(); todayStart.setHours(0,0,0,0)
-      const todayClosed = await dbGet('open_positions', `status=eq.closed&closed_at=gte.${todayStart.toISOString()}&select=pnl_pips`) as Record<string,number>[]
-      todayLoss = todayClosed.reduce((s, p) => s + (p.pnl_pips || 0), 0)
-    }
+    // Per-user daily P&L (computed lazily below)
+    const userDailyLossCache = new Map<string, number>()
 
     // ── 1. Process pending entries ──────────────────────────────────
     const pending = await dbGet('pending_entries', 'status=eq.pending&select=*')
     let opened = 0, expired = 0
 
     for (const e of pending) {
-      const symbol = e.symbol as string
-      const price  = pm[symbol]
+      const symbol  = e.symbol as string
+      const price   = pm[symbol]
+      const userId  = e.user_id as string | null
+      const uCfg    = userId ? userSettingsMap.get(userId) : undefined
+
+      // Per-user risk config (fallback to permissive defaults for entries without user_id)
+      const maxPositions     = uCfg?.risk_max_positions     ?? 99
+      const maxDailyLossPips = uCfg?.risk_max_daily_loss_pips ?? 0
+      const dailyLossEnabled = uCfg?.risk_daily_loss_enabled ?? false
+      const correlationGuard = uCfg?.risk_correlation_guard  ?? false
+
+      // Per-user open positions for risk checks
+      const userOpen = openNow.filter(p => (p.user_id ?? null) === userId)
+      let userOpenCount = userOpen.length
+      const userOpenSymbols = new Set(userOpen.map(p => p.symbol))
 
       // Expire stale entries
       if (new Date(e.expires_at as string) < now) {
@@ -207,24 +223,36 @@ Deno.serve(async (req) => {
 
       if (!price) continue
 
-      const atr     = (e.atr_pips as number) / (e.inst_mult as number)
-      const isLong  = e.direction === 'LONG'
-      const inZone  = isLong
+      const atr    = (e.atr_pips as number) / (e.inst_mult as number)
+      const isLong = e.direction === 'LONG'
+      const inZone = isLong
         ? price <= (e.entry_price as number) + atr * 0.25
         : price >= (e.entry_price as number) - atr * 0.25
 
       if (!inZone) continue
 
-      // ── Risk management checks ──────────────────────────────────
-      if (openCount >= maxPositions) continue
-      if (dailyLossEnabled && maxDailyLossPips > 0 && todayLoss <= -maxDailyLossPips) continue
+      // ── Risk management checks (per user) ──────────────────────
+      if (userOpenCount >= maxPositions) continue
+      if (dailyLossEnabled && maxDailyLossPips > 0) {
+        let todayLoss = userDailyLossCache.get(userId ?? '') ?? null
+        if (todayLoss === null && userId) {
+          const todayStart = new Date(); todayStart.setHours(0,0,0,0)
+          const todayClosed = await dbGet('open_positions',
+            `status=eq.closed&closed_at=gte.${todayStart.toISOString()}&user_id=eq.${userId}&select=pnl_pips`
+          ) as Record<string,number>[]
+          todayLoss = todayClosed.reduce((s, p) => s + (p.pnl_pips || 0), 0)
+          userDailyLossCache.set(userId, todayLoss)
+        }
+        if ((todayLoss ?? 0) <= -maxDailyLossPips) continue
+      }
       if (correlationGuard) {
         const corrGroup = CORR_GROUPS.find(g => g.includes(symbol))
-        if (corrGroup && corrGroup.some(s => s !== symbol && openSymbols.has(s))) continue
+        if (corrGroup && corrGroup.some(s => s !== symbol && userOpenSymbols.has(s))) continue
       }
 
       // Open position
       await dbInsert('open_positions', [{
+        user_id:     userId,
         entry_id:    e.id,
         symbol,
         timeframe:   e.timeframe,
@@ -242,10 +270,14 @@ Deno.serve(async (req) => {
         mode:        e.mode,
       }])
       await dbPatch('pending_entries', { status: 'filled' }, `id=eq.${e.id}`)
-      openCount++; openSymbols.add(symbol)
+      userOpenCount++; userOpenSymbols.add(symbol)
+      // Update openNow so later entries in this loop see the updated count
+      openNow.push({ id: '', symbol, user_id: userId ?? '' })
       opened++
 
-      // ── Telegram: position opened ──────────────────────────────
+      // ── Telegram: position opened (per user) ────────────────────
+      const tgToken = uCfg?.telegram_token ?? ''
+      const tgChat  = uCfg?.telegram_chat_id ?? ''
       if (tgToken && tgChat) {
         const modeTag = e.mode === 'live' ? '💰 Live' : '📋 Paper'
         const dEmoji  = isLong ? '🟢' : '🔴'
@@ -259,7 +291,6 @@ Deno.serve(async (req) => {
           const bnSym = toBnSymbol(symbol)
           const qty   = calcBnQty(price, e.stop_loss as number, bnRiskUsdt)
 
-          // 1. Market entry order
           const order = await bnRequest('/api/v3/order', {
             symbol: bnSym, side: isLong ? 'BUY' : 'SELL',
             type: 'MARKET', quantity: qty,
@@ -273,7 +304,6 @@ Deno.serve(async (req) => {
           const fillPrice = parseFloat((order as Record<string, string>).price ?? String(price))
           const orderId   = (order as Record<string, string>).orderId ?? ''
 
-          // 2. OCO exit order (TP + SL)
           const tpPrice  = e.tp1 as number
           const slPrice  = e.stop_loss as number
           const slLimit  = isLong
@@ -290,7 +320,6 @@ Deno.serve(async (req) => {
             stopLimitTimeInForce: 'GTC',
           }, 'POST', bnApiKey, bnSecret, bnTestnet)
 
-          // Update position with broker ID
           await dbPatch('open_positions', { broker_order_id: String(orderId), entry_price: fillPrice },
             `entry_id=eq.${e.id}`)
         } catch (err) {
@@ -299,6 +328,10 @@ Deno.serve(async (req) => {
       }
 
       // ── Live OANDA execution (forex + commodities) ──────────────
+      const oandaToken    = uCfg?.oanda_token    ?? ''
+      const oandaAccount  = uCfg?.oanda_account  ?? ''
+      const oandaPractice = uCfg?.oanda_practice !== false
+      const oandaRiskPct  = uCfg?.oanda_risk_pct ?? 1
       if (e.mode === 'live' && (e.inst_type === 'forex' || e.inst_type === 'commodity') && oandaToken && oandaAccount) {
         try {
           const balance = await oandaGetBalance(oandaToken, oandaAccount, oandaPractice)
@@ -348,12 +381,16 @@ Deno.serve(async (req) => {
       }, `id=eq.${pos.id}`)
       closed++
 
-      // ── Telegram: position closed ──────────────────────────────
-      if (tgToken && tgChat) {
-        const won = reason === 'tp1'
+      // ── Telegram: position closed (per user) ────────────────────
+      const posUserId = pos.user_id as string | null
+      const posUCfg   = posUserId ? userSettingsMap.get(posUserId) : undefined
+      const posTgToken = posUCfg?.telegram_token ?? ''
+      const posTgChat  = posUCfg?.telegram_chat_id ?? ''
+      if (posTgToken && posTgChat) {
+        const won   = reason === 'tp1'
         const emoji = won ? '✅' : '❌'
-        const sign = pnlRounded >= 0 ? '+' : ''
-        await sendTelegram(tgToken, tgChat,
+        const sign  = pnlRounded >= 0 ? '+' : ''
+        await sendTelegram(posTgToken, posTgChat,
           `${emoji} *Position Closed — ${pos.symbol as string} ${pos.direction as string}*\n${won ? '🎯 Target hit!' : '🛡 Stop loss hit'}\n💰 P&L: \`${sign}${pnlRounded} ${(pos.inst_unit as string)||'pips'}\`\n📋 ${pos.mode === 'live' ? 'Live' : 'Paper'}`)
       }
     }

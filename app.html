@@ -681,6 +681,56 @@
     </div>
   </div>
 
+  <!-- TradingView Webhook -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">TradingView Webhook</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Send alerts from TradingView Pine Script directly into Sharpe. Signals appear on the Signals page and auto-trigger paper trades for eligible users. <a href="https://www.tradingview.com/support/solutions/43000529348/" target="_blank" style="color:var(--blue)">How to set up TradingView alerts →</a></div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Webhook URL</div>
+        <div class="cfg-row-desc">Paste this URL into TradingView's alert → Notifications → Webhook URL field.</div>
+      </div>
+      <div style="display:flex;gap:6px;flex:1;max-width:460px">
+        <input type="text" id="tvWebhookUrlDisplay" readonly style="flex:1;font-family:monospace;font-size:11px;background:var(--surface2);cursor:pointer" onclick="this.select()" placeholder="Loading…">
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;white-space:nowrap" onclick="copyTvWebhookUrl()">Copy</button>
+      </div>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Secret token</div>
+        <div class="cfg-row-desc">Sharpe validates this on every incoming alert. Keep it private.</div>
+      </div>
+      <div style="display:flex;gap:6px;flex:1;max-width:400px">
+        <input type="text" id="tvSecretInput" placeholder="Generate or paste a secret…" style="flex:1;font-family:monospace;font-size:12px">
+        <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px;white-space:nowrap" onclick="genTvSecret()">Generate</button>
+      </div>
+    </div>
+    <div class="cfg-row">
+      <div class="cfg-row-info">
+        <div class="cfg-row-label">Alert message format</div>
+        <div class="cfg-row-desc">Paste this JSON template into your TradingView alert message body.</div>
+      </div>
+      <div style="flex:1;max-width:460px">
+        <pre id="tvAlertTemplate" style="background:var(--surface2);border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:var(--text);white-space:pre-wrap;cursor:pointer;margin:0" onclick="copyTvTemplate()" title="Click to copy">{
+  "secret": "YOUR_SECRET",
+  "symbol": "{{ticker}}",
+  "direction": "long",
+  "entry": {{close}},
+  "stop": 0,
+  "tp": 0,
+  "timeframe": "4h",
+  "confidence": 80,
+  "note": "My Pine Script signal"
+}</pre>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Click to copy · Replace YOUR_SECRET and set stop/tp values</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+      <button class="btn btn-primary" onclick="saveTvWebhookSecret()">Save Secret</button>
+      <span id="tvSaveStatus" style="font-size:11px;color:var(--muted)"></span>
+    </div>
+  </div>
+
 </section>
 
 <!-- ADMIN -->
@@ -4081,6 +4131,7 @@ async function createPendingEntry(sig, tf, mode='paper'){
   const days = tfExpiry[tf] ?? 1;
   const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
   await sb.from('pending_entries').insert({
+    user_id: sbUser?.id ?? null,
     symbol:sig.symbol, timeframe:tf, direction:sig.dir,
     entry_price:sig.entry, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
     confidence:sig.conf, pattern:sig.pat, atr_pips:sig.atrPips,
@@ -4111,6 +4162,7 @@ function updateSigStatusBar(scannedAt){
 
 // ── TELEGRAM ───────────────────────────────────────────────────
 async function saveTelegramSettings(){
+  if(!sbUser){ showToast('Sign in first','tl'); return; }
   const token  = document.getElementById('tgTokenInput').value.trim();
   const chatId = document.getElementById('tgChatIdInput').value.trim();
   if(!token||!chatId){ showToast('Enter both bot token and chat ID','tl'); return; }
@@ -4120,10 +4172,11 @@ async function saveTelegramSettings(){
     const r=await fetch(`https://api.telegram.org/bot${token}/getMe`);
     const d=await r.json();
     if(!d.ok) throw new Error(d.description||'Invalid token');
-    await Promise.all([
-      sb.from('site_config').upsert({key:'telegram_token',  value:token},{onConflict:'key'}),
-      sb.from('site_config').upsert({key:'telegram_chat_id',value:chatId},{onConflict:'key'}),
-    ]);
+    await sb.from('user_settings').upsert({
+      user_id: sbUser.id,
+      telegram_token: token,
+      telegram_chat_id: chatId,
+    }, { onConflict: 'user_id' });
     document.getElementById('tgTokenInput').value='';
     const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=chatId;
     dot.className='api-dot ok'; lbl.textContent=`Connected · @${d.result.username}`;
@@ -4132,12 +4185,15 @@ async function saveTelegramSettings(){
 }
 
 async function testTelegramConnection(){
-  const {data}=await sb.from('site_config').select('key,value').in('key',['telegram_token','telegram_chat_id']);
-  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
-  if(!cfg.telegram_token||!cfg.telegram_chat_id){ showToast('Connect Telegram first','tl'); return; }
-  const r=await fetch(`https://api.telegram.org/bot${cfg.telegram_token}/sendMessage`,{
+  if(!sbUser){ showToast('Sign in first','tl'); return; }
+  const {data}=await sb.from('user_settings')
+    .select('telegram_token, telegram_chat_id')
+    .eq('user_id', sbUser.id)
+    .maybeSingle();
+  if(!data?.telegram_token||!data?.telegram_chat_id){ showToast('Connect Telegram first','tl'); return; }
+  const r=await fetch(`https://api.telegram.org/bot${data.telegram_token}/sendMessage`,{
     method:'POST', headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({chat_id:cfg.telegram_chat_id,
+    body:JSON.stringify({chat_id:data.telegram_chat_id,
       text:'✅ *Sharpe connected!*\n\nAlerts you will receive:\n• New signals\n• Position opened\n• Position closed with P&L',
       parse_mode:'Markdown'})
   });
@@ -4147,41 +4203,47 @@ async function testTelegramConnection(){
 
 async function loadTelegramSettings(){
   if(!sbUser) return;
-  const {data}=await sb.from('site_config').select('key,value').in('key',['telegram_token','telegram_chat_id']);
-  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
+  const {data}=await sb.from('user_settings')
+    .select('telegram_token, telegram_chat_id')
+    .eq('user_id', sbUser.id)
+    .maybeSingle();
   const dot=document.getElementById('tgDot'), lbl=document.getElementById('tgLbl');
-  if(cfg.telegram_token&&cfg.telegram_chat_id){
+  if(data?.telegram_token&&data?.telegram_chat_id){
     if(dot) dot.className='api-dot ok';
     if(lbl) lbl.textContent='Connected · Chat ID saved';
-    const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=cfg.telegram_chat_id;
+    const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=data.telegram_chat_id;
   }
 }
 
 // ── RISK MANAGEMENT ─────────────────────────────────────────────
 async function saveRiskSettings(){
-  const maxPos   = document.getElementById('riskMaxPosInput')?.value||'5';
-  const dloss    = document.getElementById('riskDailyLossInput')?.value||'100';
+  if(!sbUser) return;
+  const maxPos   = parseInt(document.getElementById('riskMaxPosInput')?.value)||5;
+  const dloss    = parseFloat(document.getElementById('riskDailyLossInput')?.value)||100;
   const dlossOn  = document.getElementById('riskDailyLossChk')?.checked||false;
   const corrOn   = document.getElementById('riskCorrChk')?.checked||false;
-  await Promise.all([
-    sb.from('site_config').upsert({key:'risk_max_positions',      value:maxPos},       {onConflict:'key'}),
-    sb.from('site_config').upsert({key:'risk_max_daily_loss_pips',value:dloss},        {onConflict:'key'}),
-    sb.from('site_config').upsert({key:'risk_daily_loss_enabled', value:String(dlossOn)},{onConflict:'key'}),
-    sb.from('site_config').upsert({key:'risk_correlation_guard',  value:String(corrOn)}, {onConflict:'key'}),
-  ]);
+  await sb.from('user_settings').upsert({
+    user_id: sbUser.id,
+    risk_max_positions:       maxPos,
+    risk_max_daily_loss_pips: dloss,
+    risk_daily_loss_enabled:  dlossOn,
+    risk_correlation_guard:   corrOn,
+  }, { onConflict: 'user_id' });
   const s=document.getElementById('riskSaveStatus');
   if(s){ s.textContent='Saved ✓'; setTimeout(()=>s.textContent='',2000); }
 }
 
 async function loadRiskSettings(){
   if(!sbUser) return;
-  const {data}=await sb.from('site_config').select('key,value')
-    .in('key',['risk_max_positions','risk_max_daily_loss_pips','risk_daily_loss_enabled','risk_correlation_guard']);
-  const cfg=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
-  const mp=document.getElementById('riskMaxPosInput');       if(mp) mp.value=cfg.risk_max_positions||'5';
-  const dl=document.getElementById('riskDailyLossInput');    if(dl) dl.value=cfg.risk_max_daily_loss_pips||'100';
-  const dlc=document.getElementById('riskDailyLossChk');     if(dlc) dlc.checked=cfg.risk_daily_loss_enabled==='true';
-  const cc=document.getElementById('riskCorrChk');           if(cc) cc.checked=cfg.risk_correlation_guard==='true';
+  const {data}=await sb.from('user_settings')
+    .select('risk_max_positions, risk_max_daily_loss_pips, risk_daily_loss_enabled, risk_correlation_guard')
+    .eq('user_id', sbUser.id)
+    .maybeSingle();
+  if(!data) return;
+  const mp=document.getElementById('riskMaxPosInput');       if(mp) mp.value=data.risk_max_positions??5;
+  const dl=document.getElementById('riskDailyLossInput');    if(dl) dl.value=data.risk_max_daily_loss_pips??100;
+  const dlc=document.getElementById('riskDailyLossChk');     if(dlc) dlc.checked=data.risk_daily_loss_enabled??false;
+  const cc=document.getElementById('riskCorrChk');           if(cc) cc.checked=data.risk_correlation_guard??true;
 }
 
 // ── TRACK RECORD ────────────────────────────────────────────────
@@ -6194,28 +6256,89 @@ function loadAlertSettings(){
   if(document.getElementById('alertFromEmail')&&fromEmail) document.getElementById('alertFromEmail').value=fromEmail;
 }
 
+// ── TRADINGVIEW WEBHOOK ─────────────────────────────────────────
+const TV_WEBHOOK_URL = 'https://qlvbgkipkxtwaqwpcmuj.supabase.co/functions/v1/tradingview-webhook';
+
+async function loadTvWebhookSettings(){
+  const display = document.getElementById('tvWebhookUrlDisplay');
+  if(display) display.value = TV_WEBHOOK_URL;
+  if(!sbUser) return;
+  const {data}=await sb.from('site_config').select('value').eq('key','tv_webhook_secret').maybeSingle();
+  const inp=document.getElementById('tvSecretInput');
+  if(inp&&data?.value) inp.value=data.value;
+  // Update template with actual secret
+  updateTvTemplate(data?.value||'YOUR_SECRET');
+}
+
+function updateTvTemplate(secret){
+  const pre=document.getElementById('tvAlertTemplate');
+  if(!pre) return;
+  pre.textContent=`{
+  "secret": "${secret}",
+  "symbol": "{{ticker}}",
+  "direction": "long",
+  "entry": {{close}},
+  "stop": 0,
+  "tp": 0,
+  "timeframe": "4h",
+  "confidence": 80,
+  "note": "My Pine Script signal"
+}`;
+}
+
+function genTvSecret(){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const arr=new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  const secret=Array.from(arr).map(b=>chars[b%chars.length]).join('');
+  const inp=document.getElementById('tvSecretInput');
+  if(inp) inp.value=secret;
+  updateTvTemplate(secret);
+}
+
+async function saveTvWebhookSecret(){
+  const secret=document.getElementById('tvSecretInput')?.value.trim();
+  if(!secret){ showToast('Enter or generate a secret first','tl'); return; }
+  await sb.from('site_config').upsert({key:'tv_webhook_secret',value:secret},{onConflict:'key'});
+  updateTvTemplate(secret);
+  const s=document.getElementById('tvSaveStatus');
+  if(s){ s.textContent='Saved ✓'; setTimeout(()=>s.textContent='',2000); }
+  showToast('Webhook secret saved','tw');
+}
+
+function copyTvWebhookUrl(){
+  const url=document.getElementById('tvWebhookUrlDisplay')?.value||TV_WEBHOOK_URL;
+  navigator.clipboard.writeText(url).then(()=>showToast('URL copied','tw')).catch(()=>showToast('Copy failed','tl'));
+}
+
+function copyTvTemplate(){
+  const text=document.getElementById('tvAlertTemplate')?.textContent||'';
+  navigator.clipboard.writeText(text).then(()=>showToast('Template copied','tw')).catch(()=>showToast('Copy failed','tl'));
+}
+
 async function saveAutoPaperSettings(){
   if(!sbUser) return;
   const enabled = document.getElementById('autoPaperChk')?.checked ?? false;
   const conf    = parseInt(document.getElementById('autoPaperConfInput')?.value) || 70;
-  await Promise.all([
-    sb.from('site_config').upsert({key:'auto_paper_trade',    value: String(enabled)}, {onConflict:'key'}),
-    sb.from('site_config').upsert({key:'auto_paper_min_conf', value: String(conf)},    {onConflict:'key'}),
-  ]);
+  await sb.from('user_settings').upsert({
+    user_id: sbUser.id,
+    auto_paper_trade:    enabled,
+    auto_paper_min_conf: conf,
+  }, { onConflict: 'user_id' });
   showToast(enabled ? `Auto paper trade ON ≥${conf}%` : 'Auto paper trade OFF', 'tw');
 }
 
 async function loadAutoPaperSettings(){
   if(!sbUser) return;
-  const { data } = await sb.from('site_config')
-    .select('key,value')
-    .in('key', ['auto_paper_trade','auto_paper_min_conf']);
+  const { data } = await sb.from('user_settings')
+    .select('auto_paper_trade, auto_paper_min_conf')
+    .eq('user_id', sbUser.id)
+    .maybeSingle();
   if(!data) return;
-  const map = Object.fromEntries(data.map(r=>[r.key,r.value]));
   const chk  = document.getElementById('autoPaperChk');
   const conf = document.getElementById('autoPaperConfInput');
-  if(chk)  chk.checked  = map['auto_paper_trade'] === 'true';
-  if(conf) conf.value   = map['auto_paper_min_conf'] ?? '70';
+  if(chk)  chk.checked = data.auto_paper_trade ?? false;
+  if(conf) conf.value  = data.auto_paper_min_conf ?? 70;
 }
 
 function initSettings(){
@@ -6226,6 +6349,7 @@ function initSettings(){
   loadAutoPaperSettings();
   loadTelegramSettings();
   loadRiskSettings();
+  loadTvWebhookSettings();
   if(oandaToken&&oandaAccount){
     const ri=document.getElementById('oandaRiskInput');
     const pi=document.getElementById('oandaPracticeChk');
