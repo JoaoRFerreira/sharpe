@@ -22,6 +22,7 @@
     <button onclick="nav('dashboard',this)">Dashboard</button>
     <button onclick="nav('journal',this)">Journal</button>
     <button onclick="nav('signals',this)">Signals <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Essential</span></button>
+    <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
     <button onclick="nav('ideas',this)">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
     <button onclick="nav('simulator',this)">Simulator</button>
     <button onclick="nav('news',this)">News</button>
@@ -363,6 +364,9 @@
   </div>
   <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
 
+  <!-- TradingView live ticker -->
+  <div id="tvTicker" style="margin-bottom:16px;border-radius:10px;overflow:hidden"></div>
+
   <!-- Side-by-side split: Overview left, Signals right -->
   <div class="sig-split">
     <!-- Left: Market Overview -->
@@ -380,6 +384,29 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- POSITIONS -->
+<section class="section" id="positions">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div class="section-title" style="margin:0">Live Positions</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="pos-mode-badge paper">PAPER</span>
+      <span style="font-size:12px;color:var(--muted)">Auto-opens when price enters signal entry zone · closes at SL or TP</span>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Summary bar -->
+  <div id="posSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
+
+  <!-- Open positions -->
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">Open Positions</div>
+  <div id="openPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
+
+  <!-- Closed positions -->
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:28px;margin-bottom:10px">Recent Closed</div>
+  <div id="closedPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
 </section>
 
 <!-- NEWS -->
@@ -1449,7 +1476,7 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
-const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','ideas','news','learning','settings','admin']);
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','ideas','news','learning','settings','admin']);
 let _hashNav = false;
 const _sectionInited = new Set();
 
@@ -1474,6 +1501,7 @@ function nav(id, btn){
   else if(id==='admin') loadAdminPanel();
   else if(!_sectionInited.has(id)){
     if(id==='signals') initSignals();
+    if(id==='positions') initPositions();
     if(id==='ideas') renderIdeas();
     if(id==='settings') initSettings();
     if(id==='simulator') calcRoR();
@@ -3570,6 +3598,10 @@ async function processAutoActions(results, isDemo=false){
       fireWebhook(sig);
       sendEmailAlert(sig);
     }
+    // Paper trading: always create pending entry when auto-log is on
+    if(!isDemo && paperTrading && autoLog && sig.conf>=autoLogConf && !alreadyLogged){
+      createPendingEntry(sig, 'paper').catch(()=>{});
+    }
     if(!isDemo&&autoExecute&&!alreadyLogged){
       const isCrypto = sig.type==='Crypto';
       if(isCrypto&&bnApiKey&&bnSecret){
@@ -3692,8 +3724,181 @@ function initSignals(){
   if(qConf){ qConf.value=autoLogConf; qConf.disabled=false; }
   updateSigStatusBar();
   loadSiteSettings();
-  // Auto-load latest signals from Supabase when section opens
+  initTvTicker();
   if(sbUser) loadSignals();
+}
+
+function initTvTicker(){
+  const el = document.getElementById('tvTicker');
+  if(!el || el.dataset.loaded) return;
+  el.dataset.loaded = '1';
+  const symbols = [
+    {proName:'FX:EURUSD',title:'EUR/USD'},{proName:'FX:GBPUSD',title:'GBP/USD'},
+    {proName:'FX:USDJPY',title:'USD/JPY'},{proName:'FX:AUDUSD',title:'AUD/USD'},
+    {proName:'FX:USDCAD',title:'USD/CAD'},{proName:'FX:USDCHF',title:'USD/CHF'},
+    {proName:'FX:EURJPY',title:'EUR/JPY'},{proName:'FX:GBPJPY',title:'GBP/JPY'},
+    {proName:'TVC:GOLD',title:'XAU/USD'},{proName:'TVC:SILVER',title:'XAG/USD'},
+    {proName:'BINANCE:BTCUSDT',title:'BTC/USD'},{proName:'BINANCE:ETHUSDT',title:'ETH/USD'},
+    {proName:'BINANCE:SOLUSDT',title:'SOL/USD'},{proName:'BINANCE:XRPUSDT',title:'XRP/USD'},
+  ];
+  const cfg = {
+    symbols, showSymbolLogo:false, isTransparent:true,
+    displayMode:'adaptive', colorTheme:'dark', locale:'en'
+  };
+  const wrap = document.createElement('div');
+  wrap.className = 'tradingview-widget-container';
+  const inner = document.createElement('div');
+  inner.className = 'tradingview-widget-container__widget';
+  const scr = document.createElement('script');
+  scr.type = 'text/javascript';
+  scr.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
+  scr.async = true;
+  scr.textContent = JSON.stringify(cfg);
+  wrap.appendChild(inner);
+  wrap.appendChild(scr);
+  el.appendChild(wrap);
+}
+
+// ── Positions ────────────────────────────────────────────────────
+function initPositions(){
+  loadPositions();
+  // Realtime: re-render when positions change
+  sb.channel('positions-watch')
+    .on('postgres_changes',{event:'*',schema:'public',table:'open_positions'},()=>loadPositions())
+    .on('postgres_changes',{event:'*',schema:'public',table:'pending_entries'},()=>loadPositions())
+    .subscribe();
+}
+
+async function loadPositions(){
+  const [openRes, closedRes, pendRes] = await Promise.all([
+    sb.from('open_positions').select('*').eq('status','open').order('opened_at',{ascending:false}),
+    sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(20),
+    sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
+  ]);
+  renderPositions(openRes.data||[], closedRes.data||[], pendRes.data||[]);
+}
+
+function renderPositions(open, closed, pending){
+  // Update nav badge
+  const badge = document.getElementById('navPosBadge');
+  if(badge){ const n=open.length; badge.textContent=n; badge.style.display=n?'inline':'none'; }
+
+  // Summary bar
+  const wins=closed.filter(p=>p.close_reason==='tp1').length;
+  const losses=closed.filter(p=>p.close_reason==='stop').length;
+  const totalPips=closed.reduce((s,p)=>(s+(p.pnl_pips||0)),0);
+  const wr=closed.length?Math.round(wins/closed.length*100):0;
+  document.getElementById('posSummary').innerHTML=[
+    {lbl:'Open',val:open.length,sub:'positions',color:'var(--blue)'},
+    {lbl:'Pending',val:pending.length,sub:'waiting entry',color:'var(--muted)'},
+    {lbl:'Win Rate',val:closed.length?wr+'%':'—',sub:`${wins}W / ${losses}L`,color:wr>=50?'var(--green)':'var(--red)'},
+    {lbl:'Total P&L',val:(totalPips>=0?'+':'')+totalPips.toFixed(1)+' pips',sub:`${closed.length} closed trades`,color:totalPips>=0?'var(--green)':'var(--red)'},
+  ].map(s=>`<div class="cfg-card" style="margin:0;padding:14px 18px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px">${s.lbl}</div>
+    <div style="font-size:22px;font-weight:800;color:${s.color};letter-spacing:-.5px">${s.val}</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.sub}</div>
+  </div>`).join('');
+
+  // Open positions
+  const openEl = document.getElementById('openPositions');
+  if(!open.length && !pending.length){
+    openEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No open positions. Enable auto-execute in Settings to start paper trading.</div>';
+  } else {
+    const pendCards = pending.map(e=>`
+      <div class="pos-card pos-pending">
+        <div class="pos-card-top">
+          <div>
+            <span class="pos-sym">${e.symbol}</span>
+            <span class="pos-mode paper">PAPER</span>
+            <span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Waiting entry</div>
+            <div style="font-size:12px;color:var(--muted)">@ ${e.entry_price}</div>
+          </div>
+        </div>
+        <div class="pos-levels">
+          <span>SL <strong>${e.stop_loss}</strong></span>
+          <span>TP <strong>${e.tp1}</strong></span>
+          <span style="color:var(--muted);font-size:11px">Expires ${new Date(e.expires_at).toLocaleDateString()}</span>
+        </div>
+      </div>`).join('');
+    const openCards = open.map(p=>{
+      const lp = livePrices[p.symbol];
+      const isLong = p.direction==='LONG';
+      const pnlPips = lp ? ((isLong?lp-p.entry_price:p.entry_price-lp)*p.inst_mult).toFixed(1) : '—';
+      const pnlColor = lp ? (parseFloat(pnlPips)>=0?'var(--green)':'var(--red)') : 'var(--muted)';
+      const slPct = lp ? Math.abs(lp-p.stop_loss)/Math.abs(p.tp1-p.stop_loss)*100 : 0;
+      const prog = Math.min(100,Math.max(0, isLong ? slPct : 100-slPct));
+      return `<div class="pos-card">
+        <div class="pos-card-top">
+          <div>
+            <span class="pos-sym">${p.symbol}</span>
+            <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
+            <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:700;color:${pnlColor}">${pnlPips>=0&&lp?'+':''}${pnlPips} pips</div>
+            <div style="font-size:11px;color:var(--muted)">Live: ${lp||'—'}</div>
+          </div>
+        </div>
+        <div class="pos-progress"><div class="pos-progress-fill" style="width:${prog}%;background:${parseFloat(pnlPips||0)>=0?'var(--green)':'var(--red)'}"></div></div>
+        <div class="pos-levels">
+          <span style="color:var(--red)">SL ${p.stop_loss}</span>
+          <span>Entry ${p.entry_price}</span>
+          <span style="color:var(--green)">TP ${p.tp1}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">${p.pattern||''} · ${p.confidence||'—'}% conf · opened ${new Date(p.opened_at).toLocaleString()}</div>
+      </div>`;
+    }).join('');
+    openEl.innerHTML = `<div class="pos-grid">${pendCards+openCards}</div>`;
+  }
+
+  // Closed positions
+  const closedEl = document.getElementById('closedPositions');
+  if(!closed.length){
+    closedEl.innerHTML='<div style="color:var(--muted);font-size:13px">No closed positions yet.</div>';
+  } else {
+    closedEl.innerHTML=`<div class="pos-grid">${closed.map(p=>{
+      const isLong=p.direction==='LONG';
+      const win=p.close_reason==='tp1';
+      const pips=p.pnl_pips||0;
+      return `<div class="pos-card pos-closed">
+        <div class="pos-card-top">
+          <div>
+            <span class="pos-sym" style="opacity:.7">${p.symbol}</span>
+            <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
+            <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:700;color:${pips>=0?'var(--green)':'var(--red)'}">${pips>=0?'+':''}${pips.toFixed(1)} pips</div>
+            <div style="font-size:11px;font-weight:600;color:${win?'var(--green)':'var(--red)'}">${win?'✓ Target hit':'✗ Stopped out'}</div>
+          </div>
+        </div>
+        <div class="pos-levels">
+          <span>Entry ${p.entry_price}</span>
+          <span>Close ${p.close_price}</span>
+          <span style="color:var(--muted);font-size:11px">${new Date(p.closed_at).toLocaleDateString()}</span>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+}
+
+// ── Create pending entry when signal fires ───────────────────────
+let paperTrading = localStorage.getItem('paper_trading') !== 'false';
+
+async function createPendingEntry(sig, mode='paper'){
+  const tfExpiry = { '1day':3, '4h':0.5, '1week':7 };
+  const days = tfExpiry[sigTf] ?? 1;
+  const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
+  await sb.from('pending_entries').insert({
+    symbol:sig.symbol, timeframe:sigTf, direction:sig.dir,
+    entry_price:sig.entry, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
+    confidence:sig.conf, pattern:sig.pat, atr_pips:sig.atrPips,
+    inst_mult:sig.mult, inst_dec:sig.dec, inst_unit:sig.unit, inst_type:sig.type,
+    mode, expires_at:expiresAt,
+  });
 }
 
 function updateSigStatusBar(scannedAt){
