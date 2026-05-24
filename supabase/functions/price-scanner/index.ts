@@ -179,6 +179,208 @@ function analyzeVolume(candles: Candle[], period = 20) {
   return {ratio:+ratio.toFixed(2), declining: last5.length>=2 && last5[last5.length-1]<last5[0]*0.8}
 }
 
+// ── Strategy helpers ──────────────────────────────────────────
+type Cand = { dir:'LONG'|'SHORT'; pat:string; stop:number; t1:number; t2:number; conf:number; reasons:string[] }
+
+// 1. Turtle Trading — Donchian channel breakout (Richard Dennis, 1983)
+function detectTurtle(candles: Candle[], atrVal: number): Cand | null {
+  const n = candles.length; if (n < 60) return null
+  const last = candles[n-1], prev = candles.slice(0, n-1)
+  const hh20 = prev.slice(-20).reduce((m,c)=>Math.max(m,c.high),-Infinity)
+  const ll20  = prev.slice(-20).reduce((m,c)=>Math.min(m,c.low),  Infinity)
+  const hh55  = prev.length>=55 ? prev.slice(-55).reduce((m,c)=>Math.max(m,c.high),-Infinity) : null
+  const ll55  = prev.length>=55 ? prev.slice(-55).reduce((m,c)=>Math.min(m,c.low),  Infinity) : null
+
+  let dir: 'LONG'|'SHORT'|null = null, sys = 0
+  if      (hh55!==null && last.close > hh55) { dir='LONG';  sys=55 }
+  else if (ll55!==null && last.close < ll55)  { dir='SHORT'; sys=55 }
+  else if (last.close > hh20)                 { dir='LONG';  sys=20 }
+  else if (last.close < ll20)                 { dir='SHORT'; sys=20 }
+  if (!dir) return null
+
+  const stop = dir==='LONG' ? last.close-atrVal*2 : last.close+atrVal*2
+  const t1   = dir==='LONG' ? last.close+atrVal*3 : last.close-atrVal*3
+  const t2   = dir==='LONG' ? last.close+atrVal*5 : last.close-atrVal*5
+  return {
+    dir, pat:`Turtle ${sys}-Bar Breakout`, stop, t1, t2, conf: sys===55?75:65,
+    reasons: [
+      `Price closes beyond ${sys}-period Donchian channel — trend breakout confirmed`,
+      sys===55 ? 'System 2 (55-bar) — high-conviction trend entry' : 'System 1 (20-bar) — momentum breakout entry',
+      '2×ATR stop distance — systematic risk control (original Dennis rules)',
+    ]
+  }
+}
+
+// 2. ICT — Order Blocks + Fair Value Gaps (Michael Huddleston, ~2010)
+function detectICT(candles: Candle[], inst: Inst, atrVal: number): Cand | null {
+  const n = candles.length; if (n < 20) return null
+  const last = candles[n-1]
+
+  // ── Order Blocks ─────────────────────────────────
+  const obLookback = Math.min(n-4, 30)
+  for (let i = n-obLookback; i < n-3; i++) {
+    const c   = candles[i]
+    const obLo = Math.min(c.open, c.close), obHi = Math.max(c.open, c.close)
+
+    // Bullish OB: last bearish candle before strong bull impulse
+    if (c.close < c.open) {
+      const impulse  = candles.slice(i+1,i+4).some(fc => fc.close > obHi + atrVal)
+      if (!impulse) continue
+      const fresh = !candles.slice(i+4, n-1).some(fc => fc.low < obHi && fc.high > obLo)
+      const atZone = last.low <= obHi + atrVal*0.3 && last.close >= obLo - atrVal*0.3
+      if (fresh && atZone) {
+        const stop = obLo - atrVal*0.5, risk = Math.abs(last.close-stop)
+        return {
+          dir:'LONG', pat:'ICT Bullish Order Block', stop,
+          t1: last.close+risk*2, t2: last.close+risk*3, conf: 72,
+          reasons: [
+            'Fresh bullish order block — last bearish candle before institutional buying impulse',
+            `OB zone: ${obLo.toFixed(inst.dec)}–${obHi.toFixed(inst.dec)}`,
+            'Price returning to unfilled institutional entry level',
+          ]
+        }
+      }
+    }
+
+    // Bearish OB: last bullish candle before strong bear impulse
+    if (c.close > c.open) {
+      const impulse  = candles.slice(i+1,i+4).some(fc => fc.close < obLo - atrVal)
+      if (!impulse) continue
+      const fresh = !candles.slice(i+4, n-1).some(fc => fc.low < obHi && fc.high > obLo)
+      const atZone = last.high >= obLo - atrVal*0.3 && last.close <= obHi + atrVal*0.3
+      if (fresh && atZone) {
+        const stop = obHi + atrVal*0.5, risk = Math.abs(last.close-stop)
+        return {
+          dir:'SHORT', pat:'ICT Bearish Order Block', stop,
+          t1: last.close-risk*2, t2: last.close-risk*3, conf: 72,
+          reasons: [
+            'Fresh bearish order block — last bullish candle before institutional selling impulse',
+            `OB zone: ${obLo.toFixed(inst.dec)}–${obHi.toFixed(inst.dec)}`,
+            'Price returning to unfilled institutional entry level',
+          ]
+        }
+      }
+    }
+  }
+
+  // ── Fair Value Gaps ──────────────────────────────
+  const fvgStart = Math.max(1, n-15)
+  for (let i = fvgStart; i < n-2; i++) {
+    // Bullish FVG: gap between candle[i-1].high and candle[i+1].low
+    const bLo = candles[i-1].high, bHi = candles[i+1].low
+    if (bHi > bLo) {
+      const unfilled = !candles.slice(i+2, n-1).some(c => c.low <= bHi)
+      const atFVG = last.low <= bHi + atrVal*0.2 && last.close >= bLo
+      if (unfilled && atFVG) {
+        const stop = bLo - atrVal*0.5, risk = Math.abs(last.close-stop)
+        return {
+          dir:'LONG', pat:'ICT Bullish FVG', stop,
+          t1: last.close+risk*2, t2: last.close+risk*3, conf: 67,
+          reasons: [
+            'Price filling bullish fair value gap — institutional imbalance zone',
+            `FVG: ${bLo.toFixed(inst.dec)}–${bHi.toFixed(inst.dec)}`,
+            'Unfilled imbalances act as support on the first retest',
+          ]
+        }
+      }
+    }
+
+    // Bearish FVG: candle[i-1].low > candle[i+1].high (downward gap)
+    const dHi = candles[i-1].low, dLo = candles[i+1].high
+    if (dHi > dLo) {
+      const unfilled = !candles.slice(i+2, n-1).some(c => c.high >= dLo)
+      const atFVG = last.high >= dLo - atrVal*0.2 && last.close <= dHi
+      if (unfilled && atFVG) {
+        const stop = dHi + atrVal*0.5, risk = Math.abs(last.close-stop)
+        return {
+          dir:'SHORT', pat:'ICT Bearish FVG', stop,
+          t1: last.close-risk*2, t2: last.close-risk*3, conf: 67,
+          reasons: [
+            'Price filling bearish fair value gap — institutional imbalance zone',
+            `FVG: ${dLo.toFixed(inst.dec)}–${dHi.toFixed(inst.dec)}`,
+            'Unfilled imbalances act as resistance on the first retest',
+          ]
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+// 3. Supply & Demand Zones — DBR / RBD (Sam Seiden / CME floor origins)
+function detectSDZone(candles: Candle[], inst: Inst, atrVal: number): Cand | null {
+  const n = candles.length; if (n < 25) return null
+  const last = candles[n-1]
+  const lookback = Math.min(n-5, 40)
+
+  for (let i = n-lookback; i < n-5; i++) {
+    for (let baseLen = 1; baseLen <= 4; baseLen++) {
+      if (i + baseLen >= n-2) break
+      const base = candles.slice(i, i+baseLen)
+      const baseHi = base.reduce((m,c)=>Math.max(m,c.high), -Infinity)
+      const baseLo = base.reduce((m,c)=>Math.min(m,c.low),   Infinity)
+      if (baseHi - baseLo > atrVal * 0.6) break  // base too wide — try shorter
+
+      const prior = candles.slice(Math.max(0, i-4), i)
+      if (prior.length < 2) break
+      const priorMove  = prior[prior.length-1].close - prior[0].open
+      const priorDrop  = priorMove < -atrVal
+      const priorRally = priorMove >  atrVal
+
+      const after = candles.slice(i+baseLen, i+baseLen+4)
+      if (after.length < 2) continue
+      const afterRally = after.some(c => c.close > baseHi + atrVal*1.5)
+      const afterDrop  = after.some(c => c.close < baseLo - atrVal*1.5)
+
+      // DBR — Drop→Base→Rally = demand zone
+      if (priorDrop && afterRally) {
+        const fresh = !candles.slice(i+baseLen+4, n-1).some(c => c.low <= baseHi && c.high >= baseLo)
+        if (!fresh) break
+        const atZone = last.close >= baseLo - atrVal*0.3 && last.close <= baseHi + atrVal*0.5
+        if (atZone) {
+          const stop = baseLo - atrVal*0.5, risk = Math.abs(last.close-stop)
+          const baseDesc = baseLen===1 ? 'single-candle base' : `${baseLen}-candle base`
+          return {
+            dir:'LONG', pat:'Demand Zone (DBR)', stop,
+            t1: last.close+risk*2, t2: last.close+risk*3, conf: 70,
+            reasons: [
+              'Fresh demand zone — Drop-Base-Rally institutional accumulation pattern',
+              `Zone: ${baseLo.toFixed(inst.dec)}–${baseHi.toFixed(inst.dec)} (${baseDesc})`,
+              'Tight base = rapid institutional decision → strong level',
+              'First retest of zone — maximum probability (unfilled)',
+            ]
+          }
+        }
+      }
+
+      // RBD — Rally→Base→Drop = supply zone
+      if (priorRally && afterDrop) {
+        const fresh = !candles.slice(i+baseLen+4, n-1).some(c => c.low <= baseHi && c.high >= baseLo)
+        if (!fresh) break
+        const atZone = last.close <= baseHi + atrVal*0.3 && last.close >= baseLo - atrVal*0.5
+        if (atZone) {
+          const stop = baseHi + atrVal*0.5, risk = Math.abs(last.close-stop)
+          const baseDesc = baseLen===1 ? 'single-candle base' : `${baseLen}-candle base`
+          return {
+            dir:'SHORT', pat:'Supply Zone (RBD)', stop,
+            t1: last.close-risk*2, t2: last.close-risk*3, conf: 70,
+            reasons: [
+              'Fresh supply zone — Rally-Base-Drop institutional distribution pattern',
+              `Zone: ${baseLo.toFixed(inst.dec)}–${baseHi.toFixed(inst.dec)} (${baseDesc})`,
+              'Tight base = rapid institutional decision → strong level',
+              'First retest of zone — maximum probability (unfilled)',
+            ]
+          }
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+// ── Main analysis ─────────────────────────────────────────────
 function analyseCandles(candles: Candle[], inst: Inst) {
   if (candles.length < 55) return null
   const closes=candles.map(c=>c.close), highs=candles.map(c=>c.high), lows=candles.map(c=>c.low)
@@ -186,7 +388,6 @@ function analyseCandles(candles: Candle[], inst: Inst) {
   const e20=e20a[e20a.length-1], e50=e50a[e50a.length-1], e200=e200a[e200a.length-1]
   const rsiVal=calcRsi(closes,14), atrVal=calcAtr(highs,lows,closes,14)
   const last=candles[candles.length-1], prev=candles[candles.length-2]
-  const pat=detectPat(candles.slice(-3))
   const aboveE200=last.close>e200
   const bullTrend=e20>e50&&e50>e200, bearTrend=e20<e50&&e50<e200
   const trendStr=bullTrend?'Strong Uptrend ↑':bearTrend?'Strong Downtrend ↓':aboveE200?'Uptrend (partial)':'Downtrend (partial)'
@@ -198,54 +399,90 @@ function analyseCandles(candles: Candle[], inst: Inst) {
   const nearestLevel=swingLevels.length>0?swingLevels.reduce((b,lvl)=>Math.abs(lvl-last.close)<Math.abs(b-last.close)?lvl:b,swingLevels[0]):null
 
   const overview={
-    symbol:inst.symbol,type:inst.type,price:+last.close.toFixed(inst.dec),
+    symbol:inst.symbol, type:inst.type, price:+last.close.toFixed(inst.dec),
     change:+(last.close-prev.close).toFixed(inst.dec),
-    trend:aboveE200?'bull':'bear',rsi:+rsiVal.toFixed(1),atrPips:+(atrVal*inst.mult).toFixed(1)
+    trend:aboveE200?'bull':'bear', rsi:+rsiVal.toFixed(1), atrPips:+(atrVal*inst.mult).toFixed(1)
   }
 
-  if (!pat||pat.dir==='NEUTRAL') return {overview,signal:null}
-  const dir=pat.dir
-  const trendOk=(dir==='LONG'&&aboveE200)||(dir==='SHORT'&&!aboveE200)
-  const rsiOk=(dir==='LONG'&&rsiVal<65)||(dir==='SHORT'&&rsiVal>35)
-  if (!trendOk&&!rsiOk) return {overview,signal:null}
+  // ── Collect candidates from all strategies ────────
+  const candidates: Cand[] = []
 
-  const entry=last.close
-  const stop=dir==='LONG'?entry-atrVal*1.5:entry+atrVal*1.5
-  const t1=dir==='LONG'?entry+atrVal*2.5:entry-atrVal*2.5
-  const t2=dir==='LONG'?entry+atrVal*4.0:entry-atrVal*4.0
-  const rr=Math.abs(t1-entry)/Math.abs(stop-entry)
-  const structAligned=(dir==='LONG'&&struct==='bullish')||(dir==='SHORT'&&struct==='bearish')
+  // Strategy A: Candlestick + EMA (existing)
+  const pat = detectPat(candles.slice(-3))
+  if (pat && pat.dir !== 'NEUTRAL') {
+    const dir=pat.dir
+    const trendOk=(dir==='LONG'&&aboveE200)||(dir==='SHORT'&&!aboveE200)
+    const rsiOk=(dir==='LONG'&&rsiVal<65)||(dir==='SHORT'&&rsiVal>35)
+    if (trendOk || rsiOk) {
+      const stop=dir==='LONG'?last.close-atrVal*1.5:last.close+atrVal*1.5
+      const t1=dir==='LONG'?last.close+atrVal*2.5:last.close-atrVal*2.5
+      const t2=dir==='LONG'?last.close+atrVal*4.0:last.close-atrVal*4.0
+      const structAligned=(dir==='LONG'&&struct==='bullish')||(dir==='SHORT'&&struct==='bearish')
+      let conf=30
+      if(trendOk) conf+=22; if(bullTrend||bearTrend) conf+=15; if(rsiOk) conf+=13
+      conf+=pat.str===3?15:pat.str===2?8:0
+      if(structAligned) conf+=10; if(atKeyLevel) conf+=12
+      if(vol&&vol.ratio>2.0) conf+=15; else if(vol&&vol.ratio>1.5) conf+=10
+      if(vol&&vol.declining) conf+=8
+      const reasons:string[]=[]
+      if(trendOk) reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA200 — trend aligned`)
+      if(bullTrend||bearTrend) reasons.push(`EMAs stacked (20/50/200) — strong ${dir==='LONG'?'uptrend':'downtrend'}`)
+      if(rsiOk) reasons.push(`RSI ${rsiVal.toFixed(0)} — ${dir==='LONG'?'room to run':'room to fall'}`)
+      if(pat.str===3) reasons.push(`${pat.name} — high-conviction pattern`)
+      else if(pat.str===2) reasons.push(`${pat.name} — moderate-strength pattern`)
+      if(structAligned) reasons.push(`Price structure: ${struct}`)
+      if(atKeyLevel&&nearestLevel) reasons.push(`Key S/R level at ${nearestLevel.toFixed(inst.dec)}`)
+      if(vol&&vol.ratio>2.0) reasons.push(`Volume surge ${vol.ratio}×avg`)
+      else if(vol&&vol.ratio>1.5) reasons.push(`Above-average volume ${vol.ratio}×avg`)
+      if(vol&&vol.declining) reasons.push('Volume declining — consolidation before breakout')
+      candidates.push({dir,pat:pat.name,stop,t1,t2,conf:Math.min(93,conf),reasons})
+    }
+  }
 
-  let conf=30
-  if(trendOk) conf+=22; if(bullTrend||bearTrend) conf+=15; if(rsiOk) conf+=13
-  conf+=pat.str===3?15:pat.str===2?8:0
-  if(structAligned) conf+=10; if(atKeyLevel) conf+=12
-  if(vol&&vol.ratio>2.0) conf+=15; else if(vol&&vol.ratio>1.5) conf+=10
-  if(vol&&vol.declining) conf+=8
-  conf=Math.min(93,conf)
+  // Helper: boost a candidate's confidence with context factors
+  const boost = (c: Cand): Cand => {
+    let conf = c.conf
+    const trendOk=(c.dir==='LONG'&&aboveE200)||(c.dir==='SHORT'&&!aboveE200)
+    const structAligned=(c.dir==='LONG'&&struct==='bullish')||(c.dir==='SHORT'&&struct==='bearish')
+    const rsiOk=(c.dir==='LONG'&&rsiVal<65)||(c.dir==='SHORT'&&rsiVal>35)
+    if (trendOk) { conf+=10; c.reasons.push(`Price ${c.dir==='LONG'?'above':'below'} EMA200 — trend aligned`) }
+    if (bullTrend||bearTrend) conf+=8
+    if (structAligned) { conf+=7; c.reasons.push(`Price structure: ${struct}`) }
+    if (rsiOk) conf+=5
+    if (vol&&vol.ratio>1.5) conf+=5
+    if (atKeyLevel&&nearestLevel) { conf+=5; c.reasons.push(`Key S/R level at ${nearestLevel!.toFixed(inst.dec)}`) }
+    return {...c, conf: Math.min(93, conf)}
+  }
 
-  const reasons:string[]=[]
-  if(trendOk) reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA200 — trend aligned`)
-  if(bullTrend||bearTrend) reasons.push(`EMAs stacked (20/50/200) — strong ${dir==='LONG'?'uptrend':'downtrend'}`)
-  if(rsiOk) reasons.push(`RSI ${rsiVal.toFixed(0)} — ${dir==='LONG'?'room to run':'room to fall'}`)
-  if(pat.str===3) reasons.push(`${pat.name} — high-conviction pattern`)
-  else if(pat.str===2) reasons.push(`${pat.name} — moderate-strength pattern`)
-  if(structAligned) reasons.push(`Price structure: ${struct}`)
-  if(atKeyLevel&&nearestLevel) reasons.push(`Key S/R level at ${nearestLevel.toFixed(inst.dec)}`)
-  if(vol&&vol.ratio>2.0) reasons.push(`Volume surge ${vol.ratio}×avg`)
-  else if(vol&&vol.ratio>1.5) reasons.push(`Above-average volume ${vol.ratio}×avg`)
-  if(vol&&vol.declining) reasons.push('Volume declining — consolidation before breakout')
+  // Strategy B: Turtle Trading
+  const turtle = detectTurtle(candles, atrVal)
+  if (turtle) candidates.push(boost(turtle))
+
+  // Strategy C: ICT Order Blocks + FVG
+  const ict = detectICT(candles, inst, atrVal)
+  if (ict) candidates.push(boost({...ict}))
+
+  // Strategy D: Supply & Demand Zones
+  const sdz = detectSDZone(candles, inst, atrVal)
+  if (sdz) candidates.push(boost({...sdz}))
+
+  if (candidates.length === 0) return {overview, signal:null}
+
+  // Pick highest confidence signal
+  const best = candidates.reduce((a,b) => b.conf > a.conf ? b : a)
+  const entry = last.close
+  const rr = Math.abs(best.t1-entry) / Math.abs(best.stop-entry)
 
   return {
     overview,
     signal:{
-      dir,pat:pat.name,entry:+entry.toFixed(inst.dec),stop:+stop.toFixed(inst.dec),
-      t1:+t1.toFixed(inst.dec),t2:+t2.toFixed(inst.dec),rr:+rr.toFixed(2),
-      riskPips:+(Math.abs(entry-stop)*inst.mult).toFixed(1),conf,rsi:+rsiVal.toFixed(1),
-      trend:trendStr,atrPips:+(atrVal*inst.mult).toFixed(1),structure:struct,
-      atKeyLevel,nearestLevel:nearestLevel?+nearestLevel.toFixed(inst.dec):null,
-      volRatio:vol?vol.ratio:null,volDeclining:vol?vol.declining:false,
-      reasons,unit:inst.unit,mult:inst.mult,dec:inst.dec
+      dir:best.dir, pat:best.pat, entry:+entry.toFixed(inst.dec),
+      stop:+best.stop.toFixed(inst.dec), t1:+best.t1.toFixed(inst.dec), t2:+best.t2.toFixed(inst.dec),
+      rr:+rr.toFixed(2), riskPips:+(Math.abs(entry-best.stop)*inst.mult).toFixed(1),
+      conf:best.conf, rsi:+rsiVal.toFixed(1), trend:trendStr, atrPips:+(atrVal*inst.mult).toFixed(1),
+      structure:struct, atKeyLevel, nearestLevel:nearestLevel?+nearestLevel.toFixed(inst.dec):null,
+      volRatio:vol?vol.ratio:null, volDeclining:vol?vol.declining:false,
+      reasons:best.reasons, unit:inst.unit, mult:inst.mult, dec:inst.dec
     }
   }
 }
