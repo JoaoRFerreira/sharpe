@@ -16,15 +16,21 @@ async function sendTelegram(token: string, chatId: string, text: string) {
 }
 
 Deno.serve(async () => {
-  // Fetch Anthropic API key from site_config
-  const { data: cfg } = await sb
+  // Fetch config keys
+  const { data: cfgRows } = await sb
     .from('site_config')
-    .select('value')
-    .eq('key', 'anthropic_api_key')
-    .maybeSingle()
+    .select('key, value')
+    .in('key', ['anthropic_api_key', 'tg_public_token', 'tg_public_channel_id'])
 
-  const anthropicKey = cfg?.value
+  const cfgMap: Record<string, string> = {}
+  for (const r of cfgRows ?? []) cfgMap[r.key] = r.value
+
+  const anthropicKey = cfgMap['anthropic_api_key']
   if (!anthropicKey) return new Response('no anthropic key', { status: 200 })
+
+  const pubToken   = cfgMap['tg_public_token']   ?? ''
+  const pubChannel = cfgMap['tg_public_channel_id'] ?? ''
+  const isMonday   = new Date().getUTCDay() === 1
 
   // Fetch current signals
   const { data: signals } = await sb
@@ -114,7 +120,49 @@ Be direct and actionable. Do not add disclaimers. Do not repeat the raw numbers 
     await sendTelegram(u.telegram_token, u.telegram_chat_id, msg)
   }
 
-  return new Response(JSON.stringify({ sent: users?.length ?? 0 }), {
+  // ── Monday week-ahead preview → public channel ──────────────────
+  if (isMonday && pubToken && pubChannel) {
+    const weekPrompt = `You are a concise professional trading analyst writing a week-ahead market preview.
+Today is ${today} (Monday).
+
+Current market prices: ${priceSnap || 'unavailable'}
+
+Top signals going into this week:
+${sigSnap || 'No active signals'}
+
+Write a short week-ahead market preview (plain prose, no markdown headers, max 200 words) that:
+1. Identifies 2–3 key themes or events to watch this week (macro, technicals)
+2. Notes which markets or instruments look most interesting and why
+3. Flags any risk events (central bank meetings, NFP, CPI, earnings) if relevant
+
+Be direct and concise. No disclaimers.`
+
+    let weekPreview = ''
+    try {
+      const r2 = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 350,
+          messages: [{ role: 'user', content: weekPrompt }],
+        }),
+      })
+      const j2 = await r2.json()
+      weekPreview = j2.content?.[0]?.text ?? ''
+    } catch { /* non-critical */ }
+
+    if (weekPreview) {
+      await sendTelegram(pubToken, pubChannel,
+        `*📅 Week Ahead Preview — ${today}*\n\n${weekPreview}\n\n_Powered by Sharpe_`)
+    }
+  }
+
+  return new Response(JSON.stringify({ sent: users?.length ?? 0, weekPreview: isMonday }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })

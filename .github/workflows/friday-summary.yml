@@ -1,0 +1,17 @@
+name: Friday Public Summary
+on:
+  schedule:
+    - cron: '0 17 * * 5'   # Every Friday 17:00 UTC
+  workflow_dispatch:
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post weekly results to public Telegram channel
+        run: |
+          curl -s -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/weekly-digest?public=true" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}'

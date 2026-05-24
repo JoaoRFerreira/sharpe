@@ -512,7 +512,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // ── Public Telegram channel (anonymized — no entry/stop/TP) ────
+    // ── Public Telegram channel ────────────────────────────────────
     const pubCfg = await dbGet('site_config', 'select=key,value&key=in.(tg_public_token,tg_public_channel_id)')
     const pubMap: Record<string,string> = {}
     pubCfg.forEach(r => { pubMap[(r as Record<string,string>).key] = (r as Record<string,string>).value })
@@ -520,15 +520,50 @@ Deno.serve(async (req: Request) => {
     const pubChannel = pubMap['tg_public_channel_id'] ?? ''
 
     if (pubToken && pubChannel) {
-      const pubSigs = sigs.filter(r => r.direction && (r.confidence as number) >= 70)
+      // Skip forex/commodity on weekends — markets are closed
+      const dayOfWeek = new Date().getUTCDay() // 0=Sun, 6=Sat
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+      const pubSigs = sigs.filter(r =>
+        r.direction &&
+        (r.confidence as number) >= 70 &&
+        !(isWeekend && r.inst_type !== 'crypto')
+      )
+
+      const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+
       for (const s of pubSigs) {
-        const dir    = s.direction as string
-        const tf     = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
-        const emoji  = dir === 'LONG' ? '🟢' : '🔴'
+        const dir     = s.direction as string
+        const tf      = s.timeframe === 'daily' ? 'Daily' : s.timeframe === '4h' ? '4H' : 'Weekly'
+        const emoji   = dir === 'LONG' ? '🟢' : '🔴'
         const reasons = (s.reasons as string[]) ?? []
-        const whyLines = reasons.map(r => `• ${r}`).join('\n')
-        const text = [
-          `${emoji} *${dir} — ${s.symbol}* (${tf})`,
+        const why     = reasons.map(r => `• ${r}`).join('\n')
+
+        // Look for a previous signal for same pair/tf/direction (different batch, last 48h)
+        const prevRows = await dbGet('signals',
+          `select=entry,stop_loss,tp1,tp2,confidence&symbol=eq.${encodeURIComponent(s.symbol as string)}&timeframe=eq.${encodeURIComponent(s.timeframe as string)}&direction=eq.${encodeURIComponent(dir)}&batch_id=neq.${batchId}&scanned_at=gt.${since48h}&order=scanned_at.desc&limit=1`
+        )
+        const prev = prevRows[0] as Record<string,unknown> | undefined
+
+        // Show changed values as: old → *new*
+        const fmtField = (newVal: unknown, oldVal: unknown | undefined) =>
+          oldVal !== undefined && String(newVal) !== String(oldVal)
+            ? `\`${oldVal}\` → *${newVal}*`
+            : `\`${newVal}\``
+
+        const text = prev ? [
+          `🔄 *UPDATED: ${dir} ${s.symbol as string}* (${tf})`,
+          `🎯 ${fmtField(s.confidence + '%', (prev.confidence as number) + '%')} conf · ${s.pattern}`,
+          ``,
+          `📍 Entry: ${fmtField(s.entry, prev.entry)}`,
+          `🛡 SL: ${fmtField(s.stop_loss, prev.stop_loss)} (${s.risk_pips} ${s.inst_unit})`,
+          `🎯 TP1: ${fmtField(s.tp1, prev.tp1)}  |  TP2: ${fmtField(s.tp2, prev.tp2)}`,
+          ``,
+          `📊 *Why:*`,
+          why,
+          ``,
+          `_Powered by Sharpe_`,
+        ].join('\n') : [
+          `${emoji} *${dir} — ${s.symbol as string}* (${tf})`,
           `🎯 Confidence: ${s.confidence}% · R:R 1:${s.rr} · ${s.pattern}`,
           ``,
           `📍 Entry: \`${s.entry}\``,
@@ -536,10 +571,11 @@ Deno.serve(async (req: Request) => {
           `🎯 TP1: \`${s.tp1}\`  |  TP2: \`${s.tp2}\``,
           ``,
           `📊 *Why this signal:*`,
-          whyLines,
+          why,
           ``,
           `_Powered by Sharpe_`,
         ].join('\n')
+
         await sendTelegram(pubToken, pubChannel, text)
       }
     }

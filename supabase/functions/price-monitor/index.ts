@@ -154,13 +154,15 @@ Deno.serve(async (req) => {
 
     // ── Load Binance config from site_config (shared admin keys) ───
     const cfgRows = await dbGet('site_config',
-      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt)')
+      'select=key,value&key=in.(bn_api_key,bn_secret,bn_testnet,bn_risk_usdt,tg_public_token,tg_public_channel_id)')
     const cfg: Record<string, string> = {}
     cfgRows.forEach(r => { cfg[r.key as string] = r.value as string })
     const bnApiKey   = cfg['bn_api_key'] ?? ''
     const bnSecret   = cfg['bn_secret']  ?? ''
     const bnTestnet  = cfg['bn_testnet'] !== 'false'
     const bnRiskUsdt = parseFloat(cfg['bn_risk_usdt'] ?? '50')
+    const pubToken   = cfg['tg_public_token'] ?? ''
+    const pubChannel = cfg['tg_public_channel_id'] ?? ''
 
     // ── Load per-user settings for Telegram + risk + OANDA ─────────
     interface UserSetting {
@@ -352,6 +354,7 @@ Deno.serve(async (req) => {
     // ── 2. Check open positions for SL/TP hits ──────────────────────
     const positions = await dbGet('open_positions', 'status=eq.open&select=*')
     let closed = 0
+    const publicCloseNotified = new Set<string>()
 
     for (const pos of positions) {
       // Skip live Binance positions — OCO handles close on exchange
@@ -392,6 +395,23 @@ Deno.serve(async (req) => {
         const sign  = pnlRounded >= 0 ? '+' : ''
         await sendTelegram(posTgToken, posTgChat,
           `${emoji} *Position Closed — ${pos.symbol as string} ${pos.direction as string}*\n${won ? '🎯 Target hit!' : '🛡 Stop loss hit'}\n💰 P&L: \`${sign}${pnlRounded} ${(pos.inst_unit as string)||'pips'}\`\n📋 ${pos.mode === 'live' ? 'Live' : 'Paper'}`)
+      }
+
+      // ── Public Telegram: close result (paper positions, confidence ≥ 70) ──
+      const pubKey = `${pos.symbol as string}-${pos.timeframe as string}-${pos.direction as string}`
+      if (pubToken && pubChannel && (pos.confidence as number) >= 70 && !publicCloseNotified.has(pubKey)) {
+        publicCloseNotified.add(pubKey)
+        const won   = reason === 'tp1'
+        const emoji = won ? '✅' : '❌'
+        const sign  = pnlRounded >= 0 ? '+' : ''
+        const tf    = pos.timeframe === 'daily' ? 'Daily' : pos.timeframe === '4h' ? '4H' : 'Weekly'
+        await sendTelegram(pubToken, pubChannel, [
+          `${emoji} *${won ? 'WIN' : 'LOSS'} — ${pos.symbol as string} ${pos.direction as string}* (${tf})`,
+          `${won ? '🎯 TP1 hit' : '🛡 Stop hit'} · Result: \`${sign}${pnlRounded} ${(pos.inst_unit as string) || 'pips'}\``,
+          `📍 Entry \`${pos.entry_price}\` → Exit \`${price}\``,
+          ``,
+          `_Powered by Sharpe_`,
+        ].join('\n'))
       }
     }
 
