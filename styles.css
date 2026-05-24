@@ -917,6 +917,51 @@ textarea{resize:vertical;min-height:56px}
 .sig-reasons-chips{display:flex;flex-direction:column;gap:5px}
 .sig-reason-chip{font-size:11px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;line-height:1.4}
 
+/* ── PRACTICE ────────────────────────────────────────────────────── */
+.prac-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+.prac-stats{display:flex;gap:10px}
+.prac-stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px 18px;text-align:center;min-width:68px}
+.prac-stat span{display:block;font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--blue)}
+.prac-stat label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.prac-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.pcat{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.pcat:hover{border-color:var(--blue);color:var(--blue)}
+.pcat.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.prac-area{display:flex;gap:16px;align-items:flex-start}
+.prac-chart-wrap{flex:3;min-width:0;background:#0f172a;border-radius:var(--r);overflow:hidden;border:1px solid #1e293b}
+.prac-chart-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1e293b}
+.prac-chart-inst{font-size:12px;font-weight:600;color:#94a3b8}
+#pracCanvas{display:block;width:100%;height:auto}
+.prac-difficulty{font-size:10px;font-weight:700;padding:2px 10px;border-radius:3px;text-transform:uppercase;letter-spacing:.8px}
+.prac-diff-easy{background:rgba(16,185,129,.18);color:#10b981}
+.prac-diff-medium{background:rgba(245,158,11,.18);color:#f59e0b}
+.prac-diff-hard{background:rgba(239,68,68,.18);color:#ef4444}
+.prac-playbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid #1e293b}
+.prac-progress{flex:1;height:3px;background:#1e293b;border-radius:2px;overflow:hidden}
+.prac-progress-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .25s}
+.prac-play-status{font-size:11px;color:#64748b;font-weight:500;white-space:nowrap}
+.prac-quiz-wrap{flex:2;min-width:260px;display:flex;flex-direction:column;gap:12px}
+.prac-hint{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:32px 20px;text-align:center}
+.prac-hint-icon{font-size:34px;margin-bottom:12px}
+.prac-hint-text{font-size:13px;color:var(--muted);line-height:1.65}
+.prac-question{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.prac-q-text{font-size:15px;font-weight:700;margin-bottom:16px;line-height:1.4}
+.prac-options{display:flex;flex-direction:column;gap:8px}
+.prac-opt{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;text-align:left;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;width:100%}
+.prac-opt:hover:not(:disabled){border-color:var(--blue);background:var(--blue-dim);color:var(--blue)}
+.prac-opt:disabled{cursor:default}
+.prac-opt-correct{background:var(--green-dim)!important;border-color:var(--green)!important;color:var(--green)!important;font-weight:600!important}
+.prac-opt-wrong{background:var(--red-dim)!important;border-color:var(--red)!important;color:var(--red)!important}
+.prac-reveal{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;animation:pracFadeIn .3s}
+.prac-result{font-size:16px;font-weight:800;margin-bottom:12px}
+.prac-correct{color:var(--green)}
+.prac-wrong{color:var(--red)}
+.prac-explain{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+.prac-next{width:100%;justify-content:center;display:block;text-align:center}
+.prac-streak-banner{background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:var(--r);padding:12px 18px;color:#fff;font-size:13px;font-weight:700;text-align:center;animation:pracFadeIn .3s}
+@keyframes pracFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:768px){.prac-area{flex-direction:column}.prac-quiz-wrap{min-width:0;width:100%}.prac-stats{gap:6px}.prac-stat{padding:8px 12px;min-width:56px}.prac-stat span{font-size:18px}}
+
 /* ── LANDING HAMBURGER MENU ────────────────────────────────────── */
 .lp-ham{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:none;cursor:pointer;padding:4px;margin-left:auto;flex-shrink:0}
 .lp-ham span{display:block;width:22px;height:2px;background:#94a3b8;border-radius:2px;transition:all .25s}
