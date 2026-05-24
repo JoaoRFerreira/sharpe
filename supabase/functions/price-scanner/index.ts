@@ -544,19 +544,30 @@ Deno.serve(async (req: Request) => {
         )
         const prev = prevRows[0] as Record<string,unknown> | undefined
 
+        // Only treat as update when at least one key field actually changed
+        const hasChanges = prev && (
+          String(s.entry)      !== String(prev.entry)      ||
+          String(s.stop_loss)  !== String(prev.stop_loss)  ||
+          String(s.tp1)        !== String(prev.tp1)        ||
+          String(s.tp2)        !== String(prev.tp2)        ||
+          String(s.confidence) !== String(prev.confidence)
+        )
+        // If prev exists but nothing changed, skip — already announced this signal
+        if (prev && !hasChanges) continue
+
         // Show changed values as: old → *new*
         const fmtField = (newVal: unknown, oldVal: unknown | undefined) =>
           oldVal !== undefined && String(newVal) !== String(oldVal)
             ? `\`${oldVal}\` → *${newVal}*`
             : `\`${newVal}\``
 
-        const text = prev ? [
+        const text = hasChanges ? [
           `🔄 *UPDATED: ${dir} ${s.symbol as string}* (${tf})`,
-          `🎯 ${fmtField(s.confidence + '%', (prev.confidence as number) + '%')} conf · ${s.pattern}`,
+          `🎯 ${fmtField(s.confidence + '%', String((prev!.confidence as number) + '%'))} conf · ${s.pattern}`,
           ``,
-          `📍 Entry: ${fmtField(s.entry, prev.entry)}`,
-          `🛡 SL: ${fmtField(s.stop_loss, prev.stop_loss)} (${s.risk_pips} ${s.inst_unit})`,
-          `🎯 TP1: ${fmtField(s.tp1, prev.tp1)}  |  TP2: ${fmtField(s.tp2, prev.tp2)}`,
+          `📍 Entry: ${fmtField(s.entry, prev!.entry)}`,
+          `🛡 SL: ${fmtField(s.stop_loss, prev!.stop_loss)} (${s.risk_pips} ${s.inst_unit})`,
+          `🎯 TP1: ${fmtField(s.tp1, prev!.tp1)}  |  TP2: ${fmtField(s.tp2, prev!.tp2)}`,
           ``,
           `📊 *Why:*`,
           why,
