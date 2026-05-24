@@ -917,8 +917,17 @@ textarea{resize:vertical;min-height:56px}
 .sig-reasons-chips{display:flex;flex-direction:column;gap:5px}
 .sig-reason-chip{font-size:11px;color:var(--text);background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;line-height:1.4}
 
+/* ── LEARN/PRACTICE MODE TOGGLE ─────────────────────────────────── */
+.lc-mode-bar{display:flex;align-items:center;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.lc-mode-toggle{display:flex;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px}
+.lc-mode-btn{background:none;border:none;border-radius:6px;padding:7px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.lc-mode-btn:hover{color:var(--text)}
+.lc-mode-btn.active{background:var(--blue);color:#fff;box-shadow:0 1px 4px rgba(29,78,216,.3)}
+.lc-mode-btn svg{flex-shrink:0;opacity:.85}
+.lc-mode-desc{font-size:12px;color:var(--muted);font-weight:500}
+
 /* ── PRACTICE ────────────────────────────────────────────────────── */
-.prac-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+.prac-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
 .prac-stats{display:flex;gap:10px}
 .prac-stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:10px 18px;text-align:center;min-width:68px}
 .prac-stat span{display:block;font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--blue)}

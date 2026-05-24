@@ -31,7 +31,6 @@
     <button onclick="nav('simulator',this)">Simulator</button>
     <button onclick="nav('news',this)">News</button>
     <button onclick="nav('learning',this)">Learning</button>
-    <button onclick="nav('practice',this)">Practice</button>
   </nav>
   <div class="auth-area" id="authArea">
     <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
@@ -270,79 +269,94 @@
   </div>
 </section>
 
-<!-- LEARNING -->
+<!-- LEARNING + PRACTICE (unified) -->
 <section class="section" id="learning">
-  <div class="section-title">Learning Center</div>
-  <div class="learn-tabs">
-    <button class="ltab active" onclick="ltab('chart',this)">Chart Patterns</button>
-    <button class="ltab" onclick="ltab('candle',this)">Candlesticks</button>
-    <button class="ltab" onclick="ltab('harmonic',this)">Harmonics & Fibonacci</button>
-    <button class="ltab" onclick="ltab('gap',this)">Gap Theory</button>
-    <button class="ltab" onclick="ltab('scalein',this)">Scale-In Technique</button>
-    <button class="ltab" onclick="ltab('risk',this)">Risk Management</button>
-    <button class="ltab" onclick="ltab('etf',this)">ETF Strategies</button>
-    <button class="ltab" onclick="ltab('crypto',this)">Crypto Strategies</button>
-    <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
-  </div>
-  <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
-  <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
-  <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
-  <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
-  <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
-  <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
-  <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
-  <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
-  <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
-</section>
 
-<!-- PRACTICE -->
-<section class="section" id="practice">
-  <div class="prac-header">
-    <div>
-      <div class="section-title" style="margin-bottom:4px">Pattern Practice</div>
-      <div style="font-size:13px;color:var(--muted)">Watch the chart replay bar-by-bar — identify the pattern before it's revealed</div>
+  <!-- Mode toggle -->
+  <div class="lc-mode-bar">
+    <div class="lc-mode-toggle">
+      <button class="lc-mode-btn active" id="lcModeLearn" onclick="setLearnMode('learn')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        Learn
+      </button>
+      <button class="lc-mode-btn" id="lcModePractice" onclick="setLearnMode('practice')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Practice
+      </button>
     </div>
-    <div class="prac-stats">
-      <div class="prac-stat"><span id="pracScore">0</span><label>Score</label></div>
-      <div class="prac-stat"><span id="pracStreak">0</span><label>Streak</label></div>
-      <div class="prac-stat"><span id="pracTotal">0</span><label>Done</label></div>
+    <div id="lcModeDesc" class="lc-mode-desc">Browse pattern cards and educational content</div>
+  </div>
+
+  <!-- LEARN view -->
+  <div id="lcLearnView">
+    <div class="learn-tabs">
+      <button class="ltab active" onclick="ltab('chart',this)">Chart Patterns</button>
+      <button class="ltab" onclick="ltab('candle',this)">Candlesticks</button>
+      <button class="ltab" onclick="ltab('harmonic',this)">Harmonics & Fibonacci</button>
+      <button class="ltab" onclick="ltab('gap',this)">Gap Theory</button>
+      <button class="ltab" onclick="ltab('scalein',this)">Scale-In Technique</button>
+      <button class="ltab" onclick="ltab('risk',this)">Risk Management</button>
+      <button class="ltab" onclick="ltab('etf',this)">ETF Strategies</button>
+      <button class="ltab" onclick="ltab('crypto',this)">Crypto Strategies</button>
+      <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
+    </div>
+    <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
+    <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
+    <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
+    <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
+    <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
+    <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
+    <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
+    <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
+    <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
+  </div>
+
+  <!-- PRACTICE view -->
+  <div id="lcPracticeView" style="display:none">
+    <div class="prac-header">
+      <div class="prac-cats">
+        <button class="pcat active" onclick="setPracCat('all',this)">All Patterns</button>
+        <button class="pcat" onclick="setPracCat('candle',this)">Candlesticks</button>
+        <button class="pcat" onclick="setPracCat('chart',this)">Chart Patterns</button>
+        <button class="pcat" onclick="setPracCat('institutional',this)">Institutional</button>
+      </div>
+      <div class="prac-stats">
+        <div class="prac-stat"><span id="pracScore">0</span><label>Score</label></div>
+        <div class="prac-stat"><span id="pracStreak">0</span><label>Streak</label></div>
+        <div class="prac-stat"><span id="pracTotal">0</span><label>Done</label></div>
+      </div>
+    </div>
+    <div class="prac-area">
+      <div class="prac-chart-wrap">
+        <div class="prac-chart-hdr">
+          <span class="prac-chart-inst" id="pracInstrument">—</span>
+          <span class="prac-difficulty prac-diff-easy" id="pracDiff">Easy</span>
+        </div>
+        <canvas id="pracCanvas" width="700" height="360"></canvas>
+        <div class="prac-playbar">
+          <div class="prac-progress"><div class="prac-progress-fill" id="pracProgressFill"></div></div>
+          <span class="prac-play-status" id="pracPlayStatus">Loading...</span>
+        </div>
+      </div>
+      <div class="prac-quiz-wrap">
+        <div id="pracHint" class="prac-hint">
+          <div class="prac-hint-icon">👁</div>
+          <div class="prac-hint-text">Watch the candles carefully.<br>A pattern is forming — identify it when the chart pauses.</div>
+        </div>
+        <div id="pracQuestion" class="prac-question" style="display:none">
+          <div class="prac-q-text" id="pracQText"></div>
+          <div class="prac-options" id="pracOptions"></div>
+        </div>
+        <div id="pracReveal" class="prac-reveal" style="display:none">
+          <div class="prac-result" id="pracResult"></div>
+          <div class="prac-explain" id="pracExplain"></div>
+          <button class="btn btn-primary prac-next" onclick="nextPracQuestion()">Next Pattern →</button>
+        </div>
+        <div id="pracStreakBanner" style="display:none" class="prac-streak-banner"></div>
+      </div>
     </div>
   </div>
-  <div class="prac-cats">
-    <button class="pcat active" onclick="setPracCat('all',this)">All Patterns</button>
-    <button class="pcat" onclick="setPracCat('candle',this)">Candlesticks</button>
-    <button class="pcat" onclick="setPracCat('chart',this)">Chart Patterns</button>
-    <button class="pcat" onclick="setPracCat('institutional',this)">Institutional</button>
-  </div>
-  <div class="prac-area">
-    <div class="prac-chart-wrap">
-      <div class="prac-chart-hdr">
-        <span class="prac-chart-inst" id="pracInstrument">—</span>
-        <span class="prac-difficulty prac-diff-easy" id="pracDiff">Easy</span>
-      </div>
-      <canvas id="pracCanvas" width="700" height="360"></canvas>
-      <div class="prac-playbar">
-        <div class="prac-progress"><div class="prac-progress-fill" id="pracProgressFill"></div></div>
-        <span class="prac-play-status" id="pracPlayStatus">Loading...</span>
-      </div>
-    </div>
-    <div class="prac-quiz-wrap">
-      <div id="pracHint" class="prac-hint">
-        <div class="prac-hint-icon">👁</div>
-        <div class="prac-hint-text">Watch the candles carefully.<br>A pattern is forming — identify it when the chart pauses.</div>
-      </div>
-      <div id="pracQuestion" class="prac-question" style="display:none">
-        <div class="prac-q-text" id="pracQText"></div>
-        <div class="prac-options" id="pracOptions"></div>
-      </div>
-      <div id="pracReveal" class="prac-reveal" style="display:none">
-        <div class="prac-result" id="pracResult"></div>
-        <div class="prac-explain" id="pracExplain"></div>
-        <button class="btn btn-primary prac-next" onclick="nextPracQuestion()">Next Pattern →</button>
-      </div>
-      <div id="pracStreakBanner" style="display:none" class="prac-streak-banner"></div>
-    </div>
-  </div>
+
 </section>
 
 <!-- SIGNALS -->
@@ -1839,7 +1853,7 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
-const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','practice','settings','admin']);
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','settings','admin']);
 let _hashNav = false;
 const _sectionInited = new Set();
 
@@ -1870,7 +1884,6 @@ function nav(id, btn){
     if(id==='trackrecord') loadTrackRecord();
     if(id==='leaderboard') loadLeaderboard();
     if(id==='simulator') calcRoR();
-    if(id==='practice') initPractice();
     _sectionInited.add(id);
   }
   window.scrollTo(0,0);
@@ -1890,6 +1903,20 @@ function ltab(id, btn){
   document.querySelectorAll('.learn-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('lc-'+id).classList.add('active');
+}
+
+let _learnMode = 'learn';
+function setLearnMode(mode){
+  _learnMode = mode;
+  const isLearn = mode === 'learn';
+  document.getElementById('lcLearnView').style.display = isLearn ? '' : 'none';
+  document.getElementById('lcPracticeView').style.display = isLearn ? 'none' : '';
+  document.getElementById('lcModeLearn').classList.toggle('active', isLearn);
+  document.getElementById('lcModePractice').classList.toggle('active', !isLearn);
+  document.getElementById('lcModeDesc').textContent = isLearn
+    ? 'Browse pattern cards and educational content'
+    : 'Watch candles replay bar-by-bar and identify the pattern';
+  if (!isLearn) initPractice();
 }
 
 // ── STATS ──────────────────────────────────────────────────────
