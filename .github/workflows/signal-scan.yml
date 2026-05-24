@@ -2,14 +2,13 @@ name: Signal Scanner — Full Scan
 
 on:
   schedule:
-    # Every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC
-    # 14 instruments × 3 timeframes × 3 candles = 126 TD credits/run × 6 = 756/day (of 800 free)
-    - cron: '0 */4 * * *'
+    # Every hour at :00 UTC (Grow plan: unlimited daily credits)
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
   scan:
-    name: Full market scan (Daily + 4H + Weekly)
+    name: Full market scan (1H + 4H + Daily + Weekly)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

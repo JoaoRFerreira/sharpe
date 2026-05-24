@@ -45,6 +45,7 @@ async function dbDelete(table: string, params: string): Promise<void> {
 // ── Instrument catalogue ────────────────────────────────────────
 interface Inst { symbol:string; type:string; base:number; mult:number; dec:number; unit:string; proOnly?:boolean; bnSymbol?:string }
 const INSTRUMENTS: Inst[] = [
+  // ── Forex majors ───────────────────────────────────────────────
   { symbol:'EUR/USD', type:'forex',     base:1.08,  mult:10000, dec:5, unit:'pips' },
   { symbol:'GBP/USD', type:'forex',     base:1.27,  mult:10000, dec:5, unit:'pips' },
   { symbol:'USD/JPY', type:'forex',     base:149,   mult:100,   dec:3, unit:'pips' },
@@ -57,10 +58,28 @@ const INSTRUMENTS: Inst[] = [
   { symbol:'GBP/JPY', type:'forex',     base:187,   mult:100,   dec:3, unit:'pips' },
   { symbol:'EUR/CHF', type:'forex',     base:0.97,  mult:10000, dec:5, unit:'pips' },
   { symbol:'AUD/JPY', type:'forex',     base:97,    mult:100,   dec:3, unit:'pips' },
+  // ── Forex minors ───────────────────────────────────────────────
+  { symbol:'EUR/CAD', type:'forex',     base:1.47,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'GBP/CAD', type:'forex',     base:1.74,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'AUD/NZD', type:'forex',     base:1.09,  mult:10000, dec:5, unit:'pips' },
+  { symbol:'GBP/CHF', type:'forex',     base:1.12,  mult:10000, dec:5, unit:'pips' },
+  // ── Commodities ────────────────────────────────────────────────
   { symbol:'XAU/USD', type:'commodity', base:1980,  mult:10,    dec:2, unit:'pts',  proOnly:true },
   { symbol:'XAG/USD', type:'commodity', base:24,    mult:100,   dec:3, unit:'pts',  proOnly:true },
+  // ── Crypto ────────────────────────────────────────────────────
   { symbol:'BTC/USD', type:'crypto',    base:42000, mult:1,     dec:0, unit:'pts',  proOnly:true, bnSymbol:'BTCUSDT' },
   { symbol:'ETH/USD', type:'crypto',    base:2200,  mult:1,     dec:2, unit:'pts',  proOnly:true, bnSymbol:'ETHUSDT' },
+  // ── Indices (Twelve Data: SPX, NDX, DJI, DAX) ─────────────────
+  { symbol:'SPX',     type:'index',     base:5200,  mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'NDX',     type:'index',     base:18000, mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'DJI',     type:'index',     base:39000, mult:1,     dec:0, unit:'pts',  proOnly:true },
+  { symbol:'DAX',     type:'index',     base:18000, mult:1,     dec:2, unit:'pts',  proOnly:true },
+  // ── ETFs ───────────────────────────────────────────────────────
+  { symbol:'SPY',     type:'etf',       base:520,   mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'QQQ',     type:'etf',       base:430,   mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'GLD',     type:'etf',       base:220,   mult:1,     dec:2, unit:'pts',  proOnly:true },
+  { symbol:'SLV',     type:'etf',       base:28,    mult:100,   dec:2, unit:'pts',  proOnly:true },
+  { symbol:'IWM',     type:'etf',       base:200,   mult:1,     dec:2, unit:'pts',  proOnly:true },
 ]
 
 // ── Technical analysis ─────────────────────────────────────────
@@ -161,7 +180,7 @@ function analyzeVolume(candles: Candle[], period = 20) {
 }
 
 function analyseCandles(candles: Candle[], inst: Inst) {
-  if (candles.length < 220) return null
+  if (candles.length < 55) return null
   const closes=candles.map(c=>c.close), highs=candles.map(c=>c.high), lows=candles.map(c=>c.low)
   const e20a=calcEmaAll(closes,20), e50a=calcEmaAll(closes,50), e200a=calcEmaAll(closes,200)
   const e20=e20a[e20a.length-1], e50=e50a[e50a.length-1], e200=e200a[e200a.length-1]
@@ -342,6 +361,10 @@ Deno.serve(async (req: Request) => {
           'GBP/JPY': () => (rates.JPY&&rates.GBP) ? rates.JPY/rates.GBP : undefined,
           'EUR/CHF': () => (rates.CHF&&rates.EUR) ? rates.CHF/rates.EUR : undefined,
           'AUD/JPY': () => (rates.JPY&&rates.AUD) ? rates.JPY/rates.AUD : undefined,
+          'EUR/CAD': () => (rates.CAD&&rates.EUR) ? rates.CAD/rates.EUR : undefined,
+          'GBP/CAD': () => (rates.CAD&&rates.GBP) ? rates.CAD/rates.GBP : undefined,
+          'AUD/NZD': () => (rates.NZD&&rates.AUD) ? rates.NZD/rates.AUD : undefined,
+          'GBP/CHF': () => (rates.CHF&&rates.GBP) ? rates.CHF/rates.GBP : undefined,
           'XAU/USD': () => rates.XAU ? 1/rates.XAU : undefined,
           'XAG/USD': () => rates.XAG ? 1/rates.XAG : undefined,
         }
@@ -351,6 +374,24 @@ Deno.serve(async (req: Request) => {
         }
       }
     } catch { /* skip forex */ }
+
+    // Indices + ETF prices from Twelve Data batch /price endpoint
+    const tdPriceInsts = INSTRUMENTS.filter(i => (i.type === 'index' || i.type === 'etf') && !i.bnSymbol)
+    if (apiKey && tdPriceInsts.length > 0) {
+      try {
+        const symbols = tdPriceInsts.map(i => encodeURIComponent(i.symbol)).join(',')
+        const r = await fetch(`https://api.twelvedata.com/price?symbol=${symbols}&apikey=${apiKey}`)
+        if (r.ok) {
+          const d = await r.json() as Record<string, {price?:string}>
+          const now2 = new Date().toISOString()
+          for (const inst of tdPriceInsts) {
+            const entry = d[inst.symbol]
+            const price = entry?.price ? parseFloat(entry.price) : null
+            if (price) priceRows.push({ symbol: inst.symbol, price, change_pct: 0, updated_at: now2 })
+          }
+        }
+      } catch { /* non-critical */ }
+    }
 
     if (priceRows.length) await dbUpsert('live_prices', priceRows, 'symbol')
     await writeLog({run_type:'prices',prices_updated:priceRows.length,duration_ms:Date.now()-startMs,status:'ok'})
@@ -370,8 +411,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     for (const {tf, tdInterval, bnInterval} of [
-      {tf:'daily',  tdInterval:'1day',  bnInterval:'1d'},
+      {tf:'1h',     tdInterval:'1h',    bnInterval:'1h'},
       {tf:'4h',     tdInterval:'4h',    bnInterval:'4h'},
+      {tf:'daily',  tdInterval:'1day',  bnInterval:'1d'},
       {tf:'weekly', tdInterval:'1week', bnInterval:'1w'},
     ]) {
       for (const inst of INSTRUMENTS) {
@@ -387,7 +429,8 @@ Deno.serve(async (req: Request) => {
 
           // 2. Load full history from cache for TA
           const candles = await loadCandles(inst.symbol, tf)
-          if (candles.length < 220) continue
+          const minCandles = tf === 'weekly' ? 55 : tf === '1h' ? 220 : 220
+          if (candles.length < minCandles) continue
 
           // 3. Track latest price from daily candles
           if (tf === 'daily') priceMap[inst.symbol] = candles[candles.length-1].close
@@ -437,7 +480,7 @@ Deno.serve(async (req: Request) => {
       'select=user_id,auto_paper_trade,auto_paper_min_conf,telegram_token,telegram_chat_id,resend_key,alert_email'
     ) as UserSetting[]
 
-    const tfExpiry: Record<string,number> = { daily:3, '4h':0.5, weekly:7 }
+    const tfExpiry: Record<string,number> = { '1h':0.17, '4h':0.5, daily:3, weekly:7 }
     const sigs = signalRows as Record<string,unknown>[]
 
     for (const u of userSettings) {

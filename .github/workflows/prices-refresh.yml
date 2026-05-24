@@ -1,15 +1,15 @@
-name: Price Refresh — Forex + Crypto
+name: Price Refresh — Forex + Crypto + ETFs
 
 on:
   schedule:
-    # Every hour at :30 (offset from full scan at :00)
-    # Crypto via Binance, forex via open.er-api.com — 0 Twelve Data credits used
-    - cron: '30 * * * *'
+    # Every 15 min at :05, :20, :35, :50 (offset from full scan at :00)
+    # Forex via open.er-api.com, crypto via Binance, indices/ETFs via Twelve Data
+    - cron: '5,20,35,50 * * * *'
   workflow_dispatch:
 
 jobs:
   prices:
-    name: Refresh forex + crypto prices
+    name: Refresh all prices
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
