@@ -313,23 +313,45 @@
 
   <!-- PRACTICE view -->
   <div id="lcPracticeView" style="display:none">
-    <div class="prac-header">
+    <!-- HUD -->
+    <div class="prac-hud">
       <div class="prac-cats">
         <button class="pcat active" onclick="setPracCat('all',this)">All Patterns</button>
         <button class="pcat" onclick="setPracCat('candle',this)">Candlesticks</button>
         <button class="pcat" onclick="setPracCat('chart',this)">Chart Patterns</button>
         <button class="pcat" onclick="setPracCat('institutional',this)">Institutional</button>
       </div>
-      <div class="prac-stats">
-        <div class="prac-stat"><span id="pracScore">0</span><label>Score</label></div>
-        <div class="prac-stat"><span id="pracStreak">0</span><label>Streak</label></div>
-        <div class="prac-stat"><span id="pracTotal">0</span><label>Done</label></div>
+      <div class="prac-hud-right">
+        <div class="prac-hud-stat">
+          <span class="prac-hud-val" id="pracScore">0</span>
+          <span class="prac-hud-lbl">Score</span>
+        </div>
+        <div class="prac-hud-divider"></div>
+        <div class="prac-hud-stat">
+          <span class="prac-hud-val prac-hud-streak" id="pracStreak">0</span>
+          <span class="prac-hud-lbl">Streak</span>
+        </div>
+        <div class="prac-hud-divider"></div>
+        <div class="prac-hud-stat">
+          <span class="prac-hud-val" id="pracAccuracy">—</span>
+          <span class="prac-hud-lbl">Accuracy</span>
+        </div>
+        <div class="prac-hud-divider"></div>
+        <div class="prac-hud-stat">
+          <span class="prac-hud-val" id="pracTotal">0</span>
+          <span class="prac-hud-lbl">Done</span>
+        </div>
       </div>
     </div>
-    <div class="prac-area">
+    <!-- Terminal -->
+    <div class="prac-terminal">
+      <!-- Chart panel -->
       <div class="prac-chart-wrap">
         <div class="prac-chart-hdr">
-          <span class="prac-chart-inst" id="pracInstrument">—</span>
+          <div class="prac-chart-meta">
+            <span class="prac-chart-inst" id="pracInstrument">—</span>
+            <span class="prac-live-dot" id="pracLiveDot"></span>
+          </div>
           <span class="prac-difficulty prac-diff-easy" id="pracDiff">Easy</span>
         </div>
         <canvas id="pracCanvas" width="700" height="360"></canvas>
@@ -338,23 +360,32 @@
           <span class="prac-play-status" id="pracPlayStatus">Loading...</span>
         </div>
       </div>
-      <div class="prac-quiz-wrap">
-        <div id="pracHint" class="prac-hint">
-          <div class="prac-hint-icon">👁</div>
-          <div class="prac-hint-text">Watch the candles carefully.<br>A pattern is forming — identify it when the chart pauses.</div>
+      <!-- Quiz panel -->
+      <div class="prac-panel">
+        <div id="pracHint" class="prac-panel-hint">
+          <div class="prac-watch-ring">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <div class="prac-watch-label">Watching</div>
+          <div class="prac-watch-sub">A pattern is forming.<br>Identify it when the chart pauses.</div>
         </div>
-        <div id="pracQuestion" class="prac-question" style="display:none">
+        <div id="pracQuestion" class="prac-panel-question" style="display:none">
+          <div class="prac-q-label">Identify the Pattern</div>
           <div class="prac-q-text" id="pracQText"></div>
           <div class="prac-options" id="pracOptions"></div>
         </div>
-        <div id="pracReveal" class="prac-reveal" style="display:none">
+        <div id="pracReveal" class="prac-panel-reveal" style="display:none">
           <div class="prac-result" id="pracResult"></div>
+          <div class="prac-pattern-badge" id="pracPatternBadge"></div>
           <div class="prac-explain" id="pracExplain"></div>
-          <button class="btn btn-primary prac-next" onclick="nextPracQuestion()">Next Pattern →</button>
+          <button class="prac-next-btn" onclick="nextPracQuestion()">
+            Next Pattern
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
         </div>
-        <div id="pracStreakBanner" style="display:none" class="prac-streak-banner"></div>
       </div>
     </div>
+    <div id="pracStreakBanner" style="display:none" class="prac-streak-banner"></div>
   </div>
 
 </section>
@@ -7203,7 +7234,7 @@ const PRACTICE_QUIZZES = [
   },
 ];
 
-const _prac = { queue:[], cur:null, shown:0, timer:null, done:false, score:0, streak:0, total:0, filter:'all' };
+const _prac = { queue:[], cur:null, shown:0, timer:null, done:false, score:0, streak:0, total:0, correct:0, filter:'all' };
 
 function initPractice() {
   if (_prac.cur) return;
@@ -7243,6 +7274,8 @@ function _pracNext() {
   dEl.className = 'prac-difficulty prac-diff-' + d.toLowerCase();
   document.getElementById('pracProgressFill').style.width = '0%';
   document.getElementById('pracPlayStatus').textContent = 'Replaying...';
+  const dot = document.getElementById('pracLiveDot');
+  if (dot) dot.classList.remove('paused');
   clearInterval(_prac.timer);
   _pracDraw();
   const speed = d === 'Easy' ? 430 : d === 'Medium' ? 320 : 230;
@@ -7268,46 +7301,84 @@ function _pracDraw() {
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#0f172a';
+  ctx.fillStyle = '#0d1424';
   ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  for (let i = 1; i <= 4; i++) {
-    const y = H * i / 5;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-  }
+
   const shown = q.candles.slice(0, _prac.shown);
   if (!shown.length) return;
-  const pad = {l:16,r:16,t:22,b:22};
+
+  const volH = Math.floor(H * 0.14);          // bottom strip for volume
+  const pad = {l:16, r:52, t:18, b: volH + 10};
   const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+
   const all = q.candles;
   const minP = Math.min(...all.map(c => c.l));
   const maxP = Math.max(...all.map(c => c.h));
-  const range = (maxP - minP) * 1.05 || 1;
-  const mid = (maxP + minP) / 2;
+  const range = (maxP - minP) * 1.08 || 1;
+  const mid   = (maxP + minP) / 2;
   const sy = v => pad.t + cH * (1 - (v - (mid - range/2)) / range);
+
+  // Horizontal grid lines + Y-axis labels
+  const levels = 5;
+  ctx.font = '10px Inter,sans-serif';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= levels; i++) {
+    const frac = i / levels;
+    const y = pad.t + cH * frac;
+    const price = (mid + range/2) - frac * range;
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r + 4, y); ctx.stroke();
+    ctx.fillStyle = '#334155';
+    ctx.fillText(price.toFixed(price < 10 ? 2 : 0), W - 2, y + 3.5);
+  }
+
   const N = all.length;
   const slot = cW / N;
   const bw = Math.max(3, slot * 0.58);
+
+  // Max vol for scaling (use H-L range as proxy)
+  const maxRange = Math.max(...all.map(c => c.h - c.l)) || 1;
+
   shown.forEach((c, i) => {
     const x = pad.l + i * slot + slot / 2;
     const bull = c.c >= c.o;
     const isPat = i >= q.patternStart;
-    const col = bull
-      ? (isPat ? '#10b981' : 'rgba(16,185,129,0.3)')
-      : (isPat ? '#ef4444' : 'rgba(239,68,68,0.3)');
+    const col    = bull ? (isPat ? '#10b981' : 'rgba(16,185,129,0.28)') : (isPat ? '#ef4444' : 'rgba(239,68,68,0.28)');
+    const colDim = bull ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+
+    // Wick
     ctx.strokeStyle = col; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, sy(c.h)); ctx.lineTo(x, sy(c.l)); ctx.stroke();
+    // Body
     const bTop = sy(Math.max(c.o, c.c)), bBot = sy(Math.min(c.o, c.c));
     ctx.fillStyle = col;
     ctx.fillRect(x - bw/2, bTop, bw, Math.max(1.5, bBot - bTop));
+
+    // Volume bar
+    const volRatio = (c.h - c.l) / maxRange;
+    const vH = Math.max(2, Math.floor(volRatio * (volH - 4)));
+    const vY = H - 4 - vH;
+    ctx.fillStyle = isPat ? col : colDim;
+    ctx.fillRect(x - bw/2, vY, bw, vH);
   });
+
+  // Vol label
+  ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#1e3050';
+  ctx.fillText('VOL', pad.l, H - 5);
+
+  // Key level line
   if (q.keyLevel && _prac.shown > (q.keyLevelAt || 0)) {
     const y = sy(q.keyLevel);
-    ctx.strokeStyle = 'rgba(251,191,36,0.5)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(251,191,36,0.45)'; ctx.lineWidth = 1;
     ctx.setLineDash([5,4]);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(251,191,36,0.6)';
+    ctx.fillText('KEY', pad.l + 4, y - 4);
   }
 }
 
@@ -7315,8 +7386,12 @@ function _pracShowQuestion() {
   const q = _prac.cur;
   document.getElementById('pracHint').style.display = 'none';
   document.getElementById('pracQText').textContent = q.question;
+  const keys = 'ABCD';
   document.getElementById('pracOptions').innerHTML = q.options.map((opt, i) =>
-    `<button class="prac-opt" onclick="answerPrac(${i})">${opt}</button>`
+    `<button class="prac-opt" onclick="answerPrac(${i})">
+      <span class="prac-opt-key">${keys[i]}</span>${opt}
+      <span class="prac-opt-key-hint">${keys[i]}</span>
+    </button>`
   ).join('');
   document.getElementById('pracQuestion').style.display = '';
 }
@@ -7327,8 +7402,10 @@ function answerPrac(idx) {
   const q = _prac.cur;
   const ok = idx === q.answer;
   _prac.total++;
-  if (ok) { _prac.score++; _prac.streak++; } else { _prac.streak = 0; }
+  if (ok) { _prac.score++; _prac.streak++; _prac.correct++; } else { _prac.streak = 0; }
   _pracUpdateStats();
+  const dot = document.getElementById('pracLiveDot');
+  if (dot) dot.classList.add('paused');
   document.querySelectorAll('.prac-opt').forEach((btn, i) => {
     btn.disabled = true;
     if (i === q.answer) btn.classList.add('prac-opt-correct');
@@ -7336,13 +7413,14 @@ function answerPrac(idx) {
   });
   document.getElementById('pracResult').innerHTML = ok
     ? '<span class="prac-correct">✓ Correct!</span>'
-    : `<span class="prac-wrong">✗ That was a <strong>${q.options[q.answer]}</strong></span>`;
+    : '<span class="prac-wrong">✗ Incorrect</span>';
+  document.getElementById('pracPatternBadge').textContent = q.options[q.answer];
   document.getElementById('pracExplain').textContent = q.explanation;
   document.getElementById('pracQuestion').style.display = 'none';
   document.getElementById('pracReveal').style.display = '';
   const banner = document.getElementById('pracStreakBanner');
   if (_prac.streak > 0 && _prac.streak % 3 === 0) {
-    banner.textContent = `🔥 ${_prac.streak} in a row! Keep it up!`;
+    banner.textContent = `🔥 ${_prac.streak} correct in a row — great pattern recognition!`;
     banner.style.display = '';
   } else { banner.style.display = 'none'; }
 }
@@ -7351,7 +7429,18 @@ function _pracUpdateStats() {
   document.getElementById('pracScore').textContent = _prac.score;
   document.getElementById('pracStreak').textContent = _prac.streak;
   document.getElementById('pracTotal').textContent = _prac.total;
+  const acc = document.getElementById('pracAccuracy');
+  if (acc) acc.textContent = _prac.total ? Math.round((_prac.correct / _prac.total) * 100) + '%' : '—';
 }
+
+// Keyboard shortcuts A/B/C/D when quiz is active
+document.addEventListener('keydown', e => {
+  if (_prac.done || !_prac.cur) return;
+  if (document.getElementById('pracQuestion').style.display === 'none') return;
+  const map = {a:0,b:1,c:2,d:3};
+  const idx = map[e.key.toLowerCase()];
+  if (idx !== undefined) answerPrac(idx);
+});
 </script>
 
 <!-- Mobile bottom navigation (logged-in only, visible via .visible class on mobile) -->
