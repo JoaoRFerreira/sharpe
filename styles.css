@@ -958,18 +958,18 @@ textarea{resize:vertical;min-height:56px}
 .prac-diff-medium{background:rgba(245,158,11,.15);color:#f59e0b}
 .prac-diff-hard{background:rgba(239,68,68,.15);color:#ef4444}
 /* Quiz panel (dark side) */
-.prac-panel{flex:42;min-width:260px;display:flex;flex-direction:column;background:#0d1424}
+.prac-panel{flex:42;min-width:260px;display:flex;flex-direction:column;background:var(--card)}
 .prac-panel-hint{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 28px;text-align:center}
-.prac-watch-ring{width:50px;height:50px;border-radius:50%;border:1.5px solid #1e3a5f;display:flex;align-items:center;justify-content:center;margin-bottom:20px;position:relative}
+.prac-watch-ring{width:50px;height:50px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:20px;position:relative}
 .prac-watch-ring::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(59,130,246,.18);animation:pracWatchPing 2.2s ease-in-out infinite}
 .prac-watch-label{font-size:10px;font-weight:700;letter-spacing:2.5px;color:#3b82f6;text-transform:uppercase;margin-bottom:10px}
-.prac-watch-sub{font-size:12px;color:#334155;line-height:1.75}
+.prac-watch-sub{font-size:12px;color:var(--muted);line-height:1.75}
 .prac-panel-question{flex:1;display:flex;flex-direction:column;padding:24px 20px;animation:pracFadeIn .22s}
 .prac-q-label{font-size:9px;font-weight:700;letter-spacing:2px;color:#3b82f6;text-transform:uppercase;margin-bottom:12px}
-.prac-q-text{font-size:14px;font-weight:600;color:#f1f5f9;line-height:1.55;margin-bottom:18px}
+.prac-q-text{font-size:14px;font-weight:600;color:var(--text);line-height:1.55;margin-bottom:18px}
 .prac-options{display:flex;flex-direction:column;gap:7px}
-.prac-opt{background:#111c2d;border:1px solid #1e3050;border-radius:6px;padding:11px 14px;text-align:left;font-size:13px;font-weight:500;color:#94a3b8;cursor:pointer;transition:all .12s;font-family:'Inter',sans-serif;width:100%;display:flex;align-items:center;gap:11px}
-.prac-opt-key{width:23px;height:23px;border-radius:4px;background:#1a2d48;border:1px solid #1e3050;font-size:10px;font-weight:700;color:#475569;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;font-variant-numeric:tabular-nums}
+.prac-opt{background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:11px 14px;text-align:left;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;font-family:'Inter',sans-serif;width:100%;display:flex;align-items:center;gap:11px}
+.prac-opt-key{width:23px;height:23px;border-radius:4px;background:var(--card2);border:1px solid var(--border);font-size:10px;font-weight:700;color:var(--muted2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s;font-variant-numeric:tabular-nums}
 .prac-opt:hover:not(:disabled){border-color:#3b82f6;background:rgba(59,130,246,.07);color:#cbd5e1}
 .prac-opt:hover:not(:disabled) .prac-opt-key{background:#1d4ed8;border-color:#3b82f6;color:#fff}
 .prac-opt:disabled{cursor:default}
@@ -983,11 +983,26 @@ textarea{resize:vertical;min-height:56px}
 .prac-correct{color:#10b981}
 .prac-wrong{color:#ef4444}
 .prac-pattern-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:4px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.25);color:#60a5fa;letter-spacing:.3px;margin-bottom:14px}
-.prac-explain{font-size:12px;color:#475569;line-height:1.8;flex:1;margin-bottom:20px}
+.prac-explain{font-size:12px;color:var(--muted);line-height:1.8;flex:1;margin-bottom:20px}
 .prac-next-btn{background:#1d4ed8;border:none;border-radius:6px;padding:13px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif;transition:background .15s;width:100%;letter-spacing:.2px}
 .prac-next-btn:hover{background:#2563eb}
 /* Streak banner */
 .prac-streak-banner{background:linear-gradient(135deg,#1e3a8a,#4c1d95);border:1px solid rgba(99,102,241,.25);border-radius:var(--r);padding:11px 18px;color:#e0e7ff;font-size:13px;font-weight:700;text-align:center;animation:pracFadeIn .3s;margin-top:12px;letter-spacing:.2px}
+.prac-intro{display:flex;background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.prac-intro-step{flex:1;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;border-right:1px solid var(--border)}
+.prac-intro-step:last-child{border-right:none}
+.prac-intro-num{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.prac-intro-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px}
+.prac-intro-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.prac-badges-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.prac-badge{display:flex;align-items:center;gap:6px;background:var(--gold-dim);border:1px solid var(--gold);border-radius:20px;padding:4px 12px 4px 8px;font-size:11px;font-weight:600;color:var(--gold);animation:pracFadeIn .3s}
+.prac-badge-icon{font-size:14px;line-height:1}
+.lb-tabs{display:flex;gap:6px;margin-bottom:20px}
+.lbtab{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:7px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.lbtab:hover{border-color:var(--blue);color:var(--blue)}
+.lbtab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+@media(max-width:900px){.prac-intro{flex-wrap:wrap}.prac-intro-step{flex:1 1 45%;border-right:none;border-bottom:1px solid var(--border)}.prac-intro-step:last-child{border-bottom:none}}
+@media(max-width:600px){.prac-intro-step{flex:1 1 100%}}
 /* Animations */
 @keyframes pracFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @keyframes pracPulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.45)}60%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}

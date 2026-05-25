@@ -343,6 +343,27 @@
         </div>
       </div>
     </div>
+    <!-- How it works -->
+    <div class="prac-intro">
+      <div class="prac-intro-step">
+        <div class="prac-intro-num">1</div>
+        <div><div class="prac-intro-title">Watch the replay</div><div class="prac-intro-desc">Candles appear one by one — just like watching a live chart unfold</div></div>
+      </div>
+      <div class="prac-intro-step">
+        <div class="prac-intro-num">2</div>
+        <div><div class="prac-intro-title">Identify the pattern</div><div class="prac-intro-desc">When the chart pauses, pick from four options — or press A / B / C / D</div></div>
+      </div>
+      <div class="prac-intro-step">
+        <div class="prac-intro-num">3</div>
+        <div><div class="prac-intro-title">Learn from every answer</div><div class="prac-intro-desc">Win or lose, you get a clear explanation — build muscle memory over time</div></div>
+      </div>
+      <div class="prac-intro-step">
+        <div class="prac-intro-num">4</div>
+        <div><div class="prac-intro-title">Earn badges &amp; rank up</div><div class="prac-intro-desc">Unlock achievements as your streak and accuracy improve</div></div>
+      </div>
+    </div>
+    <!-- Badges -->
+    <div class="prac-badges-row" id="pracBadgesRow" style="display:none"></div>
     <!-- Terminal -->
     <div class="prac-terminal">
       <!-- Chart panel -->
@@ -1039,6 +1060,19 @@
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_webhooks"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_webhooks" checked><span class="toggle-sl"></span></label></td>
             </tr>
+              <tr><td colspan="4" style="padding:10px 8px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);background:var(--card2)">Learning</td></tr>
+              <tr>
+                <td style="padding:8px">Learning Center (read)</td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_learning" checked><span class="toggle-sl"></span></label></td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_learning" checked><span class="toggle-sl"></span></label></td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_learning" checked><span class="toggle-sl"></span></label></td>
+              </tr>
+              <tr>
+                <td style="padding:8px">Pattern Practice</td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_practice"><span class="toggle-sl"></span></label></td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_practice" checked><span class="toggle-sl"></span></label></td>
+                <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_practice" checked><span class="toggle-sl"></span></label></td>
+              </tr>
           </tbody>
         </table>
       </div>
@@ -1586,9 +1620,17 @@
 <!-- LEADERBOARD -->
 <section class="section" id="leaderboard">
   <div class="section-title">Leaderboard</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Top traders ranked by net pips on closed paper positions. Opt in from Settings → Leaderboard to appear here.</div>
-  <div id="lbGrid" style="overflow-x:auto">
-    <div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div>
+  <div class="lb-tabs">
+    <button class="lbtab active" onclick="setLbTab('trading',this)">Trading Performance</button>
+    <button class="lbtab" onclick="setLbTab('practice',this)">Pattern Practice</button>
+  </div>
+  <div id="lbTradingView">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Top traders ranked by net pips on closed paper positions. Opt in from Settings → Leaderboard to appear here.</div>
+    <div id="lbGrid" style="overflow-x:auto"><div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div></div>
+  </div>
+  <div id="lbPracticeView" style="display:none">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Top pattern recognisers ranked by practice score. Go to Learning → Practice to start training and appear here.</div>
+    <div id="lbPracGrid" style="overflow-x:auto"><div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div></div>
   </div>
 </section>
 
@@ -1938,6 +1980,10 @@ function ltab(id, btn){
 
 let _learnMode = 'learn';
 function setLearnMode(mode){
+  if(mode === 'practice' && !canAccess('practice')){
+    requirePlan('practice', 'Pattern Practice is available on Trader and Pro plans. Upgrade to sharpen your skills.');
+    return;
+  }
   _learnMode = mode;
   const isLearn = mode === 'learn';
   document.getElementById('lcLearnView').style.display = isLearn ? '' : 'none';
@@ -4897,9 +4943,9 @@ let sbUser = null;   // current auth user
 let sbPlan = 'free'; // 'free' | 'essential' | 'pro'
 
 const PLAN_LIMITS = {
-  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:true, autoLog:false, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false },
-  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false },
-  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true, binance:true, weeklyTf:true, export:true, webhooks:true }
+  free:      { maxTrades:50, instruments:['EUR/USD','GBP/USD','USD/JPY'], liveData:false, signals:false, ideasCount:1, news:true, autoLog:false, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false, practice:false },
+  essential: { maxTrades:Infinity, instruments:['EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','NZD/USD','USD/CHF','EUR/GBP','EUR/JPY','GBP/JPY','EUR/CHF','AUD/JPY','XAU/USD','XAG/USD'], liveData:true, signals:true, ideasCount:5, news:true, autoLog:true, oanda:false, binance:false, weeklyTf:false, export:false, webhooks:false, practice:true },
+  pro:       { maxTrades:Infinity, instruments:'all', liveData:true, signals:true, ideasCount:10, news:true, autoLog:true, oanda:true, binance:true, weeklyTf:true, export:true, webhooks:true, practice:true }
 };
 
 function planLimits(){ return PLAN_LIMITS[sbPlan] || PLAN_LIMITS.free; }
@@ -4916,6 +4962,7 @@ function canAccess(feature){
   if(feature === 'export')     return p.export;
   if(feature === 'webhooks')   return p.webhooks;
   if(feature === 'moreTrades') return p.maxTrades === Infinity || trades.length < p.maxTrades;
+  if(feature === 'practice')   return p.practice;
   return true;
 }
 
@@ -6691,6 +6738,43 @@ async function loadLeaderboardSettings(){
   const nm=document.getElementById('lbDisplayName'); if(nm&&data.display_name) nm.value=data.display_name;
 }
 
+function setLbTab(tab,btn){
+  document.querySelectorAll('.lbtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lbTradingView').style.display  = tab==='trading'  ? '' : 'none';
+  document.getElementById('lbPracticeView').style.display = tab==='practice' ? '' : 'none';
+  if(tab==='practice') loadPracticeLeaderboard();
+}
+async function loadPracticeLeaderboard(){
+  const grid=document.getElementById('lbPracGrid'); if(!grid) return;
+  grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div>';
+  const {data,error}=await sb.from('user_settings')
+    .select('display_name,practice_score,practice_total,practice_accuracy,practice_streak_best')
+    .not('practice_score','is',null)
+    .order('practice_score',{ascending:false})
+    .limit(50);
+  if(error||!data?.length){
+    grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No practice scores yet. Be the first — try Pattern Practice in the Learning section.</div>';
+    return;
+  }
+  const rows=data.map((r,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 8px;font-weight:700">${medal}</td>
+      <td style="padding:10px 8px;font-weight:600">${r.display_name||'Anonymous'}</td>
+      <td style="padding:10px 8px;text-align:center;font-weight:700;color:var(--blue)">${r.practice_score??0}</td>
+      <td style="padding:10px 8px;text-align:center">${r.practice_total??0}</td>
+      <td style="padding:10px 8px;text-align:center;color:var(--green);font-weight:600">${r.practice_accuracy??0}%</td>
+      <td style="padding:10px 8px;text-align:center;color:var(--gold);font-weight:600">${r.practice_streak_best??0}🔥</td>
+    </tr>`;
+  }).join('');
+  grid.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">
+      <th style="padding:6px 8px;text-align:left">#</th><th style="padding:6px 8px;text-align:left">Trader</th>
+      <th style="padding:6px 8px;text-align:center">Score</th><th style="padding:6px 8px;text-align:center">Questions</th>
+      <th style="padding:6px 8px;text-align:center">Accuracy</th><th style="padding:6px 8px;text-align:center">Best Streak</th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+}
 async function loadLeaderboard(){
   const grid=document.getElementById('lbGrid'); if(!grid) return;
   grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div>';
@@ -7240,6 +7324,7 @@ function initPractice() {
   if (_prac.cur) return;
   _pracShuffle();
   _pracNext();
+  _pracRenderBadges();
 }
 
 function _pracShuffle() {
@@ -7423,6 +7508,9 @@ function answerPrac(idx) {
     banner.textContent = `🔥 ${_prac.streak} correct in a row — great pattern recognition!`;
     banner.style.display = '';
   } else { banner.style.display = 'none'; }
+  _pracTrackCat(q, ok);
+  _pracCheckBadges();
+  _pracSaveProgress();
 }
 
 function _pracUpdateStats() {
@@ -7433,6 +7521,69 @@ function _pracUpdateStats() {
   if (acc) acc.textContent = _prac.total ? Math.round((_prac.correct / _prac.total) * 100) + '%' : '—';
 }
 
+const BADGES = [
+  {id:'first-blood',   icon:'🎯', name:'First Blood',      desc:'First correct answer'},
+  {id:'on-fire',       icon:'🔥', name:'On Fire',           desc:'3 correct in a row'},
+  {id:'hot-streak',    icon:'⚡', name:'Hot Streak',        desc:'5 correct in a row'},
+  {id:'scholar',       icon:'📚', name:'Scholar',           desc:'Completed 20 questions'},
+  {id:'sharp-eye',     icon:'🌟', name:'Sharp Eye',         desc:'Completed 50 questions'},
+  {id:'century',       icon:'💯', name:'Century',           desc:'Completed 100 questions'},
+  {id:'turtle',        icon:'🐢', name:'Turtle Whisperer',  desc:'Identified a Turtle breakout'},
+  {id:'institutional', icon:'🏛', name:'Institutionalist',  desc:'Identified an institutional pattern'},
+  {id:'candle-master', icon:'🕯', name:'Candle Master',     desc:'5 correct candlestick patterns'},
+  {id:'chart-reader',  icon:'📊', name:'Chart Reader',      desc:'5 correct chart patterns'},
+  {id:'perfect',       icon:'🏆', name:'Perfect Session',   desc:'100% accuracy over 5+ questions'},
+];
+function _pracLoadBadges(){ try{ return JSON.parse(localStorage.getItem('sharpe_badges')||'{}'); }catch(e){ return {}; } }
+function _pracSaveBadge(id){ const b=_pracLoadBadges(); if(b[id]) return false; b[id]=Date.now(); localStorage.setItem('sharpe_badges',JSON.stringify(b)); return true; }
+function _pracCheckBadges(){
+  const check=(id,cond)=>{ if(cond && _pracSaveBadge(id)) _pracShowBadgeToast(id); };
+  check('first-blood',   _prac.correct>=1);
+  check('on-fire',       _prac.streak>=3);
+  check('hot-streak',    _prac.streak>=5);
+  check('scholar',       _prac.total>=20);
+  check('sharp-eye',     _prac.total>=50);
+  check('century',       _prac.total>=100);
+  check('perfect',       _prac.total>=5 && _prac.correct===_prac.total);
+  const cats=JSON.parse(localStorage.getItem('sharpe_prac_cats')||'{}');
+  check('candle-master', (cats.candle||0)>=5);
+  check('chart-reader',  (cats.chart||0)>=5);
+  check('institutional', (cats.institutional||0)>=1);
+  check('turtle',        (cats.turtle||0)>=1);
+  _pracRenderBadges();
+}
+function _pracTrackCat(q,ok){
+  if(!ok) return;
+  const cats=JSON.parse(localStorage.getItem('sharpe_prac_cats')||'{}');
+  cats[q.category]=(cats[q.category]||0)+1;
+  if(q.id==='turtle-breakout') cats.turtle=(cats.turtle||0)+1;
+  localStorage.setItem('sharpe_prac_cats',JSON.stringify(cats));
+}
+function _pracShowBadgeToast(id){
+  const b=BADGES.find(b=>b.id===id); if(!b) return;
+  showToast(b.icon+' Badge unlocked: '+b.name,'tw');
+}
+function _pracRenderBadges(){
+  const row=document.getElementById('pracBadgesRow'); if(!row) return;
+  const earned=_pracLoadBadges();
+  const keys=Object.keys(earned);
+  if(!keys.length){ row.style.display='none'; return; }
+  row.style.display='flex';
+  row.innerHTML=BADGES.filter(b=>earned[b.id]).map(b=>`<div class="prac-badge" title="${b.desc}"><span class="prac-badge-icon">${b.icon}</span>${b.name}</div>`).join('');
+}
+async function _pracSaveProgress(){
+  if(!sbUser) return;
+  const prev=parseInt(localStorage.getItem('sharpe_prac_best_streak')||'0');
+  const best=Math.max(_prac.streak,prev);
+  if(_prac.streak>prev) localStorage.setItem('sharpe_prac_best_streak',String(_prac.streak));
+  await sb.from('user_settings').upsert({
+    user_id:sbUser.id,
+    practice_score:_prac.score,
+    practice_total:_prac.total,
+    practice_accuracy:_prac.total?Math.round((_prac.correct/_prac.total)*100):0,
+    practice_streak_best:best,
+  },{onConflict:'user_id'});
+}
 // Keyboard shortcuts A/B/C/D when quiz is active
 document.addEventListener('keydown', e => {
   if (_prac.done || !_prac.cur) return;
