@@ -409,6 +409,25 @@ textarea{resize:vertical;min-height:56px}
 .pos-mode.paper{background:rgba(88,166,255,.15);color:var(--blue)}
 .pos-mode.live{background:rgba(63,185,80,.15);color:var(--green)}
 .pos-mode-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(88,166,255,.12);color:var(--blue);border:1px solid rgba(88,166,255,.2)}
+/* Grid card view */
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.pos-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative}
+.pos-card.pos-pending{opacity:.85;border-style:dashed}
+.pos-card.pos-closed{opacity:.65}
+.pos-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:8px}
+.pos-levels{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.pos-levels strong{color:var(--text)}
+.pos-progress{height:4px;background:var(--border);border-radius:2px;margin:10px 0 6px}
+.pos-progress-fill{height:100%;border-radius:2px;transition:width .3s}
+.pos-card-actions{display:flex;justify-content:flex-end;margin-top:10px}
+/* View toggle */
+.pos-view-toggle{display:flex;gap:4px}
+.pvt-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
+.pvt-btn.active{background:var(--card-hover,var(--border));color:var(--text);border-color:var(--blue)}
+/* Market type filter chips */
+.sig-mkt-filter{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.mkt-chip{background:none;border:1px solid var(--border);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.mkt-chip.active{background:rgba(88,166,255,.12);border-color:rgba(88,166,255,.35);color:var(--blue)}
 /* Paper trade explainer */
 .pos-explainer{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;margin-bottom:24px}
 .pos-explainer-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
@@ -469,7 +488,7 @@ textarea{resize:vertical;min-height:56px}
 .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.4s ease infinite}
 /* TOAST */
 .toast-wrap{position:fixed;bottom:22px;right:22px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;opacity:0;transform:translateX(28px);transition:all .3s;max-width:340px;white-space:nowrap;box-shadow:0 8px 30px rgba(37,99,235,.12),0 2px 8px rgba(0,0,0,.06);font-family:'Inter',sans-serif;color:var(--text)}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;opacity:0;transform:translateX(28px);transition:all .3s;max-width:420px;white-space:normal;word-break:break-word;box-shadow:0 8px 30px rgba(37,99,235,.12),0 2px 8px rgba(0,0,0,.06);font-family:'Inter',sans-serif;color:var(--text)}
 .toast.in{opacity:1;transform:none}
 .tw{border-color:rgba(5,150,105,.3)!important;color:var(--green);background:#f0fdf4}
 .tl{border-color:rgba(220,38,38,.3)!important;color:var(--red);background:#fef2f2}
