@@ -513,10 +513,17 @@
 <section class="section" id="positions">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="section-title" style="margin:0">Live Positions</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span class="pos-mode-badge paper">PAPER</span>
-      <span style="font-size:12px;color:var(--muted)">Auto-opens when price enters signal entry zone · closes at SL or TP</span>
-      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
+    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
+  </div>
+
+  <!-- Paper Trade explainer -->
+  <div class="pos-explainer">
+    <div class="pos-explainer-title">How Paper Trading works</div>
+    <div class="pos-explainer-steps">
+      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any signal — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>The price monitor runs every 15 minutes. When the live price reaches the entry zone, the order moves to <em>Open</em> — no action required from you.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close any open position manually at the current live price.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. No real money is ever involved.</span></div>
     </div>
   </div>
 
@@ -524,11 +531,23 @@
   <div id="posSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
 
   <!-- Open positions -->
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">Open Positions</div>
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:10px">Open &amp; Pending</div>
   <div id="openPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
 
   <!-- Closed positions -->
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:28px;margin-bottom:10px">Recent Closed</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:32px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">Recent Closed</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      Show
+      <select class="pos-page-sel" onchange="_closedPageSize=+this.value;loadPositions()">
+        <option value="10">10</option>
+        <option value="25" selected>25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      per page
+    </div>
+  </div>
   <div id="closedPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
 </section>
 
@@ -3886,6 +3905,7 @@ function sigCard(s, isDemo, status='valid'){
       <button class="btn btn-ghost" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Journal</button>
       <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Simulator</button>
     </div>
+    ${!isDemo?`<div class="sig-paper-hint">Paper Trade queues an order at the entry price. The price monitor opens it when the zone is reached and closes it automatically at SL or TP. Track results in <a href="#" onclick="nav('positions');return false">Positions</a>.</div>`:''}
   </div>`;
 }
 
@@ -4372,10 +4392,12 @@ function initPositions(){
     .subscribe();
 }
 
+let _closedPageSize = 25;
+
 async function loadPositions(){
   const [openRes, closedRes, pendRes] = await Promise.all([
     sb.from('open_positions').select('*').eq('status','open').order('opened_at',{ascending:false}),
-    sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(20),
+    sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(_closedPageSize),
     sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
   ]);
   renderPositions(openRes.data||[], closedRes.data||[], pendRes.data||[]);
@@ -4402,87 +4424,76 @@ function renderPositions(open, closed, pending){
     <div style="font-size:11px;color:var(--muted);margin-top:2px">${s.sub}</div>
   </div>`).join('');
 
-  // Open positions
+  const fmtDate = d => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  const fmtDt   = d => new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+
+  // Open + Pending positions list
   const openEl = document.getElementById('openPositions');
   if(!open.length && !pending.length){
-    openEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No open positions. Enable auto-execute in Settings to start paper trading.</div>';
+    openEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px 0">No open positions. Click <strong>Paper Trade</strong> on any signal to queue one, or enable auto paper trade in Settings.</div>';
   } else {
-    const pendCards = pending.map(e=>`
-      <div class="pos-card pos-pending">
-        <div class="pos-card-top">
-          <div>
-            <span class="pos-sym">${e.symbol}</span>
-            <span class="pos-mode paper">PAPER</span>
-            <span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Waiting entry</div>
-            <div style="font-size:12px;color:var(--muted)">@ ${e.entry_price}</div>
-          </div>
+    const pendRows = pending.map(e=>`
+      <div class="pos-row pos-row-pending">
+        <div class="pos-row-sym">
+          <span class="pos-sym">${e.symbol}</span>
+          <span class="pos-mode paper">PAPER</span>
+          <span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span>
+          <span class="pos-row-tag">Pending</span>
         </div>
-        <div class="pos-levels">
-          <span>SL <strong>${e.stop_loss}</strong></span>
-          <span>TP <strong>${e.tp1}</strong></span>
-          <span style="color:var(--muted);font-size:11px">Expires ${new Date(e.expires_at).toLocaleDateString()}</span>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${e.entry_price}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Stop Loss</span><span class="pos-row-val" style="color:var(--red)">${e.stop_loss}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Take Profit</span><span class="pos-row-val" style="color:var(--green)">${e.tp1}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Expires</span><span class="pos-row-val" style="color:var(--muted)">${fmtDate(e.expires_at)}</span></div>
+        <div class="pos-row-cell pos-row-actions">
+          <button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button>
         </div>
       </div>`).join('');
-    const openCards = open.map(p=>{
+    const openRows = open.map(p=>{
       const lp = livePrices[p.symbol];
       const isLong = p.direction==='LONG';
-      const pnlPips = lp ? ((isLong?lp-p.entry_price:p.entry_price-lp)*p.inst_mult).toFixed(1) : '—';
-      const pnlColor = lp ? (parseFloat(pnlPips)>=0?'var(--green)':'var(--red)') : 'var(--muted)';
-      const slPct = lp ? Math.abs(lp-p.stop_loss)/Math.abs(p.tp1-p.stop_loss)*100 : 0;
-      const prog = Math.min(100,Math.max(0, isLong ? slPct : 100-slPct));
-      return `<div class="pos-card">
-        <div class="pos-card-top">
-          <div>
-            <span class="pos-sym">${p.symbol}</span>
-            <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
-            <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:18px;font-weight:700;color:${pnlColor}">${pnlPips>=0&&lp?'+':''}${pnlPips} pips</div>
-            <div style="font-size:11px;color:var(--muted)">Live: ${lp||'—'}</div>
-          </div>
+      const pnlRaw = lp ? (isLong?lp-p.entry_price:p.entry_price-lp)*p.inst_mult : null;
+      const pnlPips = pnlRaw !== null ? pnlRaw.toFixed(1) : '—';
+      const pnlColor = pnlRaw !== null ? (pnlRaw>=0?'var(--green)':'var(--red)') : 'var(--muted)';
+      return `<div class="pos-row">
+        <div class="pos-row-sym">
+          <span class="pos-sym">${p.symbol}</span>
+          <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
+          <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
         </div>
-        <div class="pos-progress"><div class="pos-progress-fill" style="width:${prog}%;background:${parseFloat(pnlPips||0)>=0?'var(--green)':'var(--red)'}"></div></div>
-        <div class="pos-levels">
-          <span style="color:var(--red)">SL ${p.stop_loss}</span>
-          <span>Entry ${p.entry_price}</span>
-          <span style="color:var(--green)">TP ${p.tp1}</span>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${p.entry_price}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Live</span><span class="pos-row-val">${lp||'—'}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">P&amp;L</span><span class="pos-row-val" style="color:${pnlColor}">${pnlRaw!==null&&pnlRaw>=0?'+':''}${pnlPips} pips</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">SL / TP</span><span class="pos-row-val"><span style="color:var(--red)">${p.stop_loss}</span> / <span style="color:var(--green)">${p.tp1}</span></span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Opened</span><span class="pos-row-val" style="color:var(--muted)">${fmtDt(p.opened_at)}</span></div>
+        <div class="pos-row-cell pos-row-actions">
+          <button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="closePositionManual('${p.id}','${p.symbol}','${p.direction}')">Close</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">${p.pattern||''} · ${p.confidence||'—'}% conf · opened ${new Date(p.opened_at).toLocaleString()}</div>
       </div>`;
     }).join('');
-    openEl.innerHTML = `<div class="pos-grid">${pendCards+openCards}</div>`;
+    openEl.innerHTML = `<div class="pos-list">${pendRows+openRows}</div>`;
   }
 
-  // Closed positions
+  // Closed positions list
   const closedEl = document.getElementById('closedPositions');
   if(!closed.length){
     closedEl.innerHTML='<div style="color:var(--muted);font-size:13px">No closed positions yet.</div>';
   } else {
-    closedEl.innerHTML=`<div class="pos-grid">${closed.map(p=>{
+    closedEl.innerHTML=`<div class="pos-list">${closed.map(p=>{
       const isLong=p.direction==='LONG';
       const win=p.close_reason==='tp1';
+      const manual=p.close_reason==='manual';
       const pips=p.pnl_pips||0;
-      return `<div class="pos-card pos-closed">
-        <div class="pos-card-top">
-          <div>
-            <span class="pos-sym" style="opacity:.7">${p.symbol}</span>
-            <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
-            <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:18px;font-weight:700;color:${pips>=0?'var(--green)':'var(--red)'}">${pips>=0?'+':''}${pips.toFixed(1)} pips</div>
-            <div style="font-size:11px;font-weight:600;color:${win?'var(--green)':'var(--red)'}">${win?'✓ Target hit':'✗ Stopped out'}</div>
-          </div>
+      return `<div class="pos-row pos-row-closed">
+        <div class="pos-row-sym">
+          <span class="pos-sym" style="opacity:.75">${p.symbol}</span>
+          <span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span>
+          <span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span>
         </div>
-        <div class="pos-levels">
-          <span>Entry ${p.entry_price}</span>
-          <span>Close ${p.close_price}</span>
-          <span style="color:var(--muted);font-size:11px">${new Date(p.closed_at).toLocaleDateString()}</span>
-        </div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${p.entry_price}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Close</span><span class="pos-row-val">${p.close_price||'—'}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">P&amp;L</span><span class="pos-row-val" style="color:${pips>=0?'var(--green)':'var(--red)'}">${pips>=0?'+':''}${pips.toFixed(1)} pips</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Result</span><span class="pos-row-val" style="color:${win?'var(--green)':manual?'var(--muted)':'var(--red)'}">${win?'Target hit':manual?'Closed manually':'Stopped out'}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Date</span><span class="pos-row-val" style="color:var(--muted)">${fmtDate(p.closed_at)}</span></div>
       </div>`;
     }).join('')}</div>`;
   }
@@ -4493,10 +4504,18 @@ let paperTrading = localStorage.getItem('paper_trading') !== 'false';
 
 async function createPendingEntry(sig, tf, mode='paper'){
   tf = tf || sigTf;
+  if(sbUser?.id){
+    const {data:dup} = await sb.from('pending_entries').select('id')
+      .eq('user_id',sbUser.id).eq('symbol',sig.symbol).eq('status','pending').maybeSingle();
+    if(dup){ showToast(`${sig.symbol} already has a pending paper trade — check Positions`, 'ti'); return; }
+    const {data:open} = await sb.from('open_positions').select('id')
+      .eq('user_id',sbUser.id).eq('symbol',sig.symbol).eq('status','open').maybeSingle();
+    if(open){ showToast(`${sig.symbol} is already in an open position`, 'ti'); return; }
+  }
   const tfExpiry = { '1day':3, '4h':0.5, '1week':7 };
   const days = tfExpiry[tf] ?? 1;
   const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
-  await sb.from('pending_entries').insert({
+  const {error} = await sb.from('pending_entries').insert({
     user_id: sbUser?.id ?? null,
     symbol:sig.symbol, timeframe:tf, direction:sig.dir,
     entry_price:sig.entry, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
@@ -4504,6 +4523,32 @@ async function createPendingEntry(sig, tf, mode='paper'){
     inst_mult:sig.mult, inst_dec:sig.dec, inst_unit:sig.unit, inst_type:sig.type,
     mode, expires_at:expiresAt,
   });
+  if(error){ showToast(`Error queuing trade: ${error.message}`, 'tl'); return; }
+  showToast(`Paper trade queued — ${sig.symbol} ${sig.dir} waiting entry at ${sig.entry}`, 'tw');
+  nav('positions');
+}
+
+async function cancelPending(id){
+  if(!confirm('Cancel this pending paper trade?')) return;
+  await sb.from('pending_entries').delete().eq('id',id);
+  showToast('Pending trade cancelled', 'ti');
+  loadPositions();
+}
+
+async function closePositionManual(id, symbol, direction){
+  if(!confirm(`Manually close ${symbol} ${direction}? P&L will be recorded at the current live price.`)) return;
+  const lp = livePrices[symbol];
+  if(!lp){ showToast('No live price available — try refreshing prices first', 'tl'); return; }
+  const {data:pos} = await sb.from('open_positions').select('*').eq('id',id).single();
+  if(!pos) return;
+  const isLong = pos.direction==='LONG';
+  const pnlPips = parseFloat(((isLong?lp-pos.entry_price:pos.entry_price-lp)*pos.inst_mult).toFixed(1));
+  await sb.from('open_positions').update({
+    status:'closed', close_reason:'manual', close_price:lp, pnl_pips:pnlPips,
+    closed_at: new Date().toISOString(),
+  }).eq('id',id);
+  showToast(`${symbol} closed manually — ${pnlPips>=0?'+':''}${pnlPips} pips`, pnlPips>=0?'tw':'tl');
+  loadPositions();
 }
 
 function updateSigStatusBar(scannedAt){
