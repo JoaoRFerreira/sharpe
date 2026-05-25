@@ -4445,13 +4445,20 @@ async function pollPaperPrices(symbols){
         if(d.price) livePrices[sym]=parseFloat(d.price);
       }catch{}
     }),
-    otherSyms.length&&sigApiKey ? (async()=>{
-      try{
-        const url=`https://api.twelvedata.com/price?symbol=${otherSyms.map(encodeURIComponent).join(',')}&apikey=${sigApiKey}`;
-        const d=await fetch(url).then(r=>r.json());
-        if(otherSyms.length===1){ if(d.price) livePrices[otherSyms[0]]=parseFloat(d.price); }
-        else{ for(const s of otherSyms) if(d[s]?.price) livePrices[s]=parseFloat(d[s].price); }
-      }catch{}
+    otherSyms.length ? (async()=>{
+      if(sigApiKey){
+        try{
+          const url=`https://api.twelvedata.com/price?symbol=${otherSyms.map(encodeURIComponent).join(',')}&apikey=${sigApiKey}`;
+          const d=await fetch(url).then(r=>r.json());
+          if(otherSyms.length===1){ if(d.price) livePrices[otherSyms[0]]=parseFloat(d.price); }
+          else{ for(const s of otherSyms) if(d[s]?.price) livePrices[s]=parseFloat(d[s].price); }
+        }catch{}
+      } else {
+        try{
+          const {data}=await sb.from('live_prices').select('symbol,price').in('symbol',otherSyms);
+          if(data) data.forEach(r=>{ livePrices[r.symbol]=parseFloat(r.price); });
+        }catch{}
+      }
     })() : Promise.resolve(),
   ]);
 }
