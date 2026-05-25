@@ -4431,7 +4431,16 @@ async function loadPositions(){
     sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(_closedPageSize),
     sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
   ]);
-  renderPositions(openRes.data||[], closedRes.data||[], pendRes.data||[]);
+  const open = openRes.data||[], closed = closedRes.data||[], pending = pendRes.data||[];
+
+  // Fetch live prices from Supabase for all symbols in open positions
+  const symbols = [...new Set(open.map(p=>p.symbol))];
+  if(symbols.length){
+    const {data:prices} = await sb.from('live_prices').select('symbol,price').in('symbol',symbols);
+    if(prices) prices.forEach(r=>{ livePrices[r.symbol]=parseFloat(r.price); });
+  }
+
+  renderPositions(open, closed, pending);
 }
 
 function renderPositions(open, closed, pending){
@@ -4583,9 +4592,19 @@ function stopPaperMonitor(){
 async function _runPaperMonitor(){
   if(!sbUser?.id) return;
 
-  // ── Fill pending entries ──────────────────────────────────────
+  // ── Fill livePrices from Supabase if not yet populated ───────
   const {data: pending} = await sb.from('pending_entries')
     .select('*').eq('user_id', sbUser.id).eq('status','pending');
+  const {data: openCheck} = await sb.from('open_positions')
+    .select('symbol').eq('user_id', sbUser.id).eq('status','open');
+  const needSymbols = [...new Set([
+    ...(pending||[]).map(e=>e.symbol),
+    ...(openCheck||[]).map(p=>p.symbol),
+  ])];
+  if(needSymbols.length){
+    const {data:prices} = await sb.from('live_prices').select('symbol,price').in('symbol',needSymbols);
+    if(prices) prices.forEach(r=>{ livePrices[r.symbol]=parseFloat(r.price); });
+  }
 
   const now = new Date();
   for(const e of pending||[]){
