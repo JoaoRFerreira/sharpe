@@ -3407,6 +3407,9 @@ function renderLivePositions(){
   grid.innerHTML=cards.join('');
 }
 
+function showPaperPopup(){ document.getElementById('ptPopup').classList.add('open'); }
+function closePaperPopup(){ document.getElementById('ptPopup').classList.remove('open'); }
+
 function showToast(msg, cls='ti'){
   const wrap=document.getElementById('toastWrap');
   if(!wrap) return;
@@ -3923,7 +3926,7 @@ function sigCard(s, isDemo, status='valid'){
       <button class="btn btn-ghost" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Journal</button>
       <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Simulator</button>
     </div>
-    ${!isDemo?`<div class="sig-paper-hint">Paper Trade queues an order at the entry price. The price monitor opens it when the zone is reached and closes it automatically at SL or TP. Track results in <a href="#" onclick="nav('positions');return false">Positions</a>.</div>`:''}
+    ${!isDemo?`<span class="sig-paper-link" onclick="showPaperPopup()">Learn more about Paper Trading →</span>`:''}
   </div>`;
 }
 
@@ -4239,7 +4242,7 @@ async function processAutoActions(results, isDemo=false){
     }
     // Paper trading: silently create pending entry when auto-log is on + market allowed
     if(!isDemo && paperTrading && autoLog && sig.conf>=autoLogConf && !alreadyLogged && mktAllowed){
-      createPendingEntry(sig, sigTf, 'paper', true).catch(()=>{});
+      await createPendingEntry(sig, sigTf, 'paper', true);
     }
     if(!isDemo&&autoExecute&&!alreadyLogged){
       const isCrypto = sig.type==='Crypto';
@@ -4500,7 +4503,7 @@ function renderPositions(open, closed, pending){
         </div>
         <div class="pos-progress"><div class="pos-progress-fill" style="width:${prog}%;background:${parseFloat(pnlPips||0)>=0?'var(--green)':'var(--red)'}"></div></div>
         <div class="pos-levels"><span style="color:var(--red)">SL ${p.stop_loss}</span><span>Entry ${p.entry_price}</span><span style="color:var(--green)">TP ${p.tp1}</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px">${p.pattern||''} · opened ${fmtDt(p.opened_at)}</div>
+        ${p.pattern?`<div style="font-size:11px;color:var(--muted);margin-top:6px"><strong style="color:var(--text)">${p.pattern}</strong> · ${p.confidence||'—'}% confidence · opened ${fmtDt(p.opened_at)}</div>`:''}
         <div class="pos-card-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="closePositionManual('${p.id}','${p.symbol}','${p.direction}')">Close</button></div>
       </div>`;
     }).join('')}</div>`;
@@ -4517,6 +4520,7 @@ function renderPositions(open, closed, pending){
         <div class="pos-row-cell"><span class="pos-row-lbl">P&amp;L</span><span class="pos-row-val" style="color:${pnlColor}">${pnlRaw!==null&&pnlRaw>=0?'+':''}${pnlPips} pips</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">SL / TP</span><span class="pos-row-val"><span style="color:var(--red)">${p.stop_loss}</span> / <span style="color:var(--green)">${p.tp1}</span></span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Opened</span><span class="pos-row-val" style="color:var(--muted)">${fmtDt(p.opened_at)}</span></div>
+        ${p.pattern?`<div class="pos-row-cell" style="min-width:120px"><span class="pos-row-lbl">Signal</span><span class="pos-row-val" style="font-size:12px">${p.pattern}${p.confidence?' · '+p.confidence+'%':''}</span></div>`:''}
         <div class="pos-row-cell pos-row-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="closePositionManual('${p.id}','${p.symbol}','${p.direction}')">Close</button></div>
       </div>`;
     }).join('')}</div>`;
@@ -7126,6 +7130,20 @@ if ('serviceWorker' in navigator) {
 </footer>
 <!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Paper Trade info popup -->
+<div class="pt-popup-backdrop" id="ptPopup" onclick="if(event.target===this)closePaperPopup()">
+  <div class="pt-popup">
+    <div class="pt-popup-hdr">
+      <span class="pt-popup-title">How Paper Trading works</span>
+      <button class="pt-popup-close" onclick="closePaperPopup()">×</button>
+    </div>
+    <div class="pt-popup-step"><span class="pt-popup-num">1</span><span>Click <strong>Paper Trade</strong> on any signal. The order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit — no real money involved.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">2</span><span>The price monitor checks live prices every 15 minutes. When the market reaches the entry zone, the order automatically moves to <em>Open</em> — no action required from you.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close it manually at any time from the Positions page.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. Use paper trading to validate a strategy before committing real capital.</span></div>
+  </div>
+</div>
 
 <script>
 // ==================== PRACTICE MODULE ====================
