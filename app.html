@@ -1296,7 +1296,15 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           Scanner Run Log
         </span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadScanLog()">↻ Refresh</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select class="pos-page-sel" onchange="_scanLogLimit=+this.value;loadScanLog()">
+            <option value="15">15 rows</option>
+            <option value="25" selected>25 rows</option>
+            <option value="50">50 rows</option>
+            <option value="100">100 rows</option>
+          </select>
+          <button class="btn btn-ghost" style="font-size:11px;padding:3px 10px" onclick="loadScanLog()">↻ Refresh</button>
+        </div>
       </div>
       <div id="scanLogTable" style="font-size:12px;color:var(--muted)">Loading…</div>
     </div>
@@ -6038,10 +6046,11 @@ async function loadApiUsage(){
   `;
 }
 
+let _scanLogLimit = 25;
 async function loadScanLog(){
   const el=document.getElementById('scanLogTable'); if(!el) return;
   el.textContent='Loading…';
-  const {data,error}=await sb.from('scan_log').select('*').order('ran_at',{ascending:false}).limit(40);
+  const {data,error}=await sb.from('scan_log').select('*').order('ran_at',{ascending:false}).limit(_scanLogLimit);
   if(error||!data?.length){
     el.textContent=error?`Error: ${error.message}`:'No runs recorded yet. Trigger a scan to see logs here.';
     return;
