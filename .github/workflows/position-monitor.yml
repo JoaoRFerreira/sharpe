@@ -1,0 +1,25 @@
+name: Position Monitor — Fill pending + close SL/TP
+
+on:
+  schedule:
+    # Every minute — fills pending entries when price enters zone, closes at SL/TP
+    - cron: '* * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    name: Process pending entries and open positions
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Invoke price-monitor edge function
+        run: |
+          STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPA_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "${{ secrets.SUPA_URL }}/functions/v1/price-monitor")
+          echo "HTTP $STATUS"
+          cat /tmp/response.json
+          [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]

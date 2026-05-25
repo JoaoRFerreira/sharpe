@@ -530,7 +530,7 @@
     <div class="pos-explainer-title">How Paper Trading works</div>
     <div class="pos-explainer-steps">
       <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any signal — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>The price monitor runs every 15 minutes. When the live price reaches the entry zone, the order moves to <em>Open</em> — no action required from you.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>When the app is open, prices are monitored every <strong>30 seconds</strong>. When you close the app, the server checks every <strong>1 minute</strong>. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
       <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close any open position manually at the current live price.</span></div>
       <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. No real money is ever involved.</span></div>
     </div>
@@ -3188,9 +3188,9 @@ function getInst(symbol){
 
 function startPricing(){
   if(priceInterval) return;
-  renderLivePositions(); // show cards immediately with loading state
+  renderLivePositions();
   pollPrices();
-  priceInterval = setInterval(pollPrices, 300000);
+  priceInterval = setInterval(pollPrices, 60000);
 }
 function stopPricing(){
   if(priceInterval){ clearInterval(priceInterval); priceInterval=null; }
@@ -4563,6 +4563,92 @@ function setPosView(mode){
   loadPositions();
 }
 
+// ── Browser-side paper trade monitor ─────────────────────────────
+// Runs every 30 s when app is open; fills pending entries and closes
+// positions on SL/TP using live prices already in memory.
+// GitHub Actions calls price-monitor every 1 min as a server-side backup.
+let _paperMonitorInterval = null;
+
+function startPaperMonitor(){
+  if(_paperMonitorInterval || !sbUser) return;
+  _runPaperMonitor();
+  _paperMonitorInterval = setInterval(_runPaperMonitor, 30000);
+  if(!priceInterval) startPricing();
+}
+
+function stopPaperMonitor(){
+  if(_paperMonitorInterval){ clearInterval(_paperMonitorInterval); _paperMonitorInterval=null; }
+}
+
+async function _runPaperMonitor(){
+  if(!sbUser?.id) return;
+
+  // ── Fill pending entries ──────────────────────────────────────
+  const {data: pending} = await sb.from('pending_entries')
+    .select('*').eq('user_id', sbUser.id).eq('status','pending');
+
+  const now = new Date();
+  for(const e of pending||[]){
+    const lp = livePrices[e.symbol];
+
+    // Expire stale entries
+    if(new Date(e.expires_at) < now){
+      await sb.from('pending_entries').update({status:'expired'}).eq('id',e.id);
+      continue;
+    }
+
+    if(!lp) continue;
+
+    // Same fill zone logic as price-monitor edge function
+    const atr    = (e.atr_pips||0) / (e.inst_mult||1);
+    const isLong = e.direction === 'LONG';
+    const inZone = isLong ? lp <= e.entry_price + atr*0.25 : lp >= e.entry_price - atr*0.25;
+    if(!inZone) continue;
+
+    const {error} = await sb.from('open_positions').insert({
+      user_id:e.user_id, entry_id:e.id, symbol:e.symbol, timeframe:e.timeframe,
+      direction:e.direction, entry_price:lp, stop_loss:e.stop_loss, tp1:e.tp1, tp2:e.tp2,
+      confidence:e.confidence, pattern:e.pattern, inst_mult:e.inst_mult, inst_dec:e.inst_dec,
+      inst_unit:e.inst_unit, inst_type:e.inst_type, mode:e.mode,
+    });
+    if(!error){
+      await sb.from('pending_entries').update({status:'filled'}).eq('id',e.id);
+      showToast(`${e.symbol} ${e.direction} — entry triggered at ${lp.toFixed(e.inst_dec||5)}`, 'tw');
+    }
+  }
+
+  // ── Close open positions on SL / TP ──────────────────────────
+  const {data: open} = await sb.from('open_positions')
+    .select('*').eq('user_id', sbUser.id).eq('status','open');
+
+  let anyChanged = false;
+  for(const pos of open||[]){
+    const lp = livePrices[pos.symbol];
+    if(!lp) continue;
+
+    const isLong = pos.direction === 'LONG';
+    const hitSL  = isLong ? lp <= pos.stop_loss : lp >= pos.stop_loss;
+    const hitTP  = isLong ? lp >= pos.tp1       : lp <= pos.tp1;
+    if(!hitSL && !hitTP) continue;
+
+    const reason   = hitTP ? 'tp1' : 'stop';
+    const pnlPips  = parseFloat(((isLong ? lp-pos.entry_price : pos.entry_price-lp)*pos.inst_mult).toFixed(1));
+
+    await sb.from('open_positions').update({
+      status:'closed', close_reason:reason, close_price:lp,
+      pnl_pips:pnlPips, closed_at:new Date().toISOString(),
+    }).eq('id',pos.id);
+
+    showToast(
+      `${pos.symbol} ${pos.direction} — ${hitTP?'Target hit ✓':'Stopped out ✗'} · ${pnlPips>=0?'+':''}${pnlPips} ${pos.inst_unit||'pips'}`,
+      hitTP ? 'tw' : 'tl'
+    );
+    anyChanged = true;
+  }
+
+  if(anyChanged || (pending||[]).some(e=>livePrices[e.symbol])) loadPositions();
+}
+
 // ── Create pending entry when signal fires ───────────────────────
 let paperTrading = localStorage.getItem('paper_trading') !== 'false';
 
@@ -5508,6 +5594,7 @@ sb.auth.onAuthStateChange((event, session) => {
         const initId = location.hash.slice(1);
         nav(VALID_SECTIONS.has(initId) ? initId : 'dashboard', null);
         maybeShowOnboarding();
+        startPaperMonitor();
       }, 0);
     }
   } else {
@@ -5515,6 +5602,7 @@ sb.auth.onAuthStateChange((event, session) => {
     showAdminNav();
     updateAuthUI();
     stopRealtimeSubs();
+    stopPaperMonitor();
     if(event === 'SIGNED_OUT') { window.location.href = 'index.html'; return; }
     // Not logged in — show gate overlay instead of redirecting (prevents loops)
     if(event === 'INITIAL_SESSION') showAuthGate();
@@ -7139,7 +7227,7 @@ if ('serviceWorker' in navigator) {
       <button class="pt-popup-close" onclick="closePaperPopup()">×</button>
     </div>
     <div class="pt-popup-step"><span class="pt-popup-num">1</span><span>Click <strong>Paper Trade</strong> on any signal. The order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit — no real money involved.</span></div>
-    <div class="pt-popup-step"><span class="pt-popup-num">2</span><span>The price monitor checks live prices every 15 minutes. When the market reaches the entry zone, the order automatically moves to <em>Open</em> — no action required from you.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">2</span><span>When the app is open, prices are checked every <strong>30 seconds</strong> in real time. When you close the app, the server-side monitor checks every <strong>1 minute</strong>. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
     <div class="pt-popup-step"><span class="pt-popup-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close it manually at any time from the Positions page.</span></div>
     <div class="pt-popup-step"><span class="pt-popup-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. Use paper trading to validate a strategy before committing real capital.</span></div>
   </div>
