@@ -4467,6 +4467,7 @@ function renderPositions(open, closed, pending){
   const vm      = localStorage.getItem('pos_view') || 'list';
   const fmtDate = d => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
   const fmtDt   = d => new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  const fmtP    = (v, dec) => v != null ? parseFloat(v).toFixed(dec||5) : '—';
 
   // ── Pending ──────────────────────────────────────────────────────
   const pendEl = document.getElementById('pendingPositions');
@@ -4477,18 +4478,18 @@ function renderPositions(open, closed, pending){
       <div class="pos-card pos-pending">
         <div class="pos-card-top">
           <div><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
-          <div style="font-size:11px;color:var(--muted);text-align:right">Waiting entry<br>${e.entry_price}</div>
+          <div style="font-size:11px;color:var(--muted);text-align:right">Waiting entry<br>${fmtP(e.entry_price,e.inst_dec)}</div>
         </div>
-        <div class="pos-levels"><span>SL <strong>${e.stop_loss}</strong></span><span>TP <strong>${e.tp1}</strong></span><span>Exp. ${fmtDate(e.expires_at)}</span></div>
+        <div class="pos-levels"><span>SL <strong>${fmtP(e.stop_loss,e.inst_dec)}</strong></span><span>TP <strong>${fmtP(e.tp1,e.inst_dec)}</strong></span><span>Exp. ${fmtDate(e.expires_at)}</span></div>
         <div class="pos-card-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
       </div>`).join('')}</div>`;
   } else {
     pendEl.innerHTML=`<div class="pos-list">${pending.map(e=>`
       <div class="pos-row pos-row-pending">
         <div class="pos-row-sym"><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${e.entry_price}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Stop Loss</span><span class="pos-row-val" style="color:var(--red)">${e.stop_loss}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Take Profit</span><span class="pos-row-val" style="color:var(--green)">${e.tp1}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${fmtP(e.entry_price,e.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Stop Loss</span><span class="pos-row-val" style="color:var(--red)">${fmtP(e.stop_loss,e.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Take Profit</span><span class="pos-row-val" style="color:var(--green)">${fmtP(e.tp1,e.inst_dec)}</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Expires</span><span class="pos-row-val" style="color:var(--muted)">${fmtDate(e.expires_at)}</span></div>
         <div class="pos-row-cell pos-row-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
       </div>`).join('')}</div>`;
@@ -4508,10 +4509,10 @@ function renderPositions(open, closed, pending){
       return `<div class="pos-card">
         <div class="pos-card-top">
           <div><span class="pos-sym">${p.symbol}</span><span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span><span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span></div>
-          <div style="text-align:right"><div style="font-size:17px;font-weight:700;color:${pnlColor}">${pnlRaw!==null&&pnlRaw>=0?'+':''}${pnlPips} pips</div><div style="font-size:11px;color:var(--muted)">Live: ${lp||'—'}</div></div>
+          <div style="text-align:right"><div style="font-size:17px;font-weight:700;color:${pnlColor}">${pnlRaw!==null&&pnlRaw>=0?'+':''}${pnlPips} pips</div><div style="font-size:11px;color:var(--muted)">Live: ${lp?fmtP(lp,p.inst_dec):'—'}</div></div>
         </div>
         <div class="pos-progress"><div class="pos-progress-fill" style="width:${prog}%;background:${parseFloat(pnlPips||0)>=0?'var(--green)':'var(--red)'}"></div></div>
-        <div class="pos-levels"><span style="color:var(--red)">SL ${p.stop_loss}</span><span>Entry ${p.entry_price}</span><span style="color:var(--green)">TP ${p.tp1}</span></div>
+        <div class="pos-levels"><span style="color:var(--red)">SL ${fmtP(p.stop_loss,p.inst_dec)}</span><span>Entry ${fmtP(p.entry_price,p.inst_dec)}</span><span style="color:var(--green)">TP ${fmtP(p.tp1,p.inst_dec)}</span></div>
         ${p.pattern?`<div style="font-size:11px;color:var(--muted);margin-top:6px"><strong style="color:var(--text)">${p.pattern}</strong> · ${p.confidence||'—'}% confidence · opened ${fmtDt(p.opened_at)}</div>`:''}
         <div class="pos-card-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="closePositionManual('${p.id}','${p.symbol}','${p.direction}')">Close</button></div>
       </div>`;
@@ -4524,10 +4525,10 @@ function renderPositions(open, closed, pending){
       const pnlColor=pnlRaw!==null?(pnlRaw>=0?'var(--green)':'var(--red)'):'var(--muted)';
       return `<div class="pos-row">
         <div class="pos-row-sym"><span class="pos-sym">${p.symbol}</span><span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span><span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${p.entry_price}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Live</span><span class="pos-row-val">${lp||'—'}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${fmtP(p.entry_price,p.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Live</span><span class="pos-row-val">${lp?fmtP(lp,p.inst_dec):'—'}</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">P&amp;L</span><span class="pos-row-val" style="color:${pnlColor}">${pnlRaw!==null&&pnlRaw>=0?'+':''}${pnlPips} pips</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">SL / TP</span><span class="pos-row-val"><span style="color:var(--red)">${p.stop_loss}</span> / <span style="color:var(--green)">${p.tp1}</span></span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">SL / TP</span><span class="pos-row-val"><span style="color:var(--red)">${fmtP(p.stop_loss,p.inst_dec)}</span> / <span style="color:var(--green)">${fmtP(p.tp1,p.inst_dec)}</span></span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Opened</span><span class="pos-row-val" style="color:var(--muted)">${fmtDt(p.opened_at)}</span></div>
         ${p.pattern?`<div class="pos-row-cell" style="min-width:120px"><span class="pos-row-lbl">Signal</span><span class="pos-row-val" style="font-size:12px">${p.pattern}${p.confidence?' · '+p.confidence+'%':''}</span></div>`:''}
         <div class="pos-row-cell pos-row-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="closePositionManual('${p.id}','${p.symbol}','${p.direction}')">Close</button></div>
@@ -4547,7 +4548,7 @@ function renderPositions(open, closed, pending){
           <div><span class="pos-sym" style="opacity:.75">${p.symbol}</span><span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span><span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span></div>
           <div style="text-align:right"><div style="font-size:17px;font-weight:700;color:${pips>=0?'var(--green)':'var(--red)'}">${pips>=0?'+':''}${pips.toFixed(1)} pips</div><div style="font-size:11px;font-weight:600;color:${win?'var(--green)':manual?'var(--muted)':'var(--red)'}">${win?'✓ Target hit':manual?'Manual close':'✗ Stopped'}</div></div>
         </div>
-        <div class="pos-levels"><span>Entry ${p.entry_price}</span><span>Close ${p.close_price||'—'}</span><span>${fmtDate(p.closed_at)}</span></div>
+        <div class="pos-levels"><span>Entry ${fmtP(p.entry_price,p.inst_dec)}</span><span>Close ${p.close_price?fmtP(p.close_price,p.inst_dec):'—'}</span><span>${fmtDate(p.closed_at)}</span></div>
       </div>`;
     }).join('')}</div>`;
   } else {
@@ -4555,8 +4556,8 @@ function renderPositions(open, closed, pending){
       const isLong=p.direction==='LONG', win=p.close_reason==='tp1', manual=p.close_reason==='manual', pips=p.pnl_pips||0;
       return `<div class="pos-row pos-row-closed">
         <div class="pos-row-sym"><span class="pos-sym" style="opacity:.75">${p.symbol}</span><span class="pos-mode ${p.mode}">${p.mode.toUpperCase()}</span><span class="badge ${isLong?'badge-long':'badge-short'}">${p.direction}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${p.entry_price}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Close</span><span class="pos-row-val">${p.close_price||'—'}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${fmtP(p.entry_price,p.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Close</span><span class="pos-row-val">${p.close_price?fmtP(p.close_price,p.inst_dec):'—'}</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">P&amp;L</span><span class="pos-row-val" style="color:${pips>=0?'var(--green)':'var(--red)'}">${pips>=0?'+':''}${pips.toFixed(1)} pips</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Result</span><span class="pos-row-val" style="color:${win?'var(--green)':manual?'var(--muted)':'var(--red)'}">${win?'Target hit':manual?'Manual close':'Stopped out'}</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Date</span><span class="pos-row-val" style="color:var(--muted)">${fmtDate(p.closed_at)}</span></div>
