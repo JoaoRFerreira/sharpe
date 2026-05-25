@@ -219,8 +219,72 @@
     </div>
   </div>
 
-  <!-- AUTOMATED PIPELINE -->
+  <!-- LEARN & PRACTICE -->
   <div class="lp-sec-dark">
+    <div class="lp-sec">
+      <div class="lp-sec-hdr">
+        <div class="lp-tag">Learn &amp; Practice</div>
+        <h2>Don't just trade signals — understand them.</h2>
+        <p>Most traders copy setups without knowing why they work. Sharpe teaches you the patterns behind every signal, then tests you on them until recognition becomes instinct.</p>
+      </div>
+      <div class="lp-learn-layout">
+        <!-- Left: learn -->
+        <div class="lp-learn-side">
+          <div class="lp-learn-badge">📚 Learning Center — Free</div>
+          <h3 class="lp-learn-title">80+ pattern cards across 9 categories</h3>
+          <p class="lp-learn-desc">From basic candlesticks to institutional methods used by hedge funds — every pattern the scanner detects is explained with a visual example and clear trade rationale.</p>
+          <ul class="lp-learn-list">
+            <li>Chart Patterns · Candlesticks · Harmonics</li>
+            <li>ICT Order Blocks · Fair Value Gaps</li>
+            <li>Turtle Trading · Supply &amp; Demand Zones</li>
+            <li>Risk Management · ETF &amp; Crypto strategies</li>
+          </ul>
+        </div>
+        <!-- Divider -->
+        <div class="lp-learn-divider"></div>
+        <!-- Right: practice -->
+        <div class="lp-learn-side">
+          <div class="lp-learn-badge lp-learn-badge-ess">🎯 Pattern Practice — Trader+</div>
+          <h3 class="lp-learn-title">Interactive training that builds real skill</h3>
+          <p class="lp-learn-desc">20 curated chart scenarios replay bar-by-bar on a live canvas. When the chart pauses, you identify the pattern. Every answer — right or wrong — comes with a full explanation.</p>
+          <div class="lp-prac-features">
+            <div class="lp-prac-feat">
+              <div class="lp-prac-feat-icon">⌨</div>
+              <div><strong>Keyboard shortcuts</strong><br><span>Press A / B / C / D to answer instantly</span></div>
+            </div>
+            <div class="lp-prac-feat">
+              <div class="lp-prac-feat-icon">🏆</div>
+              <div><strong>11 achievement badges</strong><br><span>From First Blood to Perfect Session</span></div>
+            </div>
+            <div class="lp-prac-feat">
+              <div class="lp-prac-feat-icon">📊</div>
+              <div><strong>Practice leaderboard</strong><br><span>Rank against other traders by score &amp; accuracy</span></div>
+            </div>
+            <div class="lp-prac-feat">
+              <div class="lp-prac-feat-icon">📈</div>
+              <div><strong>Real chart rendering</strong><br><span>Y-axis labels, volume bars, key level lines</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Pattern preview strip -->
+      <div class="lp-pattern-strip">
+        <div class="lp-pattern-pill">🕯 Bullish Engulfing</div>
+        <div class="lp-pattern-pill">🕯 Hammer</div>
+        <div class="lp-pattern-pill">🕯 Morning Star</div>
+        <div class="lp-pattern-pill">📈 Head &amp; Shoulders</div>
+        <div class="lp-pattern-pill">📈 Bull Flag</div>
+        <div class="lp-pattern-pill">📈 Double Top</div>
+        <div class="lp-pattern-pill">🏛 ICT Order Block</div>
+        <div class="lp-pattern-pill">🏛 Fair Value Gap</div>
+        <div class="lp-pattern-pill">🐢 Turtle Breakout</div>
+        <div class="lp-pattern-pill">🏛 DBR Demand Zone</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTOMATED PIPELINE -->
+  <div class="lp-sec-dark" style="border-top:1px solid #1e293b">
     <div class="lp-sec">
       <div class="lp-sec-hdr">
         <div class="lp-tag">The Automated Pipeline</div>
@@ -873,9 +937,9 @@
       </div>
       <!-- Billing toggle -->
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:36px">
-        <span id="billMonthLbl" style="font-size:13px;font-weight:700;color:var(--text)">Monthly</span>
+        <span id="billMonthLbl" style="font-size:13px;font-weight:700;color:#f1f5f9">Monthly</span>
         <label class="toggle-sw" style="cursor:pointer" onclick="event.preventDefault();toggleBilling()"><input type="checkbox" id="billToggle" style="display:none"><span class="toggle-sl"></span></label>
-        <span id="billAnnualLbl" style="font-size:13px;color:var(--muted)">Annual <span id="annualSaveBadge" style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
+        <span id="billAnnualLbl" style="font-size:13px;color:#64748b">Annual <span id="annualSaveBadge" style="background:rgba(21,128,61,.2);color:#4ade80;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:3px">SAVE 20%</span></span>
       </div>
       <div class="pricing-page-cards">
         <!-- Starter (Free) -->
@@ -1576,8 +1640,8 @@ function toggleBilling() {
   if (toggle) toggle.checked = billingAnnual;
   const monthLbl  = document.getElementById('billMonthLbl');
   const annualLbl = document.getElementById('billAnnualLbl');
-  if (monthLbl)  { monthLbl.style.color  = billingAnnual ? 'var(--muted)' : 'var(--text)';  monthLbl.style.fontWeight  = billingAnnual ? '400' : '700'; }
-  if (annualLbl) { annualLbl.style.color = billingAnnual ? 'var(--text)'  : 'var(--muted)'; annualLbl.style.fontWeight = billingAnnual ? '700' : '400'; }
+  if (monthLbl)  { monthLbl.style.color  = billingAnnual ? '#64748b' : '#f1f5f9'; monthLbl.style.fontWeight  = billingAnnual ? '400' : '700'; }
+  if (annualLbl) { annualLbl.style.color = billingAnnual ? '#f1f5f9' : '#64748b'; annualLbl.style.fontWeight = billingAnnual ? '700' : '400'; }
   ['free','essential','pro'].forEach(k => {
     const el   = document.getElementById('price-' + k);
     const orig = document.getElementById('price-' + k + '-orig');

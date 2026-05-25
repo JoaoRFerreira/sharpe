@@ -1011,6 +1011,26 @@ textarea{resize:vertical;min-height:56px}
 @media(max-width:900px){.prac-terminal{flex-direction:column}.prac-chart-wrap{border-right:none;border-bottom:1px solid #1a2540}.prac-panel{min-width:0;min-height:300px}}
 @media(max-width:600px){.prac-hud{flex-direction:column;align-items:flex-start}.prac-hud-right{flex-wrap:wrap}.prac-hud-divider{display:none}.prac-hud-stat{padding:0 10px}}
 
+/* ── LANDING LEARN & PRACTICE SECTION ───────────────────────────── */
+.lp-learn-layout{display:flex;gap:0;align-items:stretch;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden;margin-bottom:40px}
+.lp-learn-side{flex:1;padding:36px 40px;display:flex;flex-direction:column}
+.lp-learn-divider{width:1px;background:rgba(255,255,255,.08);flex-shrink:0}
+.lp-learn-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.08);color:#94a3b8;letter-spacing:.3px;margin-bottom:16px;width:fit-content}
+.lp-learn-badge-ess{background:rgba(29,78,216,.25);color:#60a5fa}
+.lp-learn-title{font-size:20px;font-weight:800;color:#f1f5f9;letter-spacing:-.3px;line-height:1.3;margin-bottom:14px}
+.lp-learn-desc{font-size:14px;color:#94a3b8;line-height:1.7;margin-bottom:20px}
+.lp-learn-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin:0 0 0 0}
+.lp-learn-list li{font-size:13px;color:#64748b;padding-left:16px;position:relative;line-height:1.5}
+.lp-learn-list li::before{content:'→';position:absolute;left:0;color:#3b82f6;font-size:11px;top:1px}
+.lp-prac-features{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
+.lp-prac-feat{display:flex;gap:10px;align-items:flex-start}
+.lp-prac-feat-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.lp-prac-feat strong{font-size:12px;color:#e2e8f0;font-weight:700;display:block;margin-bottom:2px}
+.lp-prac-feat span{font-size:11px;color:#64748b;line-height:1.4}
+.lp-pattern-strip{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.lp-pattern-pill{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:6px 16px;font-size:12px;color:#94a3b8;font-weight:500}
+@media(max-width:768px){.lp-learn-layout{flex-direction:column}.lp-learn-divider{width:auto;height:1px}.lp-learn-side{padding:28px 24px}.lp-prac-features{grid-template-columns:1fr}}
+
 /* ── LANDING HAMBURGER MENU ────────────────────────────────────── */
 .lp-ham{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:none;cursor:pointer;padding:4px;margin-left:auto;flex-shrink:0}
 .lp-ham span{display:block;width:22px;height:2px;background:#94a3b8;border-radius:2px;transition:all .25s}
