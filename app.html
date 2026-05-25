@@ -522,7 +522,10 @@
 <section class="section" id="positions">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
     <div class="section-title" style="margin:0">Live Positions</div>
-    <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="posLastUpdated" style="font-size:11px;color:var(--muted)"></span>
+      <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
+    </div>
   </div>
 
   <!-- Paper Trade explainer -->
@@ -1981,6 +1984,7 @@ function nav(id, btn){
   }
   mobNavSync(id);
   if(!_hashNav) history.pushState(null,'','#'+id);
+  if(id!=='positions') stopPosAutoRefresh();
   // Always re-render live/data-driven sections; init static sections once
   if(id==='dashboard') renderDashboard();
   else if(id==='journal') renderJournal();
@@ -4416,11 +4420,57 @@ function initPositions(){
   if(pl) pl.classList.toggle('active',vm==='list');
   if(pg) pg.classList.toggle('active',vm==='grid');
   loadPositions();
+  startPosAutoRefresh();
   // Realtime: re-render when positions change
   sb.channel('positions-watch')
     .on('postgres_changes',{event:'*',schema:'public',table:'open_positions'},()=>loadPositions())
     .on('postgres_changes',{event:'*',schema:'public',table:'pending_entries'},()=>loadPositions())
     .subscribe();
+}
+
+// ── Position price auto-refresh ───────────────────────────────────
+let _posCache = {open:[], closed:[], pending:[]};
+let _posRefreshInterval = null;
+
+// Fetch prices directly from external APIs for the given symbols
+async function pollPaperPrices(symbols){
+  if(!symbols.length) return;
+  const cryptoSyms = symbols.filter(s=>INSTRUMENTS.find(i=>i.symbol===s&&i.bnSymbol));
+  const otherSyms  = symbols.filter(s=>!INSTRUMENTS.find(i=>i.symbol===s&&i.bnSymbol));
+  await Promise.all([
+    ...cryptoSyms.map(async sym=>{
+      const inst=INSTRUMENTS.find(i=>i.symbol===sym); if(!inst?.bnSymbol) return;
+      try{
+        const d=await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${inst.bnSymbol}`).then(r=>r.json());
+        if(d.price) livePrices[sym]=parseFloat(d.price);
+      }catch{}
+    }),
+    otherSyms.length&&sigApiKey ? (async()=>{
+      try{
+        const url=`https://api.twelvedata.com/price?symbol=${otherSyms.map(encodeURIComponent).join(',')}&apikey=${sigApiKey}`;
+        const d=await fetch(url).then(r=>r.json());
+        if(otherSyms.length===1){ if(d.price) livePrices[otherSyms[0]]=parseFloat(d.price); }
+        else{ for(const s of otherSyms) if(d[s]?.price) livePrices[s]=parseFloat(d[s].price); }
+      }catch{}
+    })() : Promise.resolve(),
+  ]);
+}
+
+async function _refreshPosDisplay(){
+  const symbols=[...new Set(_posCache.open.map(p=>p.symbol))];
+  await pollPaperPrices(symbols);
+  renderPositions(_posCache.open, _posCache.closed, _posCache.pending);
+  // Update last-refreshed label
+  const lbl=document.getElementById('posLastUpdated');
+  if(lbl) lbl.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function startPosAutoRefresh(){
+  stopPosAutoRefresh();
+  _posRefreshInterval=setInterval(_refreshPosDisplay, 30000);
+}
+function stopPosAutoRefresh(){
+  if(_posRefreshInterval){ clearInterval(_posRefreshInterval); _posRefreshInterval=null; }
 }
 
 let _closedPageSize = 25;
@@ -4432,15 +4482,21 @@ async function loadPositions(){
     sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
   ]);
   const open = openRes.data||[], closed = closedRes.data||[], pending = pendRes.data||[];
+  _posCache = {open, closed, pending};
 
-  // Fetch live prices from Supabase for all symbols in open positions
+  // First: seed livePrices from Supabase (fast, cached every 15 min)
   const symbols = [...new Set(open.map(p=>p.symbol))];
   if(symbols.length){
     const {data:prices} = await sb.from('live_prices').select('symbol,price').in('symbol',symbols);
     if(prices) prices.forEach(r=>{ livePrices[r.symbol]=parseFloat(r.price); });
   }
 
+  // Then: fetch fresh prices directly from external APIs
+  await pollPaperPrices(symbols);
+
   renderPositions(open, closed, pending);
+  const lbl=document.getElementById('posLastUpdated');
+  if(lbl) lbl.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function renderPositions(open, closed, pending){
