@@ -660,6 +660,31 @@
     </div>
   </div>
 
+  <!-- Telegram Alerts — easiest integration, highest day-1 value -->
+  <div class="cfg-card">
+    <div class="cfg-card-hdr">Telegram Alerts</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Get instant signal alerts and position updates in Telegram — works even when the site is closed. <a href="https://t.me/BotFather" target="_blank" style="color:var(--blue)">Create a bot via @BotFather →</a></div>
+    <div class="oanda-grid">
+      <div class="fg">
+        <label>Bot Token</label>
+        <input type="password" id="tgTokenInput" placeholder="123456789:AAF…">
+      </div>
+      <div class="fg">
+        <label>Chat ID <span style="font-size:10px;color:var(--muted)">(message @userinfobot on Telegram to get yours)</span></label>
+        <input type="text" id="tgChatIdInput" placeholder="e.g. 123456789">
+      </div>
+      <div class="fg" style="display:flex;align-items:flex-end;gap:10px">
+        <button class="btn btn-primary" onclick="saveTelegramSettings()">Connect</button>
+        <button class="btn btn-ghost" onclick="testTelegramConnection()">Send test</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+      <span class="api-dot demo" id="tgDot"></span>
+      <span class="api-lbl" id="tgLbl">Not connected</span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Alerts sent: new signals · position opened · position closed with P&amp;L</div>
+  </div>
+
   <!-- OANDA Integration -->
   <div class="cfg-card" id="oandaCfgCard">
     <div class="cfg-card-hdr">OANDA Integration <span style="font-size:10px;color:var(--muted);font-weight:500;margin-left:6px">Pro plan</span></div>
@@ -726,31 +751,6 @@
       <span class="api-dot demo" id="bnDot"></span>
       <span class="api-lbl" id="bnLbl">Not connected — get free testnet keys at <a href="https://testnet.binance.vision" target="_blank" style="color:var(--blue)">testnet.binance.vision</a></span>
     </div>
-  </div>
-
-  <!-- Telegram Alerts -->
-  <div class="cfg-card">
-    <div class="cfg-card-hdr">Telegram Alerts</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Get instant signal alerts and position updates in Telegram — works even when the site is closed. <a href="https://t.me/BotFather" target="_blank" style="color:var(--blue)">Create a bot via @BotFather →</a></div>
-    <div class="oanda-grid">
-      <div class="fg">
-        <label>Bot Token</label>
-        <input type="password" id="tgTokenInput" placeholder="123456789:AAF…">
-      </div>
-      <div class="fg">
-        <label>Chat ID <span style="font-size:10px;color:var(--muted)">(message @userinfobot on Telegram to get yours)</span></label>
-        <input type="text" id="tgChatIdInput" placeholder="e.g. 123456789">
-      </div>
-      <div class="fg" style="display:flex;align-items:flex-end;gap:10px">
-        <button class="btn btn-primary" onclick="saveTelegramSettings()">Connect</button>
-        <button class="btn btn-ghost" onclick="testTelegramConnection()">Send test</button>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
-      <span class="api-dot demo" id="tgDot"></span>
-      <span class="api-lbl" id="tgLbl">Not connected</span>
-    </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Alerts sent: new signals · position opened · position closed with P&amp;L</div>
   </div>
 
   <!-- Risk Management -->
@@ -1673,7 +1673,8 @@
     <button class="lbtab" onclick="setLbTab('practice',this)">Pattern Practice</button>
   </div>
   <div id="lbTradingView">
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Top traders ranked by net pips on closed paper positions. Opt in from Settings → Leaderboard to appear here.</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Top traders ranked by net pips on closed paper positions. Enable visibility in Settings → Leaderboard to appear here.</div>
+    <div id="lbMyCard" style="display:none;margin-bottom:20px"></div>
     <div id="lbGrid" style="overflow-x:auto"><div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div></div>
   </div>
   <div id="lbPracticeView" style="display:none">
@@ -2149,10 +2150,10 @@ function maybeShowOnboarding(){
   if(!card) return;
   if(localStorage.getItem('sharpe_ob_dismissed')) { card.style.display='none'; return; }
   const steps = [
-    { label:'Add your first trade', done: trades.length > 0 },
-    { label:'Connect a broker via Settings', done: !!localStorage.getItem('sharpe_broker_connected') },
-    { label:'Set your risk rules in Settings', done: !!localStorage.getItem('sharpe_risk_set') },
-    { label:'Explore Auto Signals', done: !!localStorage.getItem('sharpe_signals_viewed') },
+    { label:'Enable auto paper trading — signals open positions hands-off', done: !!localStorage.getItem('auto_paper_enabled') },
+    { label:'Connect Telegram — get alerts when trades open and close', done: !!localStorage.getItem('tg_connected') },
+    { label:'Add your first trade to the journal', done: trades.length > 0 },
+    { label:'Browse the signal scanner', done: !!localStorage.getItem('sharpe_signals_viewed') },
   ];
   const allDone = steps.every(s=>s.done);
   if(allDone){ card.style.display='none'; localStorage.setItem('sharpe_ob_dismissed','1'); return; }
@@ -4846,6 +4847,7 @@ async function saveTelegramSettings(){
     document.getElementById('tgTokenInput').value='';
     const inp=document.getElementById('tgChatIdInput'); if(inp) inp.placeholder=chatId;
     dot.className='api-dot ok'; lbl.textContent=`Connected · @${d.result.username}`;
+    localStorage.setItem('tg_connected','1');
     showToast('Telegram connected','tw');
   } catch(e){ dot.className='api-dot err'; lbl.textContent='Failed: '+e.message; }
 }
@@ -4925,7 +4927,12 @@ async function loadTrackRecord(){
   if(!rows||!rows.length){
     document.getElementById('trTotal').textContent='0';
     ['trWinRate','trAvgRR','trTotalPips','trMaxDD','trPF'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='—'; });
-    document.getElementById('trPatternBreakdown').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">No closed trades yet.</div>';
+    document.getElementById('trPatternBreakdown').innerHTML=`<div style="padding:24px 0;text-align:center;color:var(--muted);font-size:13px">
+      <div style="font-size:28px;margin-bottom:10px">📊</div>
+      <div style="font-weight:600;color:var(--text);margin-bottom:6px">No closed paper trades yet</div>
+      <div style="margin-bottom:16px;max-width:340px;margin-left:auto;margin-right:auto">Paper trades close automatically when price hits your take profit or stop loss. Enable auto paper trading to start building your track record.</div>
+      <button class="btn btn-primary" style="font-size:12px;padding:8px 18px" onclick="nav('settings',null)">Enable Auto Paper Trading</button>
+    </div>`;
     document.getElementById('trInstBreakdown').innerHTML='';
     document.getElementById('trTradeList').innerHTML='';
     return;
@@ -7081,9 +7088,35 @@ async function loadPracticeLeaderboard(){
 async function loadLeaderboard(){
   const grid=document.getElementById('lbGrid'); if(!grid) return;
   grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">Loading…</div>';
+
+  // Show user's own stats card while we wait
+  if(sbUser){
+    const myCard=document.getElementById('lbMyCard');
+    const {data:myPos}=await sb.from('open_positions').select('pnl_pips,close_reason,direction,symbol').eq('user_id',sbUser.id).eq('status','closed');
+    if(myCard&&myPos?.length){
+      const total=myPos.length, wins=myPos.filter(r=>r.close_reason==='tp1').length;
+      const netPips=myPos.reduce((s,r)=>s+(r.pnl_pips||0),0);
+      const winRate=(wins/total*100).toFixed(0);
+      const {data:settings}=await sb.from('user_settings').select('lb_public,lb_display_name').eq('user_id',sbUser.id).maybeSingle();
+      const isPublic=settings?.lb_public;
+      myCard.style.display='';
+      myCard.innerHTML=`<div style="background:linear-gradient(135deg,rgba(37,99,235,.06),rgba(37,99,235,.02));border:1px solid rgba(37,99,235,.18);border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Your paper trading record</div>
+          <div style="display:flex;gap:24px;flex-wrap:wrap">
+            <div><div style="font-size:20px;font-weight:700;color:${netPips>=0?'var(--green)':'var(--red)'}">${netPips>=0?'+':''}${netPips.toFixed(1)} pips</div><div style="font-size:11px;color:var(--muted)">Net P&L</div></div>
+            <div><div style="font-size:20px;font-weight:700">${winRate}%</div><div style="font-size:11px;color:var(--muted)">Win rate</div></div>
+            <div><div style="font-size:20px;font-weight:700">${total}</div><div style="font-size:11px;color:var(--muted)">Closed trades</div></div>
+          </div>
+        </div>
+        ${!isPublic?`<button class="btn btn-primary" style="font-size:12px;padding:8px 18px" onclick="nav('settings',null)">Enable public ranking</button>`:'<span style="font-size:12px;color:var(--green)">✓ Visible on leaderboard</span>'}
+      </div>`;
+    }
+  }
+
   const {data,error}=await sb.from('leaderboard').select('*');
   if(error||!data?.length){
-    grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No traders on the leaderboard yet. Be the first — enable it in Settings.</div>';
+    grid.innerHTML='<div style="color:var(--muted);font-size:13px;padding:20px 0">No traders on the public leaderboard yet. Enable visibility in Settings → Leaderboard to be the first.</div>';
     return;
   }
   const rows=data.map((r,i)=>{
@@ -7185,6 +7218,7 @@ async function saveAutoPaperSettings(){
     auto_paper_trade:    enabled,
     auto_paper_min_conf: conf,
   }, { onConflict: 'user_id' });
+  if(enabled) localStorage.setItem('auto_paper_enabled','1');
   showToast(enabled ? `Auto paper trade ON ≥${conf}%` : 'Auto paper trade OFF', 'tw');
 }
 
