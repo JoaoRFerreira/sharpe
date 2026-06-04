@@ -20,17 +20,28 @@
 <header class="header">
   <div class="logo">Sharpe<span>.</span></div>
   <nav id="appNav">
+    <!-- Group 1: Core workflow -->
     <button onclick="nav('dashboard',this)">Dashboard</button>
-    <button onclick="nav('journal',this)">Journal</button>
     <button onclick="nav('signals',this)">Signals <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Essential</span></button>
     <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
-    <button onclick="nav('trackrecord',this)">Track Record</button>
-    <button onclick="nav('backtest',this)">Backtest</button>
-    <button onclick="nav('leaderboard',this)">Leaderboard</button>
-    <button onclick="nav('ideas',this)">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
-    <button onclick="nav('simulator',this)">Simulator</button>
-    <button onclick="nav('news',this)">News</button>
+    <button onclick="nav('journal',this)">Journal</button>
+    <div class="nav-sep"></div>
+    <!-- Group 2: Analysis -->
+    <button onclick="nav('trackrecord',this)">Performance</button>
     <button onclick="nav('learning',this)">Learning</button>
+    <div class="nav-sep"></div>
+    <!-- More dropdown: secondary sections -->
+    <div class="nav-more">
+      <button class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore()">More <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></button>
+      <div class="nav-more-menu" id="navMoreMenu">
+        <button onclick="nav('backtest',null);closeNavMore()">Backtest</button>
+        <button onclick="nav('leaderboard',null);closeNavMore()">Leaderboard</button>
+        <div class="menu-sep"></div>
+        <button onclick="nav('ideas',null);closeNavMore()">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
+        <button onclick="nav('simulator',null);closeNavMore()">Simulator</button>
+        <button onclick="nav('news',null);closeNavMore()">News</button>
+      </div>
+    </div>
   </nav>
   <div class="auth-area" id="authArea">
     <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="openAuthModal('signin')">Sign In</button>
@@ -1959,6 +1970,45 @@ window.addEventListener('hashchange',()=>{
 });
 function mobNavSync(id){
   document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+  // Highlight drawer buttons too
+  document.querySelectorAll('.mob-drawer-btn').forEach(b=>b.classList.toggle('active',b.dataset.section===id));
+  // Mark "More" btn active if current section lives in the dropdown
+  const moreItems = new Set(['backtest','leaderboard','ideas','simulator','news','learning','trackrecord']);
+  const moreBtn = document.querySelector('.nav-more-btn');
+  if(moreBtn) moreBtn.classList.toggle('open', moreItems.has(id));
+  // Mark dropdown items active
+  document.querySelectorAll('.nav-more-menu button').forEach(b=>{
+    const match = (b.getAttribute('onclick')||'').match(/'([a-z]+)'/);
+    if(match) b.classList.toggle('active', match[1]===id);
+  });
+}
+
+// ── More dropdown ──────────────────────────────────────────────
+function toggleNavMore(){
+  const menu=document.getElementById('navMoreMenu');
+  const btn=document.getElementById('navMoreBtn');
+  if(!menu) return;
+  const open=menu.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  if(open) setTimeout(()=>document.addEventListener('click',closeNavMoreOutside,{once:true}),0);
+}
+function closeNavMore(){
+  const menu=document.getElementById('navMoreMenu');
+  const btn=document.getElementById('navMoreBtn');
+  if(menu){menu.classList.remove('open');} if(btn) btn.classList.remove('open');
+}
+function closeNavMoreOutside(e){
+  if(!e.target.closest('.nav-more')) closeNavMore();
+}
+
+// ── Mobile drawer ──────────────────────────────────────────────
+function openMobDrawer(){
+  document.getElementById('mobDrawerOverlay')?.classList.add('open');
+  document.getElementById('mobDrawer')?.classList.add('open');
+}
+function closeMobDrawer(){
+  document.getElementById('mobDrawerOverlay')?.classList.remove('open');
+  document.getElementById('mobDrawer')?.classList.remove('open');
 }
 function ltab(id, btn){
   document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
@@ -5075,6 +5125,8 @@ function renderPositions(open, closed, pending){
   // Update nav badge
   const badge = document.getElementById('navPosBadge');
   if(badge){ const n=open.length; badge.textContent=n; badge.style.display=n?'inline':'none'; }
+  const mobBadge = document.getElementById('mobPosBadge');
+  if(mobBadge){ const n=open.length; mobBadge.textContent=n; mobBadge.style.display=n?'inline':'none'; }
 
   // Correlation risk — non-blocking, updates div asynchronously
   checkPositionCorrelations(open).then(renderCorrelationWarning).catch(() => renderCorrelationWarning([]));
@@ -8616,30 +8668,73 @@ document.addEventListener('keydown', e => {
 </script>
 
 <!-- Mobile bottom navigation (logged-in only, visible via .visible class on mobile) -->
+<!-- Mobile bottom nav — 5 primary tabs -->
 <nav class="mob-nav" id="mobNav">
   <div class="mob-nav-inner">
     <button class="mob-nav-btn active" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span>Dashboard</span>
-    </button>
-    <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>Journal</span>
+      <span>Home</span>
     </button>
     <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span>Signals</span>
     </button>
-    <button class="mob-nav-btn" data-section="ideas" onclick="nav('ideas',null);mobNavSync('ideas')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span>Ideas</span>
+    <button class="mob-nav-btn" data-section="positions" onclick="nav('positions',null);mobNavSync('positions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      <span>Positions</span>
+      <span class="mob-nav-badge" id="mobPosBadge" style="display:none">0</span>
     </button>
-    <button class="mob-nav-btn" data-section="simulator" onclick="nav('simulator',null);mobNavSync('simulator')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span>Simulator</span>
+    <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Journal</span>
+    </button>
+    <button class="mob-nav-btn" onclick="openMobDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+      <span>More</span>
     </button>
   </div>
 </nav>
+
+<!-- Mobile drawer — secondary sections -->
+<div class="mob-drawer-overlay" id="mobDrawerOverlay" onclick="closeMobDrawer()"></div>
+<div class="mob-drawer" id="mobDrawer">
+  <div class="mob-drawer-handle"></div>
+  <div class="mob-drawer-title">More</div>
+  <div class="mob-drawer-grid">
+    <button class="mob-drawer-btn" data-section="learning" onclick="nav('learning',null);closeMobDrawer();mobNavSync('learning')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      Learning
+    </button>
+    <button class="mob-drawer-btn" data-section="trackrecord" onclick="nav('trackrecord',null);closeMobDrawer();mobNavSync('trackrecord')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Performance
+    </button>
+    <button class="mob-drawer-btn" data-section="backtest" onclick="nav('backtest',null);closeMobDrawer();mobNavSync('backtest')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>
+      Backtest
+    </button>
+    <button class="mob-drawer-btn" data-section="leaderboard" onclick="nav('leaderboard',null);closeMobDrawer();mobNavSync('leaderboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Leaderboard
+    </button>
+    <button class="mob-drawer-btn" data-section="ideas" onclick="nav('ideas',null);closeMobDrawer();mobNavSync('ideas')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+      Ideas
+    </button>
+    <button class="mob-drawer-btn" data-section="simulator" onclick="nav('simulator',null);closeMobDrawer();mobNavSync('simulator')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Simulator
+    </button>
+    <button class="mob-drawer-btn" data-section="news" onclick="nav('news',null);closeMobDrawer();mobNavSync('news')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
+      News
+    </button>
+    <button class="mob-drawer-btn" onclick="nav('settings',null);closeMobDrawer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><circle cx="12" cy="12" r="10"/></svg>
+      Settings
+    </button>
+  </div>
+</div>
 
 <!-- ======================================================================
      TRADE REPLAY / POST-MORTEM MODAL
