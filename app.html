@@ -8548,7 +8548,6 @@ function _pracShowQuestion() {
   document.getElementById('pracOptions').innerHTML = q.options.map((opt, i) =>
     `<button class="prac-opt" onclick="answerPrac(${i})">
       <span class="prac-opt-key">${keys[i]}</span>${opt}
-      <span class="prac-opt-key-hint">${keys[i]}</span>
     </button>`
   ).join('');
   document.getElementById('pracQuestion').style.display = '';
