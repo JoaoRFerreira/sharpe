@@ -1457,66 +1457,148 @@
     </div>
   </div>
   <div class="faq-list" id="faqList">
+
+  <!-- ── Getting Started ─────────────────────────────────────── -->
+  <div class="faq-group-title">Getting Started</div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What is Sharpe?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Sharpe is an automated trading analytics platform for independent traders. It scans 16 Forex and Crypto pairs every 4 hours, generates technical signals, and optionally opens and closes paper trades server-side — even when your browser is closed. It also includes a trade journal, performance dashboard, daily trade ideas, market news, and an educational library.</div>
+      <div class="faq-a">Sharpe is an automated signal scanner and trading analytics platform for independent traders. It scans 16 Forex and Crypto pairs every 4 hours, filters signals with an EMA50 trend gate, and optionally opens and closes paper trades server-side — even when your browser is closed. It also includes a trade journal with AI-powered grades, a Sharpe Score performance metric, backtesting, daily trade ideas, an economic calendar, market news, and an 80+ pattern educational library.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How do Auto Signals work?<span class="faq-chv">+</span></button>
-      <div class="faq-a">A signal scanner runs every 4 hours via GitHub Actions. It analyses price data across 16 instruments — Forex pairs and Crypto — using technical indicators: EMA crossovers, RSI, ATR, candlestick patterns, and key price levels. Each signal includes direction, entry zone, stop loss, two take-profit targets, risk-to-reward ratio, and a confidence score (0–100). Results are stored in the database and appear in your dashboard immediately.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">Is there a free plan? Do I need a credit card?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Yes. The Starter plan is free forever — no credit card required. It includes a trade journal (up to 50 trades), the full learning center with Trend Filters, Risk of Ruin calculator, portfolio dashboard with Sharpe Score, economic calendar, and demo signals. Paid plans include a 7-day free trial with no card needed either.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What markets does Sharpe cover?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Sharpe covers 14 Forex pairs (EUR/USD, GBP/USD, USD/JPY, AUD/USD, GBP/JPY, EUR/JPY, USD/CAD, NZD/USD, EUR/GBP, USD/CHF, EUR/AUD, GBP/CAD, XAU/USD gold, XAG/USD silver) and 2 Crypto pairs (BTC/USD, ETH/USD). Free plan includes 3 pairs; Trader unlocks 10; Pro unlocks all 16.</div>
+      <div class="faq-a">Sharpe covers 16 instruments: 12 Forex pairs (EUR/USD, GBP/USD, USD/JPY, AUD/USD, GBP/JPY, EUR/JPY, USD/CAD, NZD/USD, EUR/GBP, USD/CHF, EUR/CHF, AUD/JPY), Gold (XAU/USD), Silver (XAG/USD), and 2 Crypto pairs (BTC/USD, ETH/USD). Free plan includes 3 pairs; Trader unlocks 14; Pro unlocks all 16.</div>
+    </div>
+
+  <!-- ── Signals & Scanner ────────────────────────────────────── -->
+  <div class="faq-group-title">Signals &amp; Scanner</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does the signal scanner work?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The scanner runs every 4 hours via GitHub Actions, analysing price data using EMA crossovers, RSI, ATR, candlestick patterns, ICT order blocks, and supply/demand zones. Critically, an EMA50 trend gate blocks counter-trend signals before they reach you — if a bearish pattern appears while price is above EMA50, no SHORT signal fires. Each signal includes direction, entry zone, stop loss, two take-profit targets, confidence score, and a reason why it fired.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How often are signals updated?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Signals are refreshed automatically every 4 hours at 00:00, 04:00, 08:00, 12:00, 16:00, and 20:00 UTC. Admin users can also trigger a manual scan from the Admin panel at any time.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is the EMA50 trend gate?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The EMA50 trend gate is a filter that blocks counter-trend signals. LONG signals only fire when price is above the 50-period EMA (bullish bias). SHORT signals only fire when price is below it. Without this filter, the scanner would generate bearish patterns during uptrends — which is exactly what caused two consecutive EUR/CHF losses before the gate was added. You can learn more in Learning → Trend Filters.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How does Auto Paper Trading work?<span class="faq-chv">+</span></button>
-      <div class="faq-a">In Settings → Auto Paper Trade, set a minimum confidence threshold (e.g. 70). When a signal fires above that confidence, the system automatically creates a pending entry. A price monitor checks live prices every 5 minutes — when price enters the entry zone, the position opens; when stop loss or take profit is hit, it closes. All of this happens server-side, so it works around the clock with no browser required.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Market Regime badge on signals?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Each signal card shows a market regime badge: Trending ↑ (EMA and RSI both confirm bullish direction), Trending ↓ (bearish), Overbought (RSI ≥ 68), Oversold (RSI ≤ 32), or Ranging (no clear bias). This gives you the market context for each signal so you can assess whether conditions support the trade beyond the pattern alone.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How do Telegram and email alerts work?<span class="faq-chv">+</span></button>
-      <div class="faq-a">In Settings → Telegram Alerts, enter your Telegram Bot Token and Chat ID. In Settings → Email Alerts, enter your Resend API key and alert email address. Once configured, you receive instant notifications when a signal fires, a position opens, a take-profit is hit, or a stop loss is triggered. Each user has their own private alert configuration — alerts go only to you.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is "Why Not Now" and what does it show?<span class="faq-chv">+</span></button>
+      <div class="faq-a">When the scanner produces no signal for an instrument, the Signals page shows a collapsed "Why Not Now" panel below the market strip. It explains the absence: "RSI at 54 — not at an extreme. Wait for RSI &gt; 68." or "Ranging structure — no trend to trade against." Silence from the scanner is now informative rather than just empty.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What is the TradingView Webhook integration?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Pro plan users can connect their TradingView Pine Script alerts to Sharpe. In Settings → TradingView Webhook, generate a secret token and copy the webhook URL. Paste it into any TradingView alert. When the alert fires, it automatically creates a signal and pending entry in Sharpe — no manual copy-paste needed. This works with any Pine Script strategy or indicator.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is Multi-Timeframe Confluence? (Pro)<span class="faq-chv">+</span></button>
+      <div class="faq-a">When the same signal direction fires on more than one timeframe simultaneously (e.g. Daily and 4H both show LONG for EUR/USD), the signal card shows a confluence badge. A gold ⚡ Triple TF Confluence badge means all three timeframes agree — this is the highest-confidence scenario the scanner produces. Multi-Timeframe Confluence is available on the Pro plan.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What is the Morning AI Brief?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Every weekday morning (Mon–Fri, 7am UTC), Claude AI reviews current market prices, active signals, and your open positions, then sends you a personalised 2-3 paragraph market outlook to your Telegram. It highlights key levels to watch, overall sentiment, and any signals worth monitoring that day. Requires an Anthropic API key configured in Admin → Site Settings, and a Telegram bot set up in Settings → Telegram.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is Signal Performance Attribution?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Signal cards show the scanner's historical win rate for that specific pattern (e.g. "Three Black Crows · 14 signals · 58% win rate · avg +32 pips"). This is calculated from all closed paper trades with a minimum of 3 data points. It lets you see which patterns have the strongest track record in real market conditions, not just backtests.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What is the Weekly Digest?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Every Monday morning (7am UTC), Sharpe automatically compiles your previous week's trading performance and sends a summary to your Telegram. The digest includes: total trades, wins, losses, win rate, net pips, best and worst pair, and count of currently open positions. It requires your Telegram Bot Token and Chat ID configured in Settings.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Economic Calendar?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The Signals page shows the week's upcoming high-impact economic events (NFP, FOMC, CPI, ECB decisions) filtered to USD, EUR, GBP, JPY, CHF, AUD, and CAD. Events happening today are highlighted. This helps you avoid opening new paper trades immediately before major data releases that can invalidate technical setups. Requires a Twelve Data API key in Settings.</div>
+    </div>
+
+  <!-- ── Paper Trading & Positions ───────────────────────────── -->
+  <div class="faq-group-title">Paper Trading &amp; Positions</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Paper trading simulates real trades with no money at risk. Click Paper Trade on any signal to queue a pending entry. A price monitor checks every 30 seconds while the app is open and every 1 minute server-side when it's closed. When price enters the entry zone, the position opens automatically. When stop loss or take profit is hit, it closes automatically and logs the result to your track record.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What is the Community Leaderboard?<span class="faq-chv">+</span></button>
-      <div class="faq-a">The leaderboard ranks opted-in traders by net pips from their closed paper trades. To appear, go to Settings → Leaderboard and toggle "Show on Leaderboard" on. You can set a custom display name — your real identity is never shown. The leaderboard is visible to all users (including non-logged-in visitors) so it serves as a transparent public track record.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is Auto Paper Trading and how do I enable it?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Auto Paper Trading automatically queues a pending entry for every signal above your confidence threshold — no clicking Paper Trade required. Go to Settings → Auto Paper Trade, enable the toggle, and set your minimum confidence (e.g. 70%). The system handles everything server-side via the signal scanner's 4-hour cycle. Requires Trader or Pro plan.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">What is the difference between Free, Trader, and Pro?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Free: 3 instruments, journal (up to 50 trades), signal feed (read-only), trade ideas (1/day), news, learning center. Trader: 10 instruments, unlimited journal, auto paper trading, Telegram &amp; email alerts, weekly digest, leaderboard, signal scanner access. Pro: all 16 instruments, AI Trade Coach, Trade Replay, Correlation Monitor, Personal Signal Calibration, Multi-Timeframe Confluence, TradingView webhook, Morning AI Brief. Full details on the <a href="#" onclick="navLanding('pricing-page',null);return false" style="color:var(--blue)">Pricing page</a>.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Correlation Risk Monitor? (Pro)<span class="faq-chv">+</span></button>
+      <div class="faq-a">When you have two or more open positions in the same direction on correlated instruments (e.g. Long EUR/USD and Long GBP/USD), the Positions page shows an amber warning: "EUR/USD and GBP/USD are 84% correlated — you are effectively 2× long USD weakness." Correlation is computed from the last 20 daily closes. This is only relevant if you have multiple open positions in the same direction.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button>
-      <div class="faq-a">No. Sharpe is an analytical and educational tool. Nothing on this platform constitutes financial advice, investment advice, or a solicitation to buy or sell any financial instrument. All signals, ideas, and analysis are for informational purposes only. Trading involves significant risk of loss — always apply your own risk management and consult a qualified financial adviser before making investment decisions.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is Trade Replay and how do I use it? (Pro)<span class="faq-chv">+</span></button>
+      <div class="faq-a">Every closed position has a Replay ▶ button. Clicking it opens a full-screen dark chart and plays back the candle sequence from your entry to your close — bar by bar, with entry, stop loss, take profit, and exit price lines overlaid. Speed is adjustable from 0.5× to 8×. Use it to understand exactly what the market did during your trade and whether your decision to close was correct.</div>
+    </div>
+
+  <!-- ── Journal & Analytics ─────────────────────────────────── -->
+  <div class="faq-group-title">Journal &amp; Analytics</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does the Trade Journal work?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The Trade Journal lets you log any trade — manual or from a signal — with entry price, stop loss, take profit, entry reasoning, exit reasoning, and tags. Every closed trade is automatically graded A–F based on execution quality: whether you hit your target, how your result compares to your average win/loss, and whether you documented your reasoning. You can filter by market, status, or grade, and export to CSV.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How is my data stored and secured?<span class="faq-chv">+</span></button>
-      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. Your API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store your card details. We never sell personal data to third parties.</div>
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Trade Grade (A–F)?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Every closed trade receives an automatic letter grade. A = win above 70% of your average win, with entry and exit reasoning documented. B = any win with notes. C = a disciplined small loss (under 80% of your average loss). D = a loss at normal size. F = a loss more than 2× your average loss — indicates a stop-loss violation or early exit from a winning trade. Grades appear as badges in the journal and can be filtered.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Sharpe Score?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The Sharpe Score is a single 0–100 composite performance metric shown on your Dashboard. It combines: Win Rate (up to 35 pts), Profit Factor (up to 30 pts), Max Drawdown (up to 20 pts), and Sample Size (up to 15 pts). Labels: 0–25 Developing, 26–45 Building, 46–60 Solid, 61–75 Strong, 76–100 Elite. It requires at least 5 closed trades to calculate.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What is Profit Factor and why does it matter?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Profit Factor is total gross winnings divided by total gross losses. A value above 1.0 means net-profitable; above 1.5 indicates a solid edge; above 2.0 is considered strong. It is one of the most important metrics for evaluating a strategy because it accounts for both win rate and the average size of wins versus losses together.</div>
+      <div class="faq-a">Profit Factor is gross winning pips divided by gross losing pips. Above 1.0 = net-profitable. Above 1.5 = solid edge. Above 2.0 = strong. It matters because it captures both win rate and the size of wins versus losses together — a system that wins 40% of the time but wins 3× more than it loses can have a higher Profit Factor than one that wins 70% at 1:1 R:R.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How does the Backtester work?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The Backtester replays the signal strategy on historical candle data already stored in the database (seeded via Admin → Seed Candles). Select an instrument and timeframe, run the backtest, and see the simulated equity curve, win rate, and profit factor as if the signals had been followed over the historical period. This lets you validate a strategy before trusting live signals.</div>
+    </div>
+
+  <!-- ── AI Features ──────────────────────────────────────────── -->
+  <div class="faq-group-title">AI Features (Pro)</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the AI Trade Coach?<span class="faq-chv">+</span></button>
+      <div class="faq-a">The AI Trade Coach (Pro only) uses Claude AI to analyse your last 50 closed paper trades and identify specific behavioural patterns in your trading. Unlike generic advice, it reads your actual data: "You exit EUR/USD 28% before take profit on Fridays — over 40 trades that costs you 180 pips." It surfaces 3 data-backed observations, 1 concrete weekly focus, and 1 genuine strength. Results are cached for 24 hours. Requires an Anthropic API key in Admin → Site Settings.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is Personal Signal Calibration? (Pro)<span class="faq-chv">+</span></button>
+      <div class="faq-a">Personal Signal Calibration compares your own win rate on each pattern against the scanner's global win rate. If Three Black Crows has a 58% global win rate but only 35% in your paper trading, the signal card shows "You: 35% · Scanner: 58% ⚠ Underperforming." This helps you identify which patterns work for your execution style and which to approach cautiously. Requires at least 3 personal trades per pattern.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Morning AI Brief? (Pro)<span class="faq-chv">+</span></button>
+      <div class="faq-a">Every weekday morning (Mon–Fri, 7am UTC), Claude AI reviews live prices, the latest signals, and your open positions, then sends you a personalised 2–3 paragraph market outlook to Telegram. It covers key levels to watch, overall market sentiment, and any signals worth monitoring that day. Requires Telegram configured in Settings and an Anthropic API key in Admin.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Weekly Signal Report?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Every Monday at 7am UTC, Sharpe sends a comprehensive weekly Telegram digest covering: signals fired that week (by pattern), paper trades opened and closed, net pips, win rate, best trade, all-time win rate and profit factor, and the top 3 highest-confidence setups from the latest scan. It goes to every user with Telegram configured. Available on Trader and Pro plans.</div>
+    </div>
+
+  <!-- ── Plans & Billing ─────────────────────────────────────── -->
+  <div class="faq-group-title">Plans &amp; Billing</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the difference between Free, Trader, and Pro?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Starter (Free): 3 instruments, 50 journal trades, Sharpe Score, Risk of Ruin calculator, economic calendar, demo signals, learning center. Trader ($15/mo): 14 instruments, unlimited journal with trade grades, live signal scanner, EMA50 trend gate, market regime badges, auto paper trading, signal performance attribution, Telegram alerts, weekly digest, leaderboard. Pro ($39/mo): all 16 instruments, AI Trade Coach, Trade Replay, Correlation Monitor, Personal Signal Calibration, Multi-Timeframe Confluence, Morning AI Brief, TradingView webhook. Full details on the <a href="#" onclick="navLanding('pricing-page',null);return false" style="color:var(--blue)">Pricing page</a>.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Can I cancel my subscription at any time?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Yes. No long-term contracts, no lock-in. Cancel any time from your account settings. Your paid plan remains active until the end of the current billing period, then reverts to Free. Your journal data and trade history are always retained regardless of plan.</div>
+      <div class="faq-a">Yes. No long-term contracts. Cancel anytime from your account settings. Your paid plan stays active until the end of the current billing period, then reverts to Free. Your journal data and trade history are always retained regardless of plan.</div>
     </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What payment methods do you accept?<span class="faq-chv">+</span></button>
+      <div class="faq-a">All major credit and debit cards via Stripe. Payments are billed monthly or annually (annual saves 20%). We never see or store your card details — all payment processing is handled by Stripe.</div>
+    </div>
+
+  <!-- ── Data & Security ──────────────────────────────────────── -->
+  <div class="faq-group-title">Data &amp; Security</div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">How is my data stored and secured?<span class="faq-chv">+</span></button>
+      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store card details. Personal data is never sold to third parties. See our <a href="#" onclick="navLanding('privacy',null);return false" style="color:var(--blue)">Privacy Policy</a> for full details.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button>
+      <div class="faq-a">No. Sharpe is an analytical and educational tool. Nothing on this platform constitutes financial advice or a solicitation to buy or sell any financial instrument. All signals and analysis are for informational purposes only. Trading involves significant risk of loss. Always apply your own risk management and consult a qualified financial adviser before making investment decisions.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Do signals guarantee profitable trading?<span class="faq-chv">+</span></button>
+      <div class="faq-a">No. Signals are generated by technical analysis algorithms applied to historical and current price data. They do not guarantee future price movement. Signal accuracy varies — there will be winning and losing periods. The scanner's historical win rate and profit factor are shown transparently on the <a href="signals-performance.html" target="_blank" style="color:var(--blue)">Signal Performance page</a>. Past performance is not indicative of future results.</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the Telegram Alerts setup?<span class="faq-chv">+</span></button>
+      <div class="faq-a">Go to Settings → Telegram Alerts. Create a bot via @BotFather on Telegram, get your Bot Token, then message @userinfobot to get your Chat ID. Enter both in Settings and click Connect. You'll receive instant alerts when signals fire, positions open or close, and weekly performance digests. Each user has a private bot — alerts go only to you.</div>
+    </div>
+
   </div>
 </section>
 
@@ -1565,21 +1647,22 @@
       <div class="footer-col">
         <h4>Platform</h4>
         <ul>
-          <li><a href="app.html">Dashboard</a></li>
+          <li><a href="app.html">Dashboard &amp; Sharpe Score</a></li>
+          <li><a href="app.html">Signal Scanner</a></li>
+          <li><a href="app.html">Paper Trading &amp; Positions</a></li>
           <li><a href="app.html">Trade Journal</a></li>
-          <li><a href="app.html">Simulator</a></li>
-          <li><a href="app.html">Auto Signals</a></li>
-          <li><a href="app.html">Market News</a></li>
+          <li><a href="app.html">AI Trade Coach</a></li>
+          <li><a href="app.html">Learning Center</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Resources</h4>
         <ul>
           <li><a href="#" onclick="navLanding('faq',null);return false">FAQ</a></li>
-          <li><a href="app.html">Learning Center</a></li>
-          <li><a href="app.html">Trade Ideas</a></li>
+          <li><a href="signals-performance.html" target="_blank">Signal Performance</a></li>
           <li><a href="#" onclick="navLanding('pricing-page',null);return false">Pricing</a></li>
           <li><a href="#" onclick="openAuthModal('signup');return false">Get Started Free</a></li>
+          <li><a href="mailto:hello@sharpe.io">Contact Us</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -1594,12 +1677,13 @@
     </div>
     <hr class="footer-divider">
     <div class="footer-bottom">
-      <p>&copy; 2025 Sharpe Analytics Ltd. All rights reserved.</p>
+      <p>&copy; 2026 Sharpe Analytics Ltd. All rights reserved.</p>
       <div class="footer-bottom-links">
         <a href="#" onclick="navLanding('terms',null);return false">Terms</a>
         <a href="#" onclick="navLanding('privacy',null);return false">Privacy</a>
         <a href="#" onclick="navLanding('risk',null);return false">Risk Disclosure</a>
-        <a href="#">Support</a>
+        <a href="#" onclick="navLanding('faq',null);return false">FAQ</a>
+        <a href="mailto:hello@sharpe.io">Contact</a>
       </div>
     </div>
     <p class="footer-disclaimer">Sharpe is an educational and analytical platform. Nothing on this site constitutes financial advice. Trading financial instruments involves significant risk of loss and may not be suitable for all investors. Past performance is not indicative of future results. Always consult a qualified financial adviser before making investment decisions.</p>
@@ -1660,18 +1744,6 @@ function closeMobileMenu() {
   document.body.style.overflow = '';
 }
 
-const SOCIAL_META = {
-  x:         { label:'X (Twitter)',  svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' },
-  instagram: { label:'Instagram',    svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" width="16" height="16"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>' },
-  linkedin:  { label:'LinkedIn',     svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>' },
-  discord:   { label:'Discord',      svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037 13.84 13.84 0 00-.604 1.246 18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.246.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>' },
-  telegram:  { label:'Telegram',     svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>' },
-  reddit:    { label:'Reddit',       svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><circle cx="12" cy="12" r="10"/><path fill="#fff" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.6 7.6a1.3 1.3 0 01.5 1c0 .53-.28.99-.7 1.27.02.16.03.32.03.48 0 2.44-2.86 4.42-6.38 4.42S4.57 14.79 4.57 12.35c0-.16.01-.32.03-.48a1.3 1.3 0 01-.7-1.27 1.3 1.3 0 012.28-.85c.7-.49 1.67-.8 2.74-.85l.52-2.46a.24.24 0 01.29-.18l1.73.36a.9.9 0 011.77.16.9.9 0 01-.9.9.9.9 0 01-.88-.74l-1.54-.32-.46 2.17c1.05.06 2 .37 2.7.85a1.3 1.3 0 012.43.78zm-7.35 1.3a.9.9 0 00.9.9.9.9 0 00.9-.9.9.9 0 00-.9-.9.9.9 0 00-.9.9zm5.04 2.38c-.62.62-1.84.67-2.24.67s-1.63-.05-2.24-.67a.24.24 0 01.34-.34c.39.39 1.23.53 1.9.53s1.52-.14 1.9-.53a.24.24 0 01.34.34zm-.14-1.48a.9.9 0 00.9-.9.9.9 0 00-.9-.9.9.9 0 00-.9.9.9.9 0 00.9.9z"/></svg>' },
-  facebook:  { label:'Facebook',     svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' },
-  youtube:   { label:'YouTube',      svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>' },
-  tiktok:    { label:'TikTok',       svg:'<svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/></svg>' }
-};
-
 async function loadFooterSocials() {
   try {
     const res = await fetch(`${SUPA_URL}/rest/v1/site_config?key=eq.social_links&select=value&limit=1`, {
@@ -1681,11 +1753,11 @@ async function loadFooterSocials() {
     const links = rows?.[0]?.value ? JSON.parse(rows[0].value) : {};
     const container = document.getElementById('footerSocial');
     if (!container) return;
-    const html = Object.entries(SOCIAL_META)
-      .filter(([k]) => links[k])
-      .map(([k, m]) => `<a href="${links[k]}" target="_blank" rel="noopener" title="${m.label}">${m.svg}</a>`)
-      .join('');
-    container.innerHTML = html || '';
+    // Only show Telegram
+    const tgUrl = links.telegram;
+    if (tgUrl) {
+      container.innerHTML = `<a href="${tgUrl}" target="_blank" rel="noopener" title="Sharpe on Telegram" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:12px;transition:color .15s" onmouseover="this.style.color='#2AABEE'" onmouseout="this.style.color=''"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>Telegram</a>`;
+    }
   } catch(e) {}
 }
 
