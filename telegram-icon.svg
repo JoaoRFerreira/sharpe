@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60a5fa"/>
+      <stop offset="100%" style="stop-color:#3b82f6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Subtle chart line in background -->
+  <polyline
+    points="60,340 130,280 200,310 280,200 350,240 420,160 480,190"
+    fill="none"
+    stroke="#1d4ed8"
+    stroke-width="3"
+    stroke-opacity="0.35"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+
+  <!-- S lettermark -->
+  <text
+    x="256"
+    y="330"
+    font-family="'Arial Black','Helvetica Neue',Arial,sans-serif"
+    font-size="300"
+    font-weight="900"
+    fill="url(#accent)"
+    text-anchor="middle"
+    letter-spacing="-10"
+  >S</text>
+
+  <!-- Bottom label -->
+  <text
+    x="256"
+    y="430"
+    font-family="'Arial','Helvetica Neue',sans-serif"
+    font-size="52"
+    font-weight="600"
+    fill="#94a3b8"
+    text-anchor="middle"
+    letter-spacing="12"
+  >SHARPE</text>
+</svg>
