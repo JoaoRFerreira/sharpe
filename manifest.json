@@ -1,19 +1,36 @@
 {
-  "name": "Sharpe — Trading Intelligence",
+  "name": "Sharpe — Signal Scanner & Trade Journal",
   "short_name": "Sharpe",
-  "description": "Institutional-grade analytics, journaling and signals for independent traders.",
+  "description": "Automated forex and crypto signal scanner with paper trading, AI trade coaching, and trade journal. Free plan available.",
   "start_url": "/sharpe/app.html#dashboard",
   "scope": "/sharpe/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["finance", "productivity"],
   "screenshots": [
-    { "src": "og.png", "sizes": "1200x630", "type": "image/png" }
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Signals",
+      "short_name": "Signals",
+      "description": "View latest trading signals",
+      "url": "/sharpe/app.html#signals",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Journal",
+      "short_name": "Journal",
+      "description": "Open trade journal",
+      "url": "/sharpe/app.html#journal",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /app.html
+
+# Signal performance page — high-value SEO content
+Allow: /signals-performance.html
+
+# Sitemap location
+Sitemap: https://joaorferreira.github.io/sharpe/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 10

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Landing page — highest priority -->
+  <url>
+    <loc>https://joaorferreira.github.io/sharpe/</loc>
+    <lastmod>2026-06-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://joaorferreira.github.io/sharpe/icon-512.png</image:loc>
+      <image:title>Sharpe — Free Forex &amp; Crypto Signal Scanner</image:title>
+    </image:image>
+  </url>
+
+  <!-- Public signal performance page — updated daily, high SEO value -->
+  <url>
+    <loc>https://joaorferreira.github.io/sharpe/signals-performance.html</loc>
+    <lastmod>2026-06-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+</urlset>
