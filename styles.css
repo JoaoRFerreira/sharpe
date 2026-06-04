@@ -288,6 +288,11 @@ textarea{resize:vertical;min-height:56px}
 .sig-sym{font-size:16px;font-weight:700}
 .sig-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .sig-pattern{font-size:19px;font-weight:700;margin-bottom:3px}
+.sig-pat-stats{font-size:10px;color:var(--muted);margin-top:2px;min-height:14px}
+.sig-pat-stats.pstat-green{color:#3fb950}.sig-pat-stats.pstat-red{color:#f85149}
+.regime-badge{display:inline-flex;align-items:center;gap:3px;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;white-space:nowrap;margin-left:4px;vertical-align:middle}
+.reg-bull{background:rgba(5,150,105,.12);color:var(--green)}.reg-bear{background:rgba(220,38,38,.12);color:var(--red)}
+.reg-hot{background:rgba(245,158,11,.12);color:#f59e0b}.reg-cold{background:rgba(59,130,246,.12);color:var(--blue)}.reg-range{background:rgba(100,116,139,.1);color:var(--muted)}
 .sig-dir-line{display:none}
 .sig-prices{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .spbox{background:var(--card2);border:1px solid var(--border);border-radius:3px;padding:7px 9px}

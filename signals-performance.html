@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharpe Signal Performance — Real results, transparent track record</title>
+<meta name="description" content="Sharpe Trading Signal Performance — Real results, transparent track record. Historical win rates, pip returns, and pattern analytics from Sharpe's live scanner.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sharpe Signal Performance — Real results, transparent track record">
+<meta property="og:description" content="Historical win rates, pip returns, and pattern analytics from Sharpe's live signal scanner.">
+<meta property="og:url" content="https://joaoRFerreira.github.io/sharpe/signals-performance.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sharpe Signal Performance">
+<meta name="twitter:description" content="Historical win rates, pip returns, and pattern analytics from Sharpe's live signal scanner.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#162032;--border:#2d3f55;--border2:#3d5068;
+  --text:#f1f5f9;--muted:#94a3b8;--muted2:#64748b;
+  --green:#10b981;--green-dim:rgba(16,185,129,.12);--green-border:rgba(16,185,129,.25);
+  --red:#ef4444;--red-dim:rgba(239,68,68,.1);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+  --gold:#f59e0b;--r:8px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+
+/* HEADER */
+.header{background:#0a1628;border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;height:60px;position:sticky;top:0;z-index:100;gap:24px}
+.logo{font-size:18px;font-weight:800;color:#f1f5f9;letter-spacing:-.5px;white-space:nowrap}
+.logo span{color:#3b82f6}
+.back-link{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;border:1px solid var(--border);padding:5px 12px;border-radius:5px;transition:all .15s;margin-left:auto}
+.back-link:hover{color:var(--text);border-color:var(--border2)}
+.back-link svg{width:13px;height:13px}
+.status-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.header-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.last-updated{font-size:11px;color:var(--muted2)}
+
+/* MAIN */
+.main{max-width:1100px;margin:0 auto;padding:36px 24px 60px}
+.page-hero{margin-bottom:36px}
+.page-title{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+.page-title span{color:#3b82f6}
+.page-sub{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px}
+@media(max-width:640px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r) var(--r) 0 0}
+.stat-card.c-blue::before{background:var(--blue)}
+.stat-card.c-green::before{background:var(--green)}
+.stat-card.c-gold::before{background:var(--gold)}
+.stat-card.c-red::before{background:var(--red)}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:10px}
+.stat-val{font-size:30px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.stat-sub{font-size:11px;color:var(--muted2);margin-top:6px}
+.stat-badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-top:8px}
+.stat-badge.green{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.stat-badge.red{background:var(--red-dim);color:var(--red)}
+
+/* SECTION */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.section-title{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.section-title small{font-size:11px;color:var(--muted);font-weight:400;margin-left:8px}
+.sort-hint{font-size:11px;color:var(--muted2)}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;overflow-x:auto;margin-bottom:36px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:#162032}
+th{padding:10px 16px;text-align:left;color:var(--muted);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+th:hover{color:var(--text)}
+th.sorted{color:var(--blue)}
+th .sort-arrow{margin-left:4px;font-size:9px;opacity:.6}
+td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.pill-green{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.pill-red{background:var(--red-dim);color:var(--red)}
+.pill-blue{background:var(--blue-dim);color:var(--blue)}
+.win-bar-wrap{display:flex;align-items:center;gap:8px}
+.win-bar{height:4px;border-radius:2px;background:var(--border);flex:1;max-width:60px;overflow:hidden}
+.win-bar-fill{height:100%;border-radius:2px;background:var(--green);transition:width .4s}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-muted{color:var(--muted)}
+
+/* LOADING / EMPTY */
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--muted2);font-size:13px}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:24px;text-align:center;font-size:12px;color:var(--muted2)}
+.footer a{color:var(--blue)}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a href="index.html" class="logo">Sharpe<span>.</span></a>
+  <div class="header-right">
+    <div class="status-dot" title="Live data"></div>
+    <span class="last-updated" id="lastUpdated">Loading…</span>
+    <a href="app.html" class="back-link">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M3 8l3-3M3 8l3 3"/></svg>
+      Back to App
+    </a>
+  </div>
+</header>
+
+<div class="main">
+  <div class="page-hero">
+    <h1 class="page-title">Signal <span>Performance</span></h1>
+    <p class="page-sub">Live statistics from Sharpe's pattern scanner — all results from paper trades, updated in real time. No cherry-picking.</p>
+  </div>
+
+  <!-- OVERALL STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="loading" style="grid-column:1/-1"><div class="spinner"></div>Fetching stats…</div>
+  </div>
+
+  <!-- BY PATTERN -->
+  <div class="section-header">
+    <div class="section-title">Performance by Pattern <small id="patternCount"></small></div>
+    <span class="sort-hint">Click column headers to sort</span>
+  </div>
+  <div class="table-wrap" id="patternWrap">
+    <div class="loading"><div class="spinner"></div>Loading…</div>
+  </div>
+
+  <!-- BY INSTRUMENT -->
+  <div class="section-header">
+    <div class="section-title">Performance by Instrument <small id="symbolCount"></small></div>
+  </div>
+  <div class="table-wrap" id="symbolWrap">
+    <div class="loading"><div class="spinner"></div>Loading…</div>
+  </div>
+</div>
+
+<footer class="footer">
+  Results are from paper trades only. Past performance does not guarantee future results. &nbsp;·&nbsp;
+  <a href="index.html">Sharpe Trading</a>
+</footer>
+
+<script>
+const SUPABASE_URL = 'https://qlvbgkipkxtwaqwpcmuj.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdmJna2lwa3h0d2Fxd3BjbXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTY3MjcsImV4cCI6MjA5NDU5MjcyN30.iATkgXOfVYDJp1meE2igoJ33mVD3tJiNww4hyR4hRDs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let patternData = [], symbolData = [];
+let patternSort = {col:'winPct', dir:-1};
+let symbolSort  = {col:'winPct', dir:-1};
+
+async function load() {
+  try {
+    const { data, error } = await sb.from('open_positions')
+      .select('pattern,symbol,direction,pnl_pips,close_reason,opened_at,closed_at,status')
+      .not('status', 'eq', 'open');
+
+    if (error) throw error;
+
+    const closed = (data || []).filter(r => r.pnl_pips !== null);
+    renderStats(closed, data || []);
+    buildTables(closed);
+    document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('statsGrid').innerHTML = '<div class="empty" style="grid-column:1/-1">Unable to load data. Please try again shortly.</div>';
+    document.getElementById('patternWrap').innerHTML = '<div class="empty">No data</div>';
+    document.getElementById('symbolWrap').innerHTML  = '<div class="empty">No data</div>';
+  }
+}
+
+function winRate(rows) {
+  if (!rows.length) return 0;
+  return rows.filter(r => r.pnl_pips > 0).length / rows.length * 100;
+}
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function sum(arr) { return arr.reduce((a,b)=>a+b,0); }
+function fmt(n,d=1){ return (n>=0?'+':'')+n.toFixed(d); }
+function fmtWR(n){ return n.toFixed(1)+'%'; }
+
+function renderStats(closed, all) {
+  if (!closed.length) {
+    document.getElementById('statsGrid').innerHTML = '<div class="empty" style="grid-column:1/-1">No closed trades yet.</div>';
+    return;
+  }
+  const wr = winRate(closed);
+  const avgPips = avg(closed.map(r=>r.pnl_pips));
+
+  // best/worst pattern
+  const byPat = {};
+  closed.forEach(r => {
+    if (!r.pattern) return;
+    if (!byPat[r.pattern]) byPat[r.pattern] = [];
+    byPat[r.pattern].push(r.pnl_pips);
+  });
+  let best='—', worst='—', bestWR=-Infinity, worstWR=Infinity;
+  Object.entries(byPat).forEach(([p, pips]) => {
+    if (pips.length < 3) return;
+    const w = pips.filter(x=>x>0).length/pips.length*100;
+    if (w > bestWR)  { bestWR=w;  best=p; }
+    if (w < worstWR) { worstWR=w; worst=p; }
+  });
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card c-blue">
+      <div class="stat-lbl">Total Signals</div>
+      <div class="stat-val">${all.length}</div>
+      <div class="stat-sub">${closed.length} with closed P&L</div>
+    </div>
+    <div class="stat-card c-${wr>=50?'green':'red'}">
+      <div class="stat-lbl">Win Rate</div>
+      <div class="stat-val">${fmtWR(wr)}</div>
+      <div class="stat-sub">${closed.filter(r=>r.pnl_pips>0).length}W / ${closed.filter(r=>r.pnl_pips<=0).length}L</div>
+    </div>
+    <div class="stat-card c-${avgPips>=0?'green':'red'}">
+      <div class="stat-lbl">Avg Pips / Trade</div>
+      <div class="stat-val">${fmt(avgPips)}</div>
+      <div class="stat-sub">Net ${fmt(sum(closed.map(r=>r.pnl_pips)))} total pips</div>
+    </div>
+    <div class="stat-card c-green">
+      <div class="stat-lbl">Best Pattern</div>
+      <div class="stat-val" style="font-size:18px;margin-top:4px">${best}</div>
+      ${best!=='—'?`<span class="stat-badge green">${fmtWR(bestWR)} win rate</span>`:''}
+    </div>
+    <div class="stat-card c-red">
+      <div class="stat-lbl">Worst Pattern</div>
+      <div class="stat-val" style="font-size:18px;margin-top:4px">${worst}</div>
+      ${worst!=='—'?`<span class="stat-badge red">${fmtWR(worstWR)} win rate</span>`:''}
+    </div>
+    <div class="stat-card c-gold">
+      <div class="stat-lbl">Instruments Tracked</div>
+      <div class="stat-val">${[...new Set(closed.map(r=>r.symbol).filter(Boolean))].length}</div>
+      <div class="stat-sub">${[...new Set(closed.map(r=>r.pattern).filter(Boolean))].length} unique patterns</div>
+    </div>
+  `;
+}
+
+function buildTables(closed) {
+  // Pattern aggregation
+  const pm = {};
+  closed.forEach(r => {
+    const k = r.pattern || 'Unknown';
+    if (!pm[k]) pm[k] = {pattern:k, rows:[], last:null};
+    pm[k].rows.push(r.pnl_pips);
+    const t = r.closed_at || r.opened_at;
+    if (t && (!pm[k].last || t > pm[k].last)) pm[k].last = t;
+  });
+  patternData = Object.values(pm).map(p => ({
+    pattern: p.pattern,
+    count: p.rows.length,
+    winPct: winRate(p.rows.map(x=>({pnl_pips:x}))),
+    avgPips: avg(p.rows),
+    last: p.last
+  }));
+
+  // Symbol aggregation + best timeframe (from signals table — skip for now, use direction as proxy)
+  const sm = {};
+  closed.forEach(r => {
+    const k = r.symbol || 'Unknown';
+    if (!sm[k]) sm[k] = {symbol:k, rows:[], pips:[]};
+    sm[k].rows.push(r.pnl_pips);
+    sm[k].pips.push(r.pnl_pips);
+  });
+  symbolData = Object.values(sm).map(s => ({
+    symbol: s.symbol,
+    count: s.rows.length,
+    winPct: winRate(s.rows.map(x=>({pnl_pips:x}))),
+    netPips: sum(s.pips),
+    avgPips: avg(s.pips)
+  }));
+
+  document.getElementById('patternCount').textContent = `(${patternData.length})`;
+  document.getElementById('symbolCount').textContent  = `(${symbolData.length})`;
+  renderPatternTable();
+  renderSymbolTable();
+}
+
+function sortData(arr, col, dir) {
+  return [...arr].sort((a,b) => {
+    const av = a[col], bv = b[col];
+    if (av === null || av === undefined) return 1;
+    if (bv === null || bv === undefined) return -1;
+    return (av < bv ? -1 : av > bv ? 1 : 0) * dir;
+  });
+}
+
+function sortArrow(col, current) {
+  if (current.col !== col) return '<span class="sort-arrow">↕</span>';
+  return `<span class="sort-arrow">${current.dir === 1 ? '↑' : '↓'}</span>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+}
+
+function renderPatternTable() {
+  const sorted = sortData(patternData, patternSort.col, patternSort.dir);
+  const cols = [
+    {key:'pattern', label:'Pattern'},
+    {key:'count',   label:'Trades'},
+    {key:'winPct',  label:'Win %'},
+    {key:'avgPips', label:'Avg Pips'},
+    {key:'last',    label:'Last Fired'},
+  ];
+  const ths = cols.map(c => `<th onclick="sortPattern('${c.key}')">${c.label}${sortArrow(c.key, patternSort)}</th>`).join('');
+  const rows = sorted.map(r => {
+    const wr = r.winPct;
+    const wrClass = wr >= 55 ? 'text-green' : wr < 45 ? 'text-red' : '';
+    return `<tr>
+      <td><strong>${r.pattern}</strong></td>
+      <td>${r.count}</td>
+      <td>
+        <div class="win-bar-wrap">
+          <span class="${wrClass}">${fmtWR(wr)}</span>
+          <div class="win-bar"><div class="win-bar-fill" style="width:${Math.min(wr,100)}%"></div></div>
+        </div>
+      </td>
+      <td class="${r.avgPips>=0?'text-green':'text-red'}">${fmt(r.avgPips)}</td>
+      <td class="text-muted">${fmtDate(r.last)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">No data</td></tr>';
+
+  document.getElementById('patternWrap').innerHTML = `
+    <table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderSymbolTable() {
+  const sorted = sortData(symbolData, symbolSort.col, symbolSort.dir);
+  const cols = [
+    {key:'symbol',  label:'Instrument'},
+    {key:'count',   label:'Trades'},
+    {key:'winPct',  label:'Win %'},
+    {key:'netPips', label:'Net Pips'},
+    {key:'avgPips', label:'Avg Pips'},
+  ];
+  const ths = cols.map(c => `<th onclick="sortSymbol('${c.key}')">${c.label}${sortArrow(c.key, symbolSort)}</th>`).join('');
+  const rows = sorted.map(r => {
+    const wr = r.winPct;
+    const wrClass = wr >= 55 ? 'text-green' : wr < 45 ? 'text-red' : '';
+    return `<tr>
+      <td><strong>${r.symbol}</strong></td>
+      <td>${r.count}</td>
+      <td>
+        <div class="win-bar-wrap">
+          <span class="${wrClass}">${fmtWR(wr)}</span>
+          <div class="win-bar"><div class="win-bar-fill" style="width:${Math.min(wr,100)}%"></div></div>
+        </div>
+      </td>
+      <td class="${r.netPips>=0?'text-green':'text-red'}">${fmt(r.netPips)}</td>
+      <td class="${r.avgPips>=0?'text-green':'text-red'}">${fmt(r.avgPips)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">No data</td></tr>';
+
+  document.getElementById('symbolWrap').innerHTML = `
+    <table><thead><tr>${ths}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function sortPattern(col) {
+  patternSort.dir = patternSort.col === col ? -patternSort.dir : -1;
+  patternSort.col = col;
+  renderPatternTable();
+}
+
+function sortSymbol(col) {
+  symbolSort.dir = symbolSort.col === col ? -symbolSort.dir : -1;
+  symbolSort.col = col;
+  renderSymbolTable();
+}
+
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>

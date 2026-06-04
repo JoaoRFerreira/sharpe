@@ -1,0 +1,30 @@
+name: Weekly Signal Report
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'   # Every Monday 07:00 UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  weekly-signal-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Invoke weekly-signal-report edge function
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST \
+            "${{ secrets.SUPA_URL }}/functions/v1/weekly-signal-report" \
+            -H "Authorization: Bearer ${{ secrets.SUPA_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+
+          echo "HTTP status: $HTTP_STATUS"
+          echo "Response body:"
+          cat /tmp/response.json
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Edge function returned non-200 status: $HTTP_STATUS"
+            exit 1
+          fi

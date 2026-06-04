@@ -65,6 +65,7 @@
   </div>
   <div id="onboardingCard" style="display:none"></div>
   <div id="statsGrid"></div>
+  <div id="sharpeScoreCard" style="margin-bottom:20px"></div>
 
   <!-- Live Open Positions -->
   <div class="lpos-section-hdr">
@@ -136,6 +137,15 @@
           <option value="loss">Losses</option>
           <option value="open">Open</option>
         </select>
+        <select id="fGrade" onchange="renderJournal()">
+          <option value="">All Grades</option>
+          <option value="A">A — Excellent</option>
+          <option value="B">B — Good</option>
+          <option value="B-">B- — Win/No notes</option>
+          <option value="C">C — Disciplined loss</option>
+          <option value="D">D — Standard loss</option>
+          <option value="F">F — Review</option>
+        </select>
       </div>
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="openCsvImport()">↑ Import CSV</button>
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="exportJournalCSV()" title="Export journal to CSV (Pro)">↓ Export CSV</button>
@@ -148,7 +158,7 @@
         <th>Date</th><th>Market</th><th>Dir</th>
         <th>Entry / Reason</th><th>Stop Loss</th>
         <th>Exit / Reason</th><th>Pips / Pts</th>
-        <th>Status</th><th></th>
+        <th>Grade</th><th>Status</th><th></th>
       </tr></thead>
       <tbody id="tBody"></tbody>
       <tfoot id="tFoot"></tfoot>
@@ -252,6 +262,7 @@
   <div class="sim-card" style="margin-top:24px">
     <h3>Risk of Ruin Calculator</h3>
     <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Estimate the probability your account hits zero given your trading statistics.</p>
+    <button class="btn btn-ghost" style="margin-bottom:12px;font-size:12px" onclick="fillRoRFromJournal()">↻ Fill from my Journal stats</button>
     <div class="ror-grid">
       <div class="fg"><label>Win Rate (%)</label><input type="number" id="ror_wr" value="50" min="1" max="99" step="1" oninput="calcRoR()"></div>
       <div class="fg"><label>Avg Win (pips)</label><input type="number" id="ror_aw" value="50" min="1" step="1" oninput="calcRoR()"></div>
@@ -265,6 +276,8 @@
       <div class="ror-label">Probability of ruin</div>
       <div class="ror-bar-wrap"><div class="ror-bar" id="rorBar" style="width:0%;background:#059669"></div></div>
       <div style="margin-top:12px;font-size:11px;color:var(--muted)" id="rorNote"></div>
+      <div id="rorRecover" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+      <div id="rorInsight" style="margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:500"></div>
     </div>
   </div>
 </section>
@@ -493,6 +506,12 @@
     <button class="mkt-chip active" data-mkt="ETF"       onclick="toggleMktChip(this)">ETFs</button>
   </div>
   <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
+
+  <!-- Economic Calendar -->
+  <div id="economicCalendar" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px">Economic Calendar · High Impact</div>
+    <div id="economicCalendarBody" style="font-size:12px;color:var(--muted)">Loading…</div>
+  </div>
 
   <!-- TradingView live ticker -->
   <div id="tvTicker" style="margin-bottom:16px;border-radius:10px;overflow:hidden"></div>
@@ -1909,6 +1928,7 @@ function nav(id, btn){
   // Always re-render live/data-driven sections; init static sections once
   if(id==='dashboard') renderDashboard();
   else if(id==='journal') renderJournal();
+  else if(id==='signals') loadEconomicCalendar();
   else if(id==='news') initNews();
   else if(id==='admin') loadAdminPanel();
   else if(!_sectionInited.has(id)){
@@ -1986,6 +2006,101 @@ function stats(){
     totalPips,winPips,lossPips,wr,pf,avgW,avgL,best,worst,streak,sType};
 }
 
+// ── SHARPE SCORE ──────────────────────────────────────────────
+function calcSharpeScore(){
+  const s = stats();
+  if(s.closed < 5) return null;
+
+  // Win Rate component: 0-35 pts. 40% wr = 0pts, 75%+ = 35pts
+  const wrPts = Math.max(0, Math.min(35, (s.wr - 40) / 35 * 35));
+
+  // Profit Factor component: 0-30 pts. PF 1.0 = 0, PF 2.5+ = 30pts
+  const pfVal = isFinite(s.pf) ? s.pf : 2.5;
+  const pfPts = Math.max(0, Math.min(30, (pfVal - 1) / 1.5 * 30));
+
+  // Max Drawdown component: 0-20 pts. Computed from trades sequence
+  const closed = trades.filter(t => t.status !== 'open');
+  let peak = 0, cumPips = 0, maxDD = 0;
+  for(let i = 0; i < closed.length; i++){
+    cumPips += (closed[i].pips || 0);
+    if(cumPips > peak) peak = cumPips;
+    const dd = peak > 0 ? (peak - cumPips) / peak * 100 : 0;
+    if(dd > maxDD) maxDD = dd;
+  }
+  const ddPts = Math.max(0, 20 - maxDD * 0.67);
+
+  // Sample Size component: 0-15 pts. 30+ trades = full 15pts
+  const samplePts = Math.min(15, s.closed / 30 * 15);
+
+  const total = Math.round(wrPts + pfPts + ddPts + samplePts);
+  return {
+    score: Math.max(0, Math.min(100, total)),
+    wrPts: Math.round(wrPts),
+    pfPts: Math.round(pfPts),
+    ddPts: Math.round(ddPts),
+    samplePts: Math.round(samplePts)
+  };
+}
+
+function renderSharpeScore(){
+  const el = document.getElementById('sharpeScoreCard');
+  if(!el) return;
+
+  const result = calcSharpeScore();
+
+  if(result === null){
+    el.innerHTML = `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:32px;font-weight:800;color:var(--muted2);line-height:1">&#8212;</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:3px">Sharpe Score</div>
+          <div style="font-size:13px;color:var(--muted)">Log 5+ trades to unlock your Sharpe Score</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sc = result.score;
+
+  // Label mapping
+  let label;
+  if(sc <= 25) label = 'Developing';
+  else if(sc <= 45) label = 'Building';
+  else if(sc <= 60) label = 'Solid';
+  else if(sc <= 75) label = 'Strong';
+  else label = 'Elite';
+
+  // Color
+  let color;
+  if(sc < 40) color = 'var(--red)';
+  else if(sc < 60) color = 'var(--gold)';
+  else if(sc < 80) color = 'var(--green)';
+  else color = 'var(--blue)';
+
+  el.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${color};border-radius:var(--r);padding:20px 24px">
+      <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+        <div style="min-width:72px;text-align:center">
+          <div style="font-size:48px;font-weight:800;line-height:1;color:${color};letter-spacing:-2px">${sc}</div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${color};margin-top:4px">${label}</div>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)">Sharpe Score</span>
+            <span title="A 0\u201390 composite score that measures overall trading quality across win rate, risk efficiency (profit factor), drawdown control, and trade sample size. Higher is better." style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--border);color:var(--muted);font-size:9px;font-weight:700;cursor:default;line-height:1;flex-shrink:0">?</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4">Composite performance rating across win rate, risk efficiency, drawdown, and sample size.</div>
+          <div style="font-size:11px;color:var(--muted)">
+            Win Rate: <strong style="color:var(--text)">${result.wrPts}/35</strong> &nbsp;&middot;&nbsp;
+            Profit Factor: <strong style="color:var(--text)">${result.pfPts}/30</strong> &nbsp;&middot;&nbsp;
+            Drawdown: <strong style="color:var(--text)">${result.ddPts}/20</strong> &nbsp;&middot;&nbsp;
+            Sample: <strong style="color:var(--text)">${result.samplePts}/15</strong>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────
 function showDashboardSkeleton(){
   document.getElementById('statsGrid').innerHTML=`
@@ -2004,6 +2119,7 @@ function renderDashboard(){
       </div>`;
     renderEquity(); renderMonthly(); renderByMarket();
     renderLivePositions();
+    renderSharpeScore();
     return;
   }
   const s = stats();
@@ -2053,6 +2169,7 @@ function renderDashboard(){
   renderRecent();
   renderLivePositions();
   if(trades.some(t=>t.status==='open') && !priceInterval) startPricing();
+  renderSharpeScore();
 }
 
 
@@ -2339,6 +2456,33 @@ function renderRecent(){
   }).join('')}</div>`;
 }
 
+// ── TRADE GRADE ────────────────────────────────────────────────
+function tradeGrade(t, avgW, avgL){
+  if(t.status === 'open') return null;
+  const p = t.pips || 0;
+  const hasNotes = !!(t.entryReason && t.entryReason.trim() && t.exitReason && t.exitReason.trim());
+  const hasAnyNotes = !!(
+    (t.entryReason && t.entryReason.trim()) ||
+    (t.exitReason  && t.exitReason.trim())
+  );
+  if(t.status === 'win'){
+    if(p > avgW * 0.7 && hasNotes)
+      return {grade:'A',  color:'#16a34a', desc:'Excellent execution'};
+    if(hasAnyNotes)
+      return {grade:'B',  color:'var(--blue)', desc:'Good trade'};
+    return   {grade:'B-', color:'var(--blue)', desc:'Win — add notes to improve'};
+  }
+  if(t.status === 'loss'){
+    const absP = Math.abs(p);
+    if(absP < avgL * 0.8)
+      return {grade:'C', color:'var(--muted)', desc:'Disciplined loss'};
+    if(absP <= avgL * 2)
+      return {grade:'D', color:'#f59e0b',     desc:'Standard loss'};
+    return   {grade:'F', color:'#ef4444',     desc:'Review this trade'};
+  }
+  return null;
+}
+
 // ── JOURNAL ────────────────────────────────────────────────────
 function renderJournal(){
   // Show import banner for authenticated users with empty journal
@@ -2353,31 +2497,43 @@ function renderJournal(){
     }
   } else if(banner && trades.length>0){ banner.remove(); }
 
-  const mf = document.getElementById('fMkt').value;
-  const sf = document.getElementById('fStat').value;
+  const mf  = document.getElementById('fMkt').value;
+  const sf  = document.getElementById('fStat').value;
+  const gf  = document.getElementById('fGrade').value;
   // refresh market dropdown
   const mkts=[...new Set(trades.map(t=>t.market))].sort();
   document.getElementById('fMkt').innerHTML='<option value="">All Markets</option>'+
     mkts.map(m=>`<option value="${m}"${m===mf?' selected':''}>${m}</option>`).join('');
 
+  const s = stats();
+
   let rows = trades.filter(t=>{
     if(mf && t.market!==mf) return false;
     if(sf && t.status!==sf) return false;
+    if(gf){
+      const g = tradeGrade(t, s.avgW, s.avgL);
+      if(!g || g.grade !== gf) return false;
+    }
     return true;
   }).sort((a,b)=>new Date(b.date)-new Date(a.date));
 
   if(!rows.length){
-    document.getElementById('tBody').innerHTML=`<tr><td colspan="9"><div class="empty">No trades match the current filter. <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:12px" onclick="clearFilters()">Clear Filters</button></div></td></tr>`;
+    document.getElementById('tBody').innerHTML=`<tr><td colspan="10"><div class="empty">No trades match the current filter. <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:12px" onclick="clearFilters()">Clear Filters</button></div></td></tr>`;
     document.getElementById('tFoot').innerHTML='';
     return;
   }
 
-  document.getElementById('tBody').innerHTML = rows.map(t=>`
+  document.getElementById('tBody').innerHTML = rows.map(t=>{
+    const g = tradeGrade(t, s.avgW, s.avgL);
+    const gradeBadge = g
+      ? `<span title="${g.desc}" style="background:${g.color}26;color:${g.color};border-radius:4px;padding:2px 8px;font-weight:700;font-size:11px;display:inline-block;cursor:default">${g.grade}</span>`
+      : `<span style="color:var(--muted);font-size:11px">—</span>`;
+    return `
     <tr>
       <td style="white-space:nowrap;color:var(--muted)">${t.date}</td>
       <td><strong>${t.market}</strong></td>
       <td><span class="badge badge-${t.direction.toLowerCase()}">${t.direction}</span></td>
-      <td><div class="mono">${t.entry}</div><div class="reason">${t.entryReason||'—'}</div>${t.tags?t.tags.split(',').filter(Boolean).map(g=>`<span class="tag-badge">${g.trim()}</span>`).join(' '):''}</td>
+      <td><div class="mono">${t.entry}</div><div class="reason">${t.entryReason||'—'}</div>${t.tags?t.tags.split(',').filter(Boolean).map(tg=>`<span class="tag-badge">${tg.trim()}</span>`).join(' '):''}</td>
       <td class="mono">${t.sl}</td>
       <td><div class="mono">${t.exit||'—'}</div><div class="reason">${t.exitReason||'—'}</div></td>
       <td>${(()=>{
@@ -2388,9 +2544,11 @@ function renderJournal(){
         }
         return `<span class="pips ${(t.pips||0)>=0?'pos':'neg'}">${(t.pips||0)>=0?'+':''}${t.pips||0}</span>`;
       })()}</td>
+      <td>${gradeBadge}</td>
       <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
       <td><button class="btn btn-danger row-del" onclick="delTrade(${t.id})">✕</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   const tot = rows.reduce((s,t)=>s+(t.pips||0),0);
   const w=rows.filter(t=>t.status==='win').length;
@@ -2399,6 +2557,7 @@ function renderJournal(){
     <td colspan="2" style="font-size:11px;color:var(--muted)">${rows.length} trades · ${w}W / ${l}L</td>
     <td colspan="4"></td>
     <td><span class="pips ${tot>=0?'pos':'neg'}">${tot>=0?'+':''}${tot}</span></td>
+    <td></td>
     <td style="font-size:11px;color:var(--muted)">Total</td>
     <td></td>
   </tr>`;
@@ -2407,6 +2566,7 @@ function renderJournal(){
 function clearFilters(){
   document.getElementById('fMkt').value='';
   document.getElementById('fStat').value='';
+  document.getElementById('fGrade').value='';
   renderJournal();
 }
 
@@ -2555,15 +2715,53 @@ function calcRoR(){
     }
   }
   const rorPct = (ruined/paths)*100;
-  const pctEl  = document.getElementById('rorPct');
-  const barEl  = document.getElementById('rorBar');
-  const noteEl = document.getElementById('rorNote');
+  const pctEl     = document.getElementById('rorPct');
+  const barEl     = document.getElementById('rorBar');
+  const noteEl    = document.getElementById('rorNote');
+  const recoverEl = document.getElementById('rorRecover');
+  const insightEl = document.getElementById('rorInsight');
   pctEl.textContent = rorPct.toFixed(1)+'%';
-  pctEl.style.color = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : '#dc2626';
+  pctEl.style.color = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : rorPct < 50 ? '#dc2626' : '#7f1d1d';
   barEl.style.width = Math.min(rorPct,100)+'%';
-  barEl.style.background = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : '#dc2626';
+  barEl.style.background = rorPct < 5 ? '#059669' : rorPct < 20 ? '#d97706' : rorPct < 50 ? '#dc2626' : '#7f1d1d';
   const ev = wr*aw - (1-wr)*al;
   noteEl.innerHTML = `Expected value per trade: <strong style="color:${ev>=0?'var(--green)':'var(--red)'}">${ev>=0?'+':''}${ev.toFixed(1)} pips</strong> &nbsp;·&nbsp; R:R ${(aw/al).toFixed(2)} &nbsp;·&nbsp; Based on ${paths.toLocaleString()} simulated paths`;
+
+  // Trades to recover
+  if(rorPct > 30){
+    const riskPct = parseFloat(document.getElementById('ror_rpt').value) || 1;
+    const winsNeeded = Math.ceil(Math.log(0.9) / Math.log(1 - riskPct/100));
+    recoverEl.textContent = `At these stats, you need ${winsNeeded} consecutive wins to recover from ruin level.`;
+  } else {
+    recoverEl.textContent = '';
+  }
+
+  // Visual insight
+  if(rorPct < 5){
+    insightEl.style.cssText = 'margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:500;background:rgba(5,150,105,0.12);color:#059669;border:1px solid rgba(5,150,105,0.3)';
+    insightEl.textContent = 'Your risk of ruin is very low. Current stats support long-term trading.';
+  } else if(rorPct < 20){
+    insightEl.style.cssText = 'margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:500;background:rgba(217,119,6,0.12);color:#d97706;border:1px solid rgba(217,119,6,0.3)';
+    insightEl.textContent = 'Manageable risk. Reduce position size or improve win rate.';
+  } else if(rorPct < 50){
+    insightEl.style.cssText = 'margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:500;background:rgba(220,38,38,0.12);color:#dc2626;border:1px solid rgba(220,38,38,0.3)';
+    insightEl.textContent = 'High risk of ruin. Reduce risk per trade to below 1%.';
+  } else {
+    insightEl.style.cssText = 'margin-top:10px;padding:8px 12px;border-radius:6px;font-size:12px;font-weight:500;background:rgba(127,29,29,0.18);color:#fca5a5;border:1px solid rgba(127,29,29,0.4)';
+    insightEl.textContent = 'Critical. These stats cannot sustain long-term trading.';
+  }
+}
+
+function fillRoRFromJournal(){
+  const s = stats();
+  if(s.closed < 5){
+    alert('You need at least 5 closed trades in your journal to use this feature.');
+    return;
+  }
+  document.getElementById('ror_wr').value = s.wr.toFixed(0);
+  document.getElementById('ror_aw').value = s.avgW.toFixed(0);
+  document.getElementById('ror_al').value = s.avgL.toFixed(0);
+  calcRoR();
 }
 
 function logSim(outcome){
@@ -3780,6 +3978,57 @@ function renderSignals(results, isDemo){
   document.getElementById('sigContainer').innerHTML=notes+groupHtml;
 }
 
+// ── Economic Calendar ──────────────────────────────────────────
+const _CURR_FLAGS={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CHF:'🇨🇭',AUD:'🇦🇺',CAD:'🇨🇦'};
+async function loadEconomicCalendar(){
+  const body=document.getElementById('economicCalendarBody'); if(!body) return;
+  if(!sigApiKey){
+    body.innerHTML='<span style="color:var(--muted)">Connect a Twelve Data key in Settings to see upcoming economic events.</span>';
+    return;
+  }
+  try{
+    const now=new Date(), day=now.getDay();
+    const mon=new Date(now); mon.setDate(now.getDate()-((day+6)%7));
+    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
+    const fmt=d=>d.toISOString().slice(0,10);
+    const url=`https://api.twelvedata.com/economic_calendar?importance=high&start_date=${fmt(mon)}&end_date=${fmt(sun)}&apikey=${sigApiKey}`;
+    const data=await fetch(url).then(r=>r.json());
+    const raw=Array.isArray(data)?data:Array.isArray(data?.result)?data.result:[];
+    const today=now.toISOString().slice(0,10);
+    const upcoming=raw
+      .filter(ev=>_CURR_FLAGS[ev.currency])
+      .filter(ev=>new Date(`${ev.date}T${(ev.time||'00:00:00').slice(0,8)}Z`).getTime()>=Date.now()-60000)
+      .sort((a,b)=>new Date(`${a.date}T${(a.time||'00:00').slice(0,5)}Z`)-new Date(`${b.date}T${(b.time||'00:00').slice(0,5)}Z`))
+      .slice(0,5);
+    if(!upcoming.length){body.innerHTML='<span>No high-impact events upcoming this week.</span>';return;}
+    body.innerHTML=upcoming.map(ev=>{
+      const isToday=ev.date===today;
+      const dt=new Date(`${ev.date}T${(ev.time||'00:00:00').slice(0,8)}Z`);
+      const label=dt.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
+      const dot=ev.impact?.toLowerCase()==='high'?'<span style="color:var(--red)">●</span>':'<span style="color:#f59e0b">●</span>';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)${isToday?';background:rgba(220,38,38,.04);border-radius:4px':''}">
+        <span>${_CURR_FLAGS[ev.currency]}</span>
+        <span style="color:var(--muted);width:28px;flex-shrink:0">${ev.currency}</span>
+        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(ev.event||'').slice(0,35)}${isToday?'&nbsp;<span style="background:var(--red);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">TODAY</span>':''}</span>
+        <span style="color:var(--muted);white-space:nowrap">${label}</span>
+        <span>${dot}</span>
+      </div>`;
+    }).join('');
+  }catch(e){
+    body.innerHTML='<span style="color:var(--muted)">Calendar unavailable.</span>';
+  }
+}
+
+// ── Market Regime Detector ─────────────────────────────────────
+function getMarketRegime(s){
+  const trend = s.trend||''; const rsi = s.rsi??50;
+  if(trend.includes('Uptrend')&&rsi>=55)   return {label:'Trending ↑',cls:'reg-bull',emoji:'📈',desc:'Sustained bullish momentum'};
+  if(trend.includes('Downtrend')&&rsi<=45) return {label:'Trending ↓',cls:'reg-bear',emoji:'📉',desc:'Sustained bearish momentum'};
+  if(rsi>=68) return {label:'Overbought',cls:'reg-hot', emoji:'🔥',desc:'Extended — watch for reversal'};
+  if(rsi<=32) return {label:'Oversold',  cls:'reg-cold',emoji:'❄️',desc:'Depressed — watch for bounce'};
+  return      {label:'Ranging',    cls:'reg-range',emoji:'↔️',desc:'No clear directional bias'};
+}
+
 function sigCard(s, isDemo, status='valid'){
   const isLong=s.dir==='LONG';
   const isPassed = status==='passed';
@@ -3809,11 +4058,13 @@ function sigCard(s, isDemo, status='valid'){
       </div>
     </div>
     <div class="sig-pattern" style="color:${isLong?'var(--green)':'var(--red)'}">${s.pat}</div>
+    <div class="sig-pat-stats" id="pstat-${s.symbol.replace(/[^a-zA-Z0-9]/g,'_')}-${s.pat.replace(/[^a-zA-Z0-9]/g,'_')}">Loading…</div>
     <div class="sig-dir-line">${isLong?'▲ Bullish Signal — Look to go Long':'▼ Bearish Signal — Look to go Short'}</div>
     <div class="sig-pa-row">
       <span class="struct-badge ${structCls}">${structLabel}</span>
       ${klBadge}
       ${volBadge}
+      ${(()=>{const r=getMarketRegime(s);return `<span class="regime-badge ${r.cls}" title="${r.desc}">${r.emoji} ${r.label}</span>`;})()}
     </div>
     <div class="sig-prices">
       <div class="spbox">
@@ -3888,6 +4139,74 @@ function sendToSim(s){
   document.getElementById('simulator').classList.add('active');
 }
 
+// ── Signal Pattern Performance Attribution ──
+let _patternStats = {};
+
+async function loadPatternStats() {
+  if (Object.keys(_patternStats).length > 0) return; // already cached for session
+
+  const { data, error } = await sb
+    .from('open_positions')
+    .select('pattern, status, close_reason, pnl_pips')
+    .eq('status', 'closed')
+    .not('pattern', 'is', null);
+
+  if (error || !data) return;
+
+  const agg = {};
+  for (const row of data) {
+    const p = row.pattern;
+    if (!agg[p]) agg[p] = { total: 0, wins: 0, pipSum: 0 };
+    agg[p].total++;
+    if (row.close_reason === 'tp1') agg[p].wins++;
+    agg[p].pipSum += (row.pnl_pips || 0);
+  }
+
+  for (const p of Object.keys(agg)) {
+    const { total, wins, pipSum } = agg[p];
+    _patternStats[p] = { total, wins, avgPips: total > 0 ? pipSum / total : 0 };
+  }
+}
+
+function getPatternStat(patName) {
+  const d = _patternStats[patName];
+  if (!d || d.total < 3) return null;
+
+  const winRate = d.wins / d.total;
+  const winPct  = Math.round(winRate * 100);
+  const avgPips = Math.round(d.avgPips);
+  const pipStr  = (avgPips >= 0 ? '+' : '') + avgPips + ' pips';
+  const label   = `${d.total} signals · ${winPct}% win rate · avg ${pipStr}`;
+  const colorCls = winRate >= 0.55 ? 'pstat-green' : winRate < 0.45 ? 'pstat-red' : '';
+  return { label, colorCls };
+}
+
+async function refreshPatternStats() {
+  await loadPatternStats();
+  document.querySelectorAll('.sig-pat-stats').forEach(el => {
+    // id format: pstat-SYMBOL-PATTERN (both sanitised)
+    // extract pattern by splitting on third segment after "pstat-"
+    const raw = el.id.replace(/^pstat-[^-]+-/, ''); // remove "pstat-SYMBOL-"
+    // reverse the sanitisation: underscores were spaces / special chars — try both forms
+    const candidates = [
+      raw.replace(/_/g, ' '),
+      raw,
+    ];
+    let stat = null;
+    for (const c of candidates) {
+      stat = getPatternStat(c);
+      if (stat) break;
+    }
+    if (!stat) {
+      el.textContent = '';
+      el.className = 'sig-pat-stats';
+      return;
+    }
+    el.textContent = stat.label;
+    el.className = 'sig-pat-stats' + (stat.colorCls ? ' ' + stat.colorCls : '');
+  });
+}
+
 // ── Main scan function ──
 async function loadSignals(){
   const btn=document.getElementById('scanBtn');
@@ -3947,6 +4266,7 @@ async function loadSignals(){
     sigResults=results;
     renderMktStrip(results);
     renderSignals(results, false);
+    refreshPatternStats(); // pattern performance attribution — non-blocking
     if(autoLog) processAutoActions(results, false);
     updateSigStatusBar(latest.scanned_at);
     const sigCount = results.filter(r=>r.signal).length;
