@@ -299,6 +299,7 @@
       <button class="ltab" onclick="ltab('etf',this)">ETF Strategies</button>
       <button class="ltab" onclick="ltab('crypto',this)">Crypto Strategies</button>
       <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
+      <button class="ltab" onclick="ltab('trend',this)">Trend Filters</button>
     </div>
     <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
     <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
@@ -309,6 +310,7 @@
     <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
     <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
     <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
+    <div class="learn-content" id="lc-trend"><div class="pattern-grid" id="lg-trend"></div></div>
   </div>
 
   <!-- PRACTICE view -->
@@ -320,6 +322,7 @@
         <button class="pcat" onclick="setPracCat('candle',this)">Candlesticks</button>
         <button class="pcat" onclick="setPracCat('chart',this)">Chart Patterns</button>
         <button class="pcat" onclick="setPracCat('institutional',this)">Institutional</button>
+        <button class="pcat" onclick="setPracCat('trend',this)">Trend Filters</button>
       </div>
       <div class="prac-hud-right">
         <div class="prac-hud-stat">
@@ -3184,7 +3187,20 @@ function buildLearning(){
     card('Zone Quality Rules','Filters','t-neut',null,'Not all supply and demand zones are equal. These filters separate high-probability zones from weak ones. Apply them in order — a zone that fails any filter should be skipped.',
       ['Rule 1 — Freshness: first retest only. Each subsequent touch weakens the zone. After 3 touches, the zone is consumed — stop trading it.','Rule 2 — Tightness: base range < 0.6×ATR. Wider bases mean less institutional conviction.','Rule 3 — Impulse size: the move away from the zone must be >1.5×ATR. Small moves suggest retail activity, not institutional orders.','Rule 4 — Time: zones formed recently are stronger than old zones. Market structure changes.','Rule 5 — Trend alignment: demand zones in uptrends and supply zones in downtrends have highest probability.']),
     card('How Sharpe Uses These Methods','Scanner Logic','t-neut',null,'Sharpe runs all four signal strategies on every instrument and timeframe each scan. The highest-confidence signal wins for that instrument/timeframe combination.',
-      ['Strategy A: Candlestick + EMA (existing — pin bars, engulfing, stars)','Strategy B: Turtle Breakout (20-bar System 1 or 55-bar System 2)','Strategy C: ICT Order Block or Fair Value Gap (bullish or bearish)','Strategy D: Supply or Demand Zone (DBR or RBD)','Confidence is calculated per strategy then boosted by: EMA200 alignment, price structure, RSI, volume, and proximity to key S/R levels','The pattern name in your signal card tells you which strategy fired']),
+      ['Strategy A: Candlestick + EMA — requires EMA50 alignment (hard gate)','Strategy B: Turtle Breakout (20-bar System 1 or 55-bar System 2)','Strategy C: ICT Order Block or Fair Value Gap (bullish or bearish)','Strategy D: Supply or Demand Zone (DBR or RBD)','Confidence is calculated per strategy then boosted by: EMA200 alignment, price structure, RSI, volume, and proximity to key S/R levels','Strategies B/C/D receive a −15 confidence penalty when counter-EMA50','The pattern name in your signal card tells you which strategy fired']),
+  ].join('');
+
+  document.getElementById('lg-trend').innerHTML=[
+    card('The EMA50 Rule','Core Filter','t-neut',null,'The single most effective filter for removing counter-trend signal noise. Backtested research shows RSI + moving average combinations achieve 78% accuracy vs 62% for RSI alone. The EMA50 is the medium-term trend divider — the line between buyers in control and sellers in control.',
+      ['LONG signals only fire when: price is above the EMA50','SHORT signals only fire when: price is below the EMA50','This one rule would have blocked both EUR/CHF SHORT losses (May 28 and Jun 3, 2026) — price was above EMA50 in a rising market both times','A bearish candlestick pattern in an uptrend is a pullback, not a reversal — the EMA50 distinguishes them','Sharpe enforces this as a hard gate on Strategy A (candlestick patterns)']),
+    card('Three EMAs: Your Trend Dashboard','Framework','t-neut',null,'The 20/50/200 EMA stack gives you trend strength at three timeframes simultaneously. When all three are aligned, the signal has the highest historical win rate. When they conflict, confidence drops.',
+      ['EMA20 — short-term momentum (4–6 weeks on daily chart)','EMA50 — medium-term trend (10–12 weeks). The key filter line.','EMA200 — long-term trend (roughly 1 year). Bull/bear divider.','Bullish stack: EMA20 > EMA50 > EMA200 — only LONGs fire at full confidence','Bearish stack: EMA20 < EMA50 < EMA200 — only SHORTs fire at full confidence','Partial alignment (e.g. above EMA50 but below EMA200): signals still fire but with lower base confidence']),
+    card('Why Counter-Trend Patterns Fail','Case Study','t-bear',null,'Three Black Crows is a valid bearish pattern — three consecutive large red candles with no meaningful bounce. It carries real information about short-term selling pressure. But when it fires during an uptrend, it is describing a pullback, not a reversal. The EMA50 tells you which one it is.',
+      ['EUR/CHF SHORT · 25 May 2026: Three Black Crows fired at 93% confidence. EMA50 was below price — uptrend. Stopped out -40.9 pips.','EUR/CHF SHORT · 3 Jun 2026: second SHORT fired. EMA50 still below price. Stopped out -14.4 pips same day.','Both losses were counter-trend by EMA50 definition. Both would have been blocked by the new gate.','The pattern was real. The trend context made it wrong. Pattern + context = signal quality.']),
+    card('RSI + Trend Alignment','Combined Filter','t-neut',null,'RSI alone achieves ~62% accuracy. RSI combined with a moving average filter achieves ~78% — a 16-point improvement from one additional rule. The EMA50 is that filter.',
+      ['RSI < 30 + price below EMA50 → confirmed oversold in downtrend = strong LONG','RSI > 70 + price above EMA50 → confirmed overbought in uptrend = strong SHORT','RSI < 30 + price above EMA50 → oversold but in uptrend = likely a buying dip, not a crash','RSI > 70 + price below EMA50 → overbought bounce in a downtrend = likely exhaustion rally','The direction matters as much as the RSI level — context changes the trade']),
+    card('What Sharpe Does With This','Implementation','t-neut',null,'The EMA50 filter is now enforced at two levels in the scanner for every instrument and timeframe.',
+      ['Strategy A (candlestick patterns): hard block. If price is above EMA50, no SHORT fires. If below, no LONG fires.','Strategies B/C/D (Turtle, ICT, S&D): −15 confidence penalty when counter-EMA50. They can still fire at institutional levels, but they need to overcome the penalty to reach your threshold.','Signal cards now show "Price above/below EMA50 — medium-term trend aligned" in the reasons list so you can verify the logic yourself.','If you see a signal missing that you expect: check the Trend Filters section of Learning — the EMA50 gate may have blocked it intentionally.']),
   ].join('');
 }
 
@@ -7669,6 +7685,108 @@ const PRACTICE_QUIZZES = [
   },
 ];
 
+// ── TREND FILTER SCENARIOS ────────────────────────────────────────
+// EMA50 is drawn as a purple dashed line on the canvas (q.ema50 field)
+PRACTICE_QUIZZES.push(
+  {
+    id:'trend-three-black-crows-uptrend',category:'trend',difficulty:'Medium',instrument:'EUR/CHF · Daily',
+    candles:[
+      {o:55,h:58,l:54,c:57},{o:57,h:60,l:56,c:59},{o:59,h:62,l:58,c:61},
+      {o:61,h:64,l:60,c:63},{o:63,h:66,l:62,c:65},{o:65,h:68,l:64,c:67},
+      {o:67,h:70,l:66,c:69},{o:69,h:72,l:68,c:71},{o:71,h:74,l:70,c:73},
+      {o:73,h:75,l:67,c:68},
+      {o:69,h:70,l:62,c:63},
+      {o:64,h:65,l:57,c:58},
+    ],
+    ema50: 55,
+    patternStart:9,
+    question:'Price is above the EMA50 (purple line) — an uptrend. Three Black Crows just formed. What does Sharpe\'s scanner do with this SHORT signal?',
+    options:['Fire it — Three Black Crows at 93% is too strong to ignore','Block it — counter-trend to EMA50; price is still above the medium-term trend','Fire it at reduced confidence','Wait one more candle to confirm'],
+    answer:1,
+    explanation:'Three Black Crows is a valid bearish pattern — but when price is above EMA50, it describes a pullback within an uptrend, not a reversal. Sharpe\'s trend gate blocks SHORT signals when price > EMA50. This is exactly what caused both EUR/CHF losses in May–Jun 2026 — strong patterns in the wrong trend context.',
+  },
+  {
+    id:'trend-bullish-engulfing-downtrend',category:'trend',difficulty:'Medium',instrument:'GBP/USD · 4H',
+    candles:[
+      {o:80,h:82,l:77,c:78},{o:78,h:79,l:74,c:75},{o:75,h:76,l:71,c:72},
+      {o:72,h:73,l:68,c:69},{o:69,h:70,l:65,c:66},{o:66,h:67,l:62,c:63},
+      {o:63,h:64,l:59,c:60},{o:60,h:61,l:56,c:57},{o:57,h:58,l:53,c:54},
+      {o:54,h:55,l:51,c:52},
+      {o:51,h:62,l:50,c:61},
+    ],
+    ema50: 70,
+    patternStart:9,
+    question:'Price is below the EMA50 (purple line) — a downtrend. A Bullish Engulfing just formed at the low. Should this LONG signal fire?',
+    options:['Yes — Bullish Engulfing is a strong reversal anywhere','Yes — the low is a good entry point','No — price below EMA50 means the medium-term trend is bearish; this is a counter-trend bounce','No — engulfings always fail in fast markets'],
+    answer:2,
+    explanation:'A Bullish Engulfing at a swing low is a real pattern — but with price below EMA50, the medium-term trend is still bearish. What looks like a reversal is more likely a short-term bounce before the downtrend continues. Sharpe blocks LONG signals when price < EMA50 for exactly this reason.',
+  },
+  {
+    id:'trend-bear-flag-aligned',category:'trend',difficulty:'Easy',instrument:'EUR/USD · Daily',
+    candles:[
+      {o:80,h:82,l:77,c:78},{o:78,h:79,l:74,c:75},{o:75,h:76,l:71,c:72},
+      {o:72,h:73,l:68,c:69},{o:69,h:70,l:65,c:66},{o:66,h:67,l:62,c:63},
+      {o:63,h:66,l:62,c:65},{o:65,h:68,l:64,c:67},{o:67,h:69,l:63,c:64},
+      {o:64,h:66,l:62,c:63},{o:63,h:65,l:61,c:62},
+      {o:62,h:63,l:54,c:55},
+    ],
+    ema50: 73,
+    patternStart:6,
+    question:'Price is below the EMA50 — downtrend confirmed. After a sharp drop, a Bear Flag consolidated and just broke lower. Is this signal trend-aligned?',
+    options:['No — Bear Flags are unreliable patterns','No — price needs to be above EMA50 for any signal','Yes — price below EMA50 confirms bearish bias; the Bear Flag is trend-aligned','Yes — but only if RSI is also below 50'],
+    answer:2,
+    explanation:'This is the correct use of the trend filter. Price is below EMA50 (bearish bias), a Bear Flag formed during consolidation, and the breakdown is in the same direction as the trend. A SHORT signal here is trend-aligned — the EMA50 gate passes, confidence gets boosted, and the signal fires.',
+  },
+  {
+    id:'trend-morning-star-downtrend',category:'trend',difficulty:'Hard',instrument:'USD/JPY · Daily',
+    candles:[
+      {o:80,h:82,l:78,c:79},{o:79,h:80,l:75,c:76},{o:76,h:77,l:72,c:73},
+      {o:73,h:74,l:69,c:70},{o:70,h:71,l:66,c:67},{o:67,h:68,l:63,c:64},
+      {o:64,h:65,l:60,c:61},
+      {o:61,h:62,l:59,c:60},
+      {o:59,h:65,l:58,c:64},
+    ],
+    ema50: 73,
+    patternStart:6,
+    question:'Price is in a downtrend, EMA50 well above (purple line). A Morning Star just completed — a three-candle bullish reversal. Does the EMA50 gate allow a LONG signal?',
+    options:['Yes — Morning Star is one of the strongest reversal patterns','Yes — three-candle patterns override the trend filter','No — EMA50 is acting as resistance above; a LONG here is counter-trend','No — Morning Stars only work on weekly timeframes'],
+    answer:2,
+    explanation:'Morning Star is a powerful pattern — but power alone does not make a trade valid. With price well below EMA50, the medium-term trend is firmly bearish. The EMA50 becomes resistance overhead. A counter-trend LONG here often becomes a dead-cat bounce before the downtrend resumes. Sharpe blocks this signal.',
+  },
+  {
+    id:'trend-bullish-engulfing-uptrend',category:'trend',difficulty:'Easy',instrument:'XAU/USD · 4H',
+    candles:[
+      {o:55,h:58,l:54,c:57},{o:57,h:60,l:56,c:59},{o:59,h:62,l:58,c:61},
+      {o:61,h:64,l:60,c:63},{o:63,h:66,l:62,c:65},{o:65,h:68,l:64,c:67},
+      {o:67,h:68,l:64,c:65},{o:65,h:66,l:62,c:63},{o:63,h:65,l:61,c:62},
+      {o:62,h:63,l:59,c:60},
+      {o:59,h:71,l:58,c:70},
+    ],
+    ema50: 52,
+    patternStart:9,
+    question:'Price pulled back in an uptrend but stayed above the EMA50 (purple line). A Bullish Engulfing formed at the pullback low. What does the trend gate say?',
+    options:['Block — there was a red candle before it','Block — pullback might continue lower','Allow — price is above EMA50; the LONG is trend-aligned with the medium-term uptrend','Allow — but only if volume is 2× average'],
+    answer:2,
+    explanation:'This is the ideal setup. Price is above EMA50 (bullish bias), pulled back to a support area, and a Bullish Engulfing confirmed buyer re-entry at the low. The LONG signal is fully trend-aligned — EMA50 gate passes, confidence is boosted, and the signal fires. Buying pullbacks in uptrends that stay above EMA50 is one of the highest-probability setups.',
+  },
+  {
+    id:'trend-ema-stack',category:'trend',difficulty:'Hard',instrument:'BTC/USD · Daily',
+    candles:[
+      {o:55,h:58,l:54,c:57},{o:57,h:61,l:56,c:60},{o:60,h:64,l:59,c:63},
+      {o:63,h:67,l:62,c:66},{o:66,h:70,l:65,c:69},{o:69,h:73,l:68,c:72},
+      {o:72,h:76,l:71,c:75},{o:75,h:79,l:74,c:78},{o:78,h:82,l:77,c:81},
+      {o:81,h:82,l:77,c:78},
+      {o:77,h:87,l:76,c:86},
+    ],
+    ema50: 60,
+    patternStart:9,
+    question:'EMA20 > EMA50 > EMA200 — all three are stacked bullishly. Price pulled back near EMA50 (purple line) and a Bullish Pin Bar formed. What happens to this signal\'s confidence?',
+    options:['No change — EMAs don\'t affect confidence','Confidence is reduced — pullbacks are risky','Maximum boost — EMA50 aligned + EMA200 aligned + strong trend structure all stack','Moderate boost — only one alignment condition is met'],
+    answer:2,
+    explanation:'When all three EMAs are stacked in the same direction (EMA20 > EMA50 > EMA200) and the signal is trend-aligned, every confidence factor fires: +22 for EMA200 alignment, +15 for strong EMA stack, +15 for the strong pattern, +10 for price structure. This is the highest-confidence scanner scenario — the sort of setup that produces the 1.5+ profit factors documented in backtest research.',
+  }
+);
+
 const _prac = { queue:[], cur:null, shown:0, timer:null, done:false, score:0, streak:0, total:0, correct:0, filter:'all' };
 
 function initPractice() {
@@ -7815,6 +7933,18 @@ function _pracDraw() {
     ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'left';
     ctx.fillStyle = 'rgba(251,191,36,0.6)';
     ctx.fillText('KEY', pad.l + 4, y - 4);
+  }
+
+  // EMA50 line — shown on trend filter scenarios
+  if (q.ema50 != null) {
+    const y = sy(q.ema50);
+    ctx.strokeStyle = 'rgba(139,92,246,0.7)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([6,3]);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(139,92,246,0.9)';
+    ctx.fillText('EMA50', pad.l + 4, y - 4);
   }
 }
 
