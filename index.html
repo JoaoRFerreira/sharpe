@@ -304,7 +304,7 @@
         <div class="lp-step">
           <div class="lp-step-num">3</div>
           <h3>Paper → Live in One Toggle</h3>
-          <p>Validate signals on paper first. When you're confident, flip the switch to live. OANDA handles forex; Binance handles crypto — all executed server-side.</p>
+          <p>Validate signals on paper first. When you're confident, flip the switch to live execution via Binance (crypto) or route signals to your own broker via TradingView webhook.</p>
           <div class="lp-step-img"><svg viewBox="0 0 160 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:80px;margin-top:18px;opacity:.9"><rect width="160" height="80" rx="8" fill="#f7f9ff"/><rect x="18" y="42" width="16" height="26" rx="2" fill="#dbeafe" stroke="#2563eb" stroke-width="1"/><rect x="44" y="32" width="16" height="36" rx="2" fill="#dbeafe" stroke="#2563eb" stroke-width="1"/><rect x="70" y="22" width="16" height="46" rx="2" fill="#bfdbfe" stroke="#2563eb" stroke-width="1"/><rect x="96" y="12" width="16" height="56" rx="2" fill="#93c5fd" stroke="#2563eb" stroke-width="1.5"/><rect x="122" y="6" width="16" height="62" rx="2" fill="#059669" stroke="#059669" stroke-width="1.5"/><line x1="12" y1="70" x2="148" y2="70" stroke="#dde4f0" stroke-width="1"/></svg></div>
         </div>
       </div>
@@ -960,7 +960,7 @@
             <li><span class="chk chk-yes">✓</span><span>Performance analytics (win rate, equity curve)</span></li>
             <li><span class="chk chk-no">✗</span><span>Weekly timeframe signals</span></li>
             <li><span class="chk chk-no">✗</span><span>Crypto instruments (BTC, ETH)</span></li>
-            <li><span class="chk chk-no">✗</span><span>OANDA auto-execution</span></li>
+            <li><span class="chk chk-no">✗</span><span>Binance auto-execution</span></li>
           </ul>
           <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading →</button>
           <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">7-day free trial · cancel anytime</div>
@@ -979,7 +979,7 @@
             <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
             <li><span class="chk chk-yes">✓</span><span><strong>All 16 instruments</strong> — full Forex &amp; Crypto coverage</span></li>
             <li><span class="chk chk-yes">✓</span><span>Weekly timeframe signals (1W)</span></li>
-            <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution</span></li>
+            <li><span class="chk chk-yes">✓</span><span>Binance live auto-execution (crypto)</span></li>
             <li><span class="chk chk-yes">✓</span><span>TradingView webhook integration</span></li>
             <li><span class="chk chk-yes">✓</span><span>Morning AI Brief (Claude) — weekdays to Telegram</span></li>
             <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence only</span></li>
@@ -1037,7 +1037,7 @@
           <li><span class="chk chk-yes">✓</span><span>Demo signals preview</span></li>
           <li><span class="chk chk-yes">✓</span><span>Market news &amp; sentiment</span></li>
           <li><span class="chk chk-no">✗</span><span>Live signal scanner</span></li>
-          <li><span class="chk chk-no">✗</span><span>OANDA integration</span></li>
+          <li><span class="chk chk-no">✗</span><span>Binance auto-execution</span></li>
         </ul>
         <button class="pp-btn pp-btn-free" onclick="openAuthModal('signup')">Start for Free →</button>
       </div>
@@ -1058,7 +1058,7 @@
           <li><span class="chk chk-yes">✓</span><span>Performance analytics (win rate, equity curve)</span></li>
           <li><span class="chk chk-no">✗</span><span>Weekly timeframe signals (1W)</span></li>
           <li><span class="chk chk-no">✗</span><span>Crypto, ETF &amp; Index instruments</span></li>
-          <li><span class="chk chk-no">✗</span><span>OANDA auto-execution &amp; export</span></li>
+          <li><span class="chk chk-no">✗</span><span>Binance auto-execution &amp; export</span></li>
         </ul>
         <button class="pp-btn pp-btn-essential" onclick="goUpgrade('essential')">Start Trading — 7 days free →</button>
         <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px">No credit card required to trial</div>
@@ -1072,7 +1072,7 @@
           <li><span class="chk chk-yes">✓</span><span>Everything in Trader</span></li>
           <li><span class="chk chk-yes">✓</span><span><strong>All 16 instruments</strong> — full Forex &amp; Crypto coverage</span></li>
           <li><span class="chk chk-yes">✓</span><span>Weekly timeframe signals (1W) — swing &amp; position trades</span></li>
-          <li><span class="chk chk-yes">✓</span><span>OANDA live auto-execution with position sizing</span></li>
+          <li><span class="chk chk-yes">✓</span><span>Binance live auto-execution with position sizing</span></li>
           <li><span class="chk chk-yes">✓</span><span>TradingView webhook — connect Pine Script alerts</span></li>
           <li><span class="chk chk-yes">✓</span><span>Morning AI Brief via Claude — weekdays to Telegram</span></li>
           <li><span class="chk chk-yes">✓</span><span>Priority alerts — 85%+ confidence signals only</span></li>
@@ -1319,12 +1319,8 @@
       <div class="faq-a">The leaderboard ranks opted-in traders by net pips from their closed paper trades. To appear, go to Settings → Leaderboard and toggle "Show on Leaderboard" on. You can set a custom display name — your real identity is never shown. The leaderboard is visible to all users (including non-logged-in visitors) so it serves as a transparent public track record.</div>
     </div>
     <div class="faq-item">
-      <button class="faq-q" onclick="toggleFaq(this)">How do I connect OANDA for live auto-execution?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Go to Settings → OANDA Integration (Pro plan required). Enter your OANDA Personal Access Token and Account ID, set your risk per trade as a percentage of account balance, and save. When a paper position would open, the system will instead place a real order on OANDA using your credentials. We strongly recommend starting with an OANDA practice account before enabling live execution.</div>
-    </div>
-    <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What is the difference between Free, Trader, and Pro?<span class="faq-chv">+</span></button>
-      <div class="faq-a">Free: 3 instruments, journal (up to 50 trades), signal feed (read-only), trade ideas (1/day), news, learning center. Trader: 10 instruments, unlimited journal, auto paper trading, Telegram &amp; email alerts, weekly digest, leaderboard, signal scanner access. Pro: all 16 instruments, OANDA live execution, TradingView webhook, Morning AI Brief, admin signal scan trigger. Full details on the <a href="#" onclick="navLanding('pricing-page',null);return false" style="color:var(--blue)">Pricing page</a>.</div>
+      <div class="faq-a">Free: 3 instruments, journal (up to 50 trades), signal feed (read-only), trade ideas (1/day), news, learning center. Trader: 10 instruments, unlimited journal, auto paper trading, Telegram &amp; email alerts, weekly digest, leaderboard, signal scanner access. Pro: all 16 instruments, Binance live auto-execution (crypto), TradingView webhook, Morning AI Brief, admin signal scan trigger. Full details on the <a href="#" onclick="navLanding('pricing-page',null);return false" style="color:var(--blue)">Pricing page</a>.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button>
@@ -1332,7 +1328,7 @@
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">How is my data stored and secured?<span class="faq-chv">+</span></button>
-      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. Your OANDA credentials and API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store your card details. We never sell personal data to third parties.</div>
+      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. Your Binance API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store your card details. We never sell personal data to third parties.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">What is Profit Factor and why does it matter?<span class="faq-chv">+</span></button>
