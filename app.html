@@ -7938,13 +7938,23 @@ function _pracDraw() {
   // EMA50 line — shown on trend filter scenarios
   if (q.ema50 != null) {
     const y = sy(q.ema50);
-    ctx.strokeStyle = 'rgba(139,92,246,0.7)'; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(139,92,246,0.85)'; ctx.lineWidth = 2;
     ctx.setLineDash([6,3]);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(139,92,246,0.9)';
-    ctx.fillText('EMA50', pad.l + 4, y - 4);
+    // Label with pill background — clamped so it's always fully visible
+    const lblY = Math.max(pad.t + 16, Math.min(H - pad.b - 4, y));
+    ctx.font = 'bold 11px Inter,sans-serif';
+    const lbl = 'EMA50';
+    const lw = ctx.measureText(lbl).width;
+    ctx.fillStyle = 'rgba(109,40,217,0.92)';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(pad.l + 2, lblY - 15, lw + 10, 17, 4)
+                  : ctx.rect(pad.l + 2, lblY - 15, lw + 10, 17);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.fillText(lbl, pad.l + 7, lblY - 2);
   }
 }
 
