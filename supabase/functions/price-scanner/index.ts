@@ -413,7 +413,10 @@ function analyseCandles(candles: Candle[], inst: Inst) {
     const dir=pat.dir
     const trendOk=(dir==='LONG'&&aboveE200)||(dir==='SHORT'&&!aboveE200)
     const rsiOk=(dir==='LONG'&&rsiVal<65)||(dir==='SHORT'&&rsiVal>35)
-    if (trendOk || rsiOk) {
+    // Hard trend gate: price must be on the correct side of EMA50.
+    // Blocks counter-trend candlestick patterns (e.g. Three Black Crows in an uptrend).
+    const ema50Aligned=(dir==='LONG'&&last.close>e50)||(dir==='SHORT'&&last.close<e50)
+    if (ema50Aligned && (trendOk || rsiOk)) {
       const stop=dir==='LONG'?last.close-atrVal*1.5:last.close+atrVal*1.5
       const t1=dir==='LONG'?last.close+atrVal*2.5:last.close-atrVal*2.5
       const t2=dir==='LONG'?last.close+atrVal*4.0:last.close-atrVal*4.0
@@ -425,7 +428,8 @@ function analyseCandles(candles: Candle[], inst: Inst) {
       if(vol&&vol.ratio>2.0) conf+=15; else if(vol&&vol.ratio>1.5) conf+=10
       if(vol&&vol.declining) conf+=8
       const reasons:string[]=[]
-      if(trendOk) reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA200 — trend aligned`)
+      reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA50 — medium-term trend aligned`)
+      if(trendOk) reasons.push(`Price ${dir==='LONG'?'above':'below'} EMA200 — long-term trend aligned`)
       if(bullTrend||bearTrend) reasons.push(`EMAs stacked (20/50/200) — strong ${dir==='LONG'?'uptrend':'downtrend'}`)
       if(rsiOk) reasons.push(`RSI ${rsiVal.toFixed(0)} — ${dir==='LONG'?'room to run':'room to fall'}`)
       if(pat.str===3) reasons.push(`${pat.name} — high-conviction pattern`)
@@ -445,13 +449,17 @@ function analyseCandles(candles: Candle[], inst: Inst) {
     const trendOk=(c.dir==='LONG'&&aboveE200)||(c.dir==='SHORT'&&!aboveE200)
     const structAligned=(c.dir==='LONG'&&struct==='bullish')||(c.dir==='SHORT'&&struct==='bearish')
     const rsiOk=(c.dir==='LONG'&&rsiVal<65)||(c.dir==='SHORT'&&rsiVal>35)
+    const ema50Aligned=(c.dir==='LONG'&&last.close>e50)||(c.dir==='SHORT'&&last.close<e50)
+    // Penalise signals that go against the EMA50 trend — they have lower historical win rates
+    if (!ema50Aligned) conf -= 15
     if (trendOk) { conf+=10; c.reasons.push(`Price ${c.dir==='LONG'?'above':'below'} EMA200 — trend aligned`) }
+    else if (ema50Aligned) c.reasons.push(`Price ${c.dir==='LONG'?'above':'below'} EMA50 — medium-term trend aligned`)
     if (bullTrend||bearTrend) conf+=8
     if (structAligned) { conf+=7; c.reasons.push(`Price structure: ${struct}`) }
     if (rsiOk) conf+=5
     if (vol&&vol.ratio>1.5) conf+=5
     if (atKeyLevel&&nearestLevel) { conf+=5; c.reasons.push(`Key S/R level at ${nearestLevel!.toFixed(inst.dec)}`) }
-    return {...c, conf: Math.min(93, conf)}
+    return {...c, conf: Math.min(93, Math.max(0, conf))}
   }
 
   // Strategy B: Turtle Trading
