@@ -449,28 +449,30 @@
     <div class="howto-steps">
       <div class="howto-step">
         <div class="howto-num">1</div>
-        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing trading signals (1–5 day holds). Use <strong>4H</strong> for shorter intraday setups resolving within hours to 2 days. <strong>1W</strong> (Pro) for weekly swing and position trades.</div></div>
+        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing setups (1–5 day holds). <strong>4H</strong> for intraday setups resolving within hours to 2 days. <strong>1W</strong> (Pro) for weekly position trades. All signals are pre-filtered by the EMA50 trend gate — counter-trend patterns are blocked before reaching you.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">2</div>
-        <div><div class="howto-step-title">View the latest signals</div><div class="howto-step-desc">Sharpe runs a full market scan server-side every 4 hours covering all instruments — signals load automatically and are always fresh when you arrive.</div></div>
+        <div><div class="howto-step-title">Read the signal card context</div><div class="howto-step-desc">Each card shows confidence %, entry/SL/TP, pattern name, <strong>market regime</strong> (Trending ↑/↓, Ranging, Overbought/Oversold), and the <strong>scanner's historical win rate</strong> for that pattern. Pro users also see multi-timeframe confluence badges when Daily and 4H agree.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">3</div>
-        <div><div class="howto-step-title">Review signal cards</div><div class="howto-step-desc">Each card shows the instrument, direction (LONG/SHORT), <strong>confidence %</strong>, entry zone, stop loss, take profit, R:R ratio and the specific pattern that triggered the signal.</div></div>
+        <div><div class="howto-step-title">Check "Why Not Now" for silent instruments</div><div class="howto-step-desc">Instruments with no signal are listed below the market strip with a reason — "RSI at 54, not yet extreme enough" or "Ranging structure — no trend to trade." Silence is now information, not absence of it.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">4</div>
-        <div><div class="howto-step-title">Enable auto-log</div><div class="howto-step-desc">Tick <strong>Auto-log signals ≥ X%</strong> to automatically save qualifying signals to your Trade Journal. Set the threshold to 75%+ to avoid low-quality noise.</div></div>
+        <div><div class="howto-step-title">Act: Paper Trade, journal, or enable auto-log</div><div class="howto-step-desc">Click <strong>Paper Trade</strong> to queue a position. Use <strong>Auto-log</strong> to save qualifying signals to your journal automatically. Enable <strong>Auto Paper Trading</strong> in Settings to have the system open and close positions server-side — even when your browser is closed.</div></div>
       </div>
     </div>
     <div class="howto-opts">
-      <div class="howto-opts-hdr">Options &amp; settings reference</div>
+      <div class="howto-opts-hdr">Signal card reference</div>
       <div class="howto-opt-grid">
-        <div class="howto-opt"><span class="howto-opt-key">Confidence 65–74%</span><span class="howto-opt-val">Possible setup with partial factor alignment. Treat as a watchlist candidate — wait for additional confirmation before acting.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid signal. Most key factors aligned (trend, momentum, pattern). Standard actionable threshold for most traders.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Confidence 85–93%</span><span class="howto-opt-val">High-conviction setup. All major factors confirm. Rare — treat as a priority signal when it appears.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Auto-log</span><span class="howto-opt-val">Signals at or above the set threshold are saved to your Trade Journal automatically after each scan. You can review and close them there.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 65–74%</span><span class="howto-opt-val">Partial alignment. Treat as a watchlist candidate — wait for additional confirmation.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid signal. Most key factors aligned. Standard actionable threshold for most traders.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 85–93%</span><span class="howto-opt-val">High-conviction setup. All major factors confirm — EMA50, price structure, RSI, volume. Rare — treat as priority.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">⚡ Triple TF Confluence</span><span class="howto-opt-val">The same direction fired on Daily, 4H, and Weekly. Statistically the highest-probability setup the scanner produces. Pro only.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Pattern win rate</span><span class="howto-opt-val">The scanner's historical win rate for this specific pattern across all closed paper trades. Minimum 3 data points before shown.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Market Regime badge</span><span class="howto-opt-val">Trending ↑/↓ = EMA and RSI both confirm direction. Ranging = no clear trend. Overbought/Oversold = RSI at extreme. Context for the signal's environment.</span></div>
       </div>
     </div>
   </div>
@@ -551,10 +553,10 @@
   <div class="pos-explainer">
     <div class="pos-explainer-title">How Paper Trading works</div>
     <div class="pos-explainer-steps">
-      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any signal — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>When the app is open, prices are monitored every <strong>30 seconds</strong>. When you close the app, the server checks every <strong>1 minute</strong>. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close any open position manually at the current live price.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. No real money is ever involved.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any signal — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit. Enable <strong>Auto Paper Trading</strong> in Settings to skip this step entirely.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>Prices are monitored every <strong>30 seconds</strong> while the app is open, and every <strong>1 minute</strong> server-side when it's closed. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>Positions close automatically at take profit or stop loss. You can also close manually. A <strong>Correlation warning</strong> appears if two or more open positions are >70% correlated — you may be taking the same trade twice.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>Every closed trade feeds your Sharpe Score, win rate, and leaderboard ranking. Hit <strong>Replay ▶</strong> on any closed position to watch it bar-by-bar and review your decision. No real money is ever involved.</span></div>
     </div>
   </div>
 
