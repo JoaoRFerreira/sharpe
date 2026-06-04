@@ -7866,8 +7866,8 @@ function _pracDraw() {
   const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
 
   const all = q.candles;
-  const minP = Math.min(...all.map(c => c.l));
-  const maxP = Math.max(...all.map(c => c.h));
+  const minP = Math.min(...all.map(c => c.l), q.ema50 != null ? q.ema50 : Infinity);
+  const maxP = Math.max(...all.map(c => c.h), q.ema50 != null ? q.ema50 : -Infinity);
   const range = (maxP - minP) * 1.08 || 1;
   const mid   = (maxP + minP) / 2;
   const sy = v => pad.t + cH * (1 - (v - (mid - range/2)) / range);
