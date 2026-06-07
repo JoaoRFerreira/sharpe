@@ -1632,6 +1632,49 @@
   </div>
 </section>
 
+<!-- FAQ ─────────────────────────────────────────────────────── -->
+<section class="section" id="faq">
+  <div class="section-title" style="margin-bottom:6px">FAQ</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Everything you need to know about Sharpe.</div>
+  <div class="faq-list" style="max-width:800px">
+
+    <div class="faq-group-title">Getting Started</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Sharpe?<span class="faq-chv">+</span></button><div class="faq-a">Sharpe is an automated signal scanner and trading analytics platform for independent traders. It scans 16 Forex and Crypto pairs every 4 hours, filters signals with an EMA50 trend gate, and optionally opens and closes paper trades server-side — even when your browser is closed. It also includes a trade journal with AI-powered grades, a Sharpe Score, backtesting, daily trade ideas, an economic calendar, market news, and an 80+ pattern educational library.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is there a free plan?<span class="faq-chv">+</span></button><div class="faq-a">Yes. The Starter plan is free forever with no credit card required. It includes a trade journal (up to 50 trades), the full learning center, Risk of Ruin calculator, portfolio dashboard with Sharpe Score, economic calendar, and demo signals. Paid plans include a 7-day free trial with no card needed.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What markets does Sharpe cover?<span class="faq-chv">+</span></button><div class="faq-a">16 instruments: 12 Forex pairs (EUR/USD, GBP/USD, USD/JPY, AUD/USD, GBP/JPY, EUR/JPY, USD/CAD, NZD/USD, EUR/GBP, USD/CHF, EUR/CHF, AUD/JPY), Gold (XAU/USD), Silver (XAG/USD), and BTC/USD, ETH/USD. Free = 3 instruments, Trader = 14, Pro = all 16.</div></div>
+
+    <div class="faq-group-title">Signals &amp; Scanner</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does the signal scanner work?<span class="faq-chv">+</span></button><div class="faq-a">Runs every 4 hours via GitHub Actions using EMA crossovers, RSI, ATR, candlestick patterns, ICT order blocks, and supply/demand zones. An EMA50 trend gate blocks counter-trend signals — if a bearish pattern appears while price is above EMA50, no SHORT signal fires. Each signal includes entry zone, stop loss, two take-profit targets, confidence score, and a reason why it fired.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the EMA50 trend gate?<span class="faq-chv">+</span></button><div class="faq-a">A filter that blocks counter-trend signals. LONG signals only fire when price is above the 50-period EMA. SHORT signals only fire when price is below it. Learn more in Learning → Trend Filters.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Market Regime badge?<span class="faq-chv">+</span></button><div class="faq-a">Each signal card shows a market regime badge: Trending ↑/↓ (EMA and RSI both confirm direction), Overbought (RSI ≥ 68), Oversold (RSI ≤ 32), or Ranging (no clear bias). Context for the signal's environment.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Multi-Timeframe Confluence? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">When the same direction fires on more than one timeframe simultaneously (e.g. Daily and 4H both show LONG), the signal card shows a confluence badge. Gold ⚡ Triple TF Confluence = all three timeframes agree — the highest-confidence scenario the scanner produces.</div></div>
+
+    <div class="faq-group-title">Paper Trading &amp; Positions</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button><div class="faq-a">Paper trading simulates real trades with no money at risk. Click Paper Trade on any signal to queue a pending entry. A price monitor checks every 30 seconds while the app is open and every 1 minute server-side when closed. When price enters the entry zone, the position opens automatically. When stop loss or take profit is hit, it closes and logs the result.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Correlation Risk Monitor? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Warns when two open positions in the same direction are >70% correlated — "EUR/USD and GBP/USD are 84% correlated — you are effectively 2× long USD weakness." Computed from the last 20 daily closes.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Trade Replay? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Every closed position has a Replay ▶ button. Clicking it plays back the candle sequence from entry to close — bar by bar, with entry, stop loss, take profit, and exit price lines overlaid. Speed adjustable from 0.5× to 8×.</div></div>
+
+    <div class="faq-group-title">Journal &amp; Analytics</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Trade Grade (A–F)?<span class="faq-chv">+</span></button><div class="faq-a">Every closed trade receives an automatic letter grade. A = win above 70% of your average win with entry and exit reasoning. B = any win with notes. C = disciplined small loss. D = normal loss. F = loss more than 2× your average loss (stop-loss violation or early exit from winner).</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Sharpe Score?<span class="faq-chv">+</span></button><div class="faq-a">A single 0–100 composite performance metric on your Dashboard combining Win Rate (35pts), Profit Factor (30pts), Max Drawdown (20pts), and Sample Size (15pts). Labels: Developing → Building → Solid → Strong → Elite. Requires at least 5 closed trades.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Profit Factor?<span class="faq-chv">+</span></button><div class="faq-a">Gross winning pips divided by gross losing pips. Above 1.0 = net-profitable. Above 1.5 = solid edge. Above 2.0 = strong. It captures both win rate and the relative size of wins vs losses.</div></div>
+
+    <div class="faq-group-title">AI Features (Pro)</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the AI Trade Coach?<span class="faq-chv">+</span></button><div class="faq-a">Uses Claude AI to analyse your last 50 closed paper trades and identify specific behavioural patterns — not generic advice, but data-backed observations from your own history. Surfaces 3 findings, 1 weekly focus, and 1 genuine strength. Cached for 24 hours. Requires Anthropic API key in Admin → Site Settings.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Personal Signal Calibration? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Compares your own win rate per pattern against the scanner's global average. If Three Black Crows has a 58% global win rate but only 35% in your paper trading, the signal card shows "You: 35% · Scanner: 58% ⚠ Underperforming." Requires at least 3 personal trades per pattern.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Morning AI Brief? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Every weekday at 7am UTC, Claude AI reviews live prices and active signals and sends you a personalised 2–3 paragraph market outlook to Telegram. Requires Telegram configured in Settings and an Anthropic API key in Admin.</div></div>
+
+    <div class="faq-group-title">Plans &amp; Billing</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the difference between plans?<span class="faq-chv">+</span></button><div class="faq-a">Starter (Free): 3 instruments, 50 journal trades, Sharpe Score, Risk of Ruin, economic calendar, learning center. Trader ($15/mo): 14 instruments, unlimited journal with grades, live signals, EMA50 gate, market regime, auto paper trading, Telegram alerts. Pro ($39/mo): all 16 instruments, AI Trade Coach, Trade Replay, Correlation Monitor, Personal Calibration, MTF Confluence, Morning Brief, TradingView webhook.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Can I cancel anytime?<span class="faq-chv">+</span></button><div class="faq-a">Yes. No long-term contracts. Cancel from account settings. Your plan stays active until the end of the billing period, then reverts to Free. Journal data and trade history are always retained.</div></div>
+
+    <div class="faq-group-title">Data &amp; Security</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How is my data secured?<span class="faq-chv">+</span></button><div class="faq-a">All data is stored on Supabase with row-level security — no user can read another user's data. API keys are encrypted at rest. Payments via Stripe — we never see card details. Data is never sold to third parties.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button><div class="faq-a">No. Sharpe is an analytical and educational tool. Nothing constitutes financial advice. Signals are for informational purposes only. Trading involves significant risk — always apply your own risk management and consult a qualified financial adviser.</div></div>
+
+  </div>
+</section>
+
 </div><!-- /main -->
 
 
@@ -1924,7 +1967,7 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
-const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','settings','admin']);
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','settings','admin','faq']);
 let _hashNav = false;
 const _sectionInited = new Set();
 
@@ -7917,7 +7960,7 @@ if ('serviceWorker' in navigator) {
       <div class="footer-col">
         <h4>Resources</h4>
         <ul>
-          <li><a href="index.html#faq">FAQ</a></li>
+          <li><a href="#" onclick="nav('faq',null);return false">FAQ</a></li>
           <li><a href="signals-performance.html" target="_blank">Signal Performance</a></li>
           <li><a href="index.html#pricing-page">Pricing</a></li>
           <li><a href="mailto:hello@sharpe.io">Contact</a></li>
@@ -7940,7 +7983,7 @@ if ('serviceWorker' in navigator) {
         <a href="index.html#terms">Terms</a>
         <a href="index.html#privacy">Privacy</a>
         <a href="index.html#risk">Risk Disclosure</a>
-        <a href="index.html#faq">FAQ</a>
+        <a href="#" onclick="nav('faq',null);return false">FAQ</a>
         <a href="mailto:hello@sharpe.io">Contact</a>
       </div>
     </div>
