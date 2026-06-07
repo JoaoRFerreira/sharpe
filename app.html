@@ -2046,7 +2046,7 @@ function navLanding(id, btn){
   }
   window.scrollTo(0,0);
 }
-const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','settings','admin','faq','terms','privacy','cookies','risk']);
+const VALID_SECTIONS = new Set(['dashboard','journal','simulator','signals','positions','trackrecord','backtest','leaderboard','ideas','news','learning','settings','admin']);
 let _hashNav = false;
 const _sectionInited = new Set();
 
@@ -3881,6 +3881,28 @@ function renderLivePositions(){
 
 function showPaperPopup(){ document.getElementById('ptPopup').classList.add('open'); }
 function closePaperPopup(){ document.getElementById('ptPopup').classList.remove('open'); }
+
+// ── Side Panel ────────────────────────────────────────────────
+const _SP_TITLES = { faq:'FAQ', terms:'Terms of Service', privacy:'Privacy Policy', cookies:'Cookie Policy', risk:'Risk Disclosure' };
+function openSidePanel(id){
+  const src = document.getElementById(id);
+  if(!src) return;
+  document.getElementById('spTitle').textContent = _SP_TITLES[id] || id;
+  const body = document.getElementById('spBody');
+  // Pull the relevant inner content (skip the back-button wrapper)
+  const inner = src.querySelector('.legal-body, .faq-list');
+  body.innerHTML = inner ? inner.outerHTML : src.innerHTML;
+  document.getElementById('spOverlay').classList.add('open');
+  document.getElementById('spPanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidePanel(){
+  document.getElementById('spOverlay').classList.remove('open');
+  document.getElementById('spPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+// Close on Escape key
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSidePanel(); });
 
 function showToast(msg, cls='ti'){
   const wrap=document.getElementById('toastWrap');
@@ -8039,7 +8061,7 @@ if ('serviceWorker' in navigator) {
       <div class="footer-col">
         <h4>Resources</h4>
         <ul>
-          <li><a href="#" onclick="nav('faq',null);return false">FAQ</a></li>
+          <li><a href="#" onclick="openSidePanel('faq');return false">FAQ</a></li>
           <li><a href="signals-performance.html" target="_blank">Signal Performance</a></li>
           <li><a href="index.html#pricing-page">Pricing</a></li>
           <li><a href="mailto:hello@sharpe.io">Contact</a></li>
@@ -8048,10 +8070,10 @@ if ('serviceWorker' in navigator) {
       <div class="footer-col">
         <h4>Legal</h4>
         <ul>
-          <li><a href="#" onclick="nav('terms',null);return false">Terms of Service</a></li>
-          <li><a href="#" onclick="nav('privacy',null);return false">Privacy Policy</a></li>
-          <li><a href="#" onclick="nav('cookies',null);return false">Cookie Policy</a></li>
-          <li><a href="#" onclick="nav('risk',null);return false">Risk Disclosure</a></li>
+          <li><a href="#" onclick="openSidePanel('terms');return false">Terms of Service</a></li>
+          <li><a href="#" onclick="openSidePanel('privacy');return false">Privacy Policy</a></li>
+          <li><a href="#" onclick="openSidePanel('cookies');return false">Cookie Policy</a></li>
+          <li><a href="#" onclick="openSidePanel('risk');return false">Risk Disclosure</a></li>
         </ul>
       </div>
     </div>
@@ -8059,16 +8081,26 @@ if ('serviceWorker' in navigator) {
     <div class="footer-bottom">
       <p>&copy; 2026 Sharpe Analytics Ltd. All rights reserved.</p>
       <div class="footer-bottom-links">
-        <a href="#" onclick="nav('terms',null);return false">Terms</a>
-        <a href="#" onclick="nav('privacy',null);return false">Privacy</a>
-        <a href="#" onclick="nav('risk',null);return false">Risk Disclosure</a>
-        <a href="#" onclick="nav('faq',null);return false">FAQ</a>
+        <a href="#" onclick="openSidePanel('terms');return false">Terms</a>
+        <a href="#" onclick="openSidePanel('privacy');return false">Privacy</a>
+        <a href="#" onclick="openSidePanel('risk');return false">Risk Disclosure</a>
+        <a href="#" onclick="openSidePanel('faq');return false">FAQ</a>
         <a href="mailto:hello@sharpe.io">Contact</a>
       </div>
     </div>
     <p class="footer-disclaimer">Sharpe is an educational and analytical platform. Nothing on this site constitutes financial advice. Trading financial instruments involves significant risk of loss and may not be suitable for all investors. Past performance is not indicative of future results. Always consult a qualified financial adviser before making investment decisions.</p>
   </div>
 </footer>
+<!-- Side Panel -->
+<div class="sp-overlay" id="spOverlay" onclick="closeSidePanel()"></div>
+<div class="sp-panel" id="spPanel">
+  <div class="sp-hdr">
+    <span class="sp-title" id="spTitle"></span>
+    <button class="sp-close" onclick="closeSidePanel()" aria-label="Close">×</button>
+  </div>
+  <div class="sp-body" id="spBody"></div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-wrap" id="toastWrap"></div>
 

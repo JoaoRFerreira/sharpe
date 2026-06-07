@@ -218,7 +218,7 @@
   <nav class="lp-mob-nav">
     <button onclick="navLanding('landing',null);closeMobileMenu()">Home</button>
     <button onclick="navLanding('pricing-page',null);closeMobileMenu()">Pricing</button>
-    <button onclick="navLanding('faq',null);closeMobileMenu()">FAQ</button>
+    <button onclick="openSidePanel('faq');closeMobileMenu()">FAQ</button>
   </nav>
   <div class="lp-mob-auth">
     <a href="app.html" class="btn btn-ghost" style="width:100%;text-align:center;text-decoration:none;display:block;padding:10px">Sign In</a>
@@ -1370,7 +1370,7 @@
       <p>We retain your account data for as long as your account is active. If you delete your account, we will delete your personal data within 30 days, except where retention is required by law.</p>
 
       <h2>8. Cookies</h2>
-      <p>We use cookies and similar tracking technologies. Please refer to our <a href="#" onclick="navLanding('cookies',null);return false" style="color:var(--blue)">Cookie Policy</a> for details.</p>
+      <p>We use cookies and similar tracking technologies. Please refer to our <a href="#" onclick="openSidePanel('cookies');return false" style="color:var(--blue)">Cookie Policy</a> for details.</p>
 
       <h2>9. Contact</h2>
       <p>For privacy-related enquiries, contact our Data Protection Officer at <strong>privacy@sharpe.io</strong>.</p>
@@ -1584,7 +1584,7 @@
   <div class="faq-group-title">Data &amp; Security</div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">How is my data stored and secured?<span class="faq-chv">+</span></button>
-      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store card details. Personal data is never sold to third parties. See our <a href="#" onclick="navLanding('privacy',null);return false" style="color:var(--blue)">Privacy Policy</a> for full details.</div>
+      <div class="faq-a">All data is stored on Supabase with row-level security — no user can ever read another user's trades or settings. API keys are stored encrypted at rest. Payment processing is handled by Stripe; we never see or store card details. Personal data is never sold to third parties. See our <a href="#" onclick="openSidePanel('privacy');return false" style="color:var(--blue)">Privacy Policy</a> for full details.</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">Is this financial advice?<span class="faq-chv">+</span></button>
@@ -1663,7 +1663,7 @@
       <div class="footer-col">
         <h4>Resources</h4>
         <ul>
-          <li><a href="#" onclick="navLanding('faq',null);return false">FAQ</a></li>
+          <li><a href="#" onclick="openSidePanel('faq');return false">FAQ</a></li>
           <li><a href="signals-performance.html" target="_blank">Signal Performance</a></li>
           <li><a href="#" onclick="navLanding('pricing-page',null);return false">Pricing</a></li>
           <li><a href="#" onclick="openAuthModal('signup');return false">Get Started Free</a></li>
@@ -1673,10 +1673,10 @@
       <div class="footer-col">
         <h4>Legal</h4>
         <ul>
-          <li><a href="#" onclick="navLanding('terms',null);return false">Terms of Service</a></li>
-          <li><a href="#" onclick="navLanding('privacy',null);return false">Privacy Policy</a></li>
-          <li><a href="#" onclick="navLanding('cookies',null);return false">Cookie Policy</a></li>
-          <li><a href="#" onclick="navLanding('risk',null);return false">Risk Disclosure</a></li>
+          <li><a href="#" onclick="openSidePanel('terms');return false">Terms of Service</a></li>
+          <li><a href="#" onclick="openSidePanel('privacy');return false">Privacy Policy</a></li>
+          <li><a href="#" onclick="openSidePanel('cookies');return false">Cookie Policy</a></li>
+          <li><a href="#" onclick="openSidePanel('risk');return false">Risk Disclosure</a></li>
         </ul>
       </div>
     </div>
@@ -1684,10 +1684,10 @@
     <div class="footer-bottom">
       <p>&copy; 2026 Sharpe Analytics Ltd. All rights reserved.</p>
       <div class="footer-bottom-links">
-        <a href="#" onclick="navLanding('terms',null);return false">Terms</a>
-        <a href="#" onclick="navLanding('privacy',null);return false">Privacy</a>
-        <a href="#" onclick="navLanding('risk',null);return false">Risk Disclosure</a>
-        <a href="#" onclick="navLanding('faq',null);return false">FAQ</a>
+        <a href="#" onclick="openSidePanel('terms');return false">Terms</a>
+        <a href="#" onclick="openSidePanel('privacy');return false">Privacy</a>
+        <a href="#" onclick="openSidePanel('risk');return false">Risk Disclosure</a>
+        <a href="#" onclick="openSidePanel('faq');return false">FAQ</a>
         <a href="mailto:hello@sharpe.io">Contact</a>
       </div>
     </div>
@@ -1696,6 +1696,15 @@
 </footer>
 <!-- Toast container -->
 
+<!-- Side Panel -->
+<div class="sp-overlay" id="spOverlay" onclick="closeSidePanel()"></div>
+<div class="sp-panel" id="spPanel">
+  <div class="sp-hdr">
+    <span class="sp-title" id="spTitle"></span>
+    <button class="sp-close" onclick="closeSidePanel()" aria-label="Close">×</button>
+  </div>
+  <div class="sp-body" id="spBody"></div>
+</div>
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -1738,6 +1747,26 @@ sb.auth.getSession().then(({ data }) => {
 });
 
 // ── NAV ───────────────────────────────────────────────────
+// ── Side Panel ───────────────────────────────────────────────
+const _SP_TITLES = { faq:'FAQ', terms:'Terms of Service', privacy:'Privacy Policy', cookies:'Cookie Policy', risk:'Risk Disclosure' };
+function openSidePanel(id){
+  const src = document.getElementById(id);
+  if(!src) return;
+  document.getElementById('spTitle').textContent = _SP_TITLES[id] || id;
+  const body = document.getElementById('spBody');
+  const inner = src.querySelector('.legal-body, .faq-list');
+  body.innerHTML = inner ? inner.outerHTML : src.innerHTML;
+  document.getElementById('spOverlay').classList.add('open');
+  document.getElementById('spPanel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeSidePanel(){
+  document.getElementById('spOverlay').classList.remove('open');
+  document.getElementById('spPanel').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSidePanel(); });
+
 function navLanding(id, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('#landingNav .lp-nav-item').forEach(b => b.classList.remove('active'));

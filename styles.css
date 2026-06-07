@@ -916,6 +916,22 @@ textarea{resize:vertical;min-height:56px}
 @media(max-width:860px){.footer-top{grid-template-columns:1fr 1fr}.footer-brand{grid-column:1/-1}}
 @media(max-width:520px){.footer-top{grid-template-columns:1fr}.footer-bottom{flex-direction:column;align-items:flex-start}}
 /* LEGAL PAGES */
+/* ── Side Panel ───────────────────────────────────────────── */
+.sp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.sp-overlay.open{opacity:1;pointer-events:all}
+.sp-panel{position:fixed;top:0;right:0;bottom:0;width:520px;max-width:100vw;background:var(--bg);z-index:601;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;border-left:1px solid var(--border);box-shadow:-12px 0 40px rgba(0,0,0,.15)}
+.sp-panel.open{transform:translateX(0)}
+.sp-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1}
+.sp-title{font-size:15px;font-weight:700;letter-spacing:-.2px;color:var(--text)}
+.sp-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:0 4px;line-height:1;transition:color .15s;font-family:sans-serif}
+.sp-close:hover{color:var(--text)}
+.sp-body{padding:24px}
+.sp-body .legal-body{border:none;box-shadow:none;padding:0;border-radius:0;background:none}
+.sp-body .legal-title{font-size:22px}
+.sp-body .legal-date{margin-bottom:20px}
+.sp-body .faq-group-title{padding-top:20px}
+.sp-body .faq-group-title:first-child{padding-top:0}
+/* ── Legal pages ──────────────────────────────────────────── */
 .legal-page{max-width:760px;margin:0 auto;padding:40px 0 80px}
 .legal-back{margin-bottom:28px}
 .legal-title{font-size:32px;font-weight:800;letter-spacing:-.5px;color:var(--text);margin-bottom:8px}
