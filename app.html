@@ -688,30 +688,6 @@
     </div>
   </div>
 
-  <!-- Telegram Alerts — easiest integration, highest day-1 value -->
-  <div class="cfg-card">
-    <div class="cfg-card-hdr">Telegram Alerts</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Get instant signal alerts and position updates in Telegram — works even when the site is closed. <a href="https://t.me/BotFather" target="_blank" style="color:var(--blue)">Create a bot via @BotFather →</a></div>
-    <div class="oanda-grid">
-      <div class="fg">
-        <label>Bot Token</label>
-        <input type="password" id="tgTokenInput" placeholder="123456789:AAF…">
-      </div>
-      <div class="fg">
-        <label>Chat ID <span style="font-size:10px;color:var(--muted)">(message @userinfobot on Telegram to get yours)</span></label>
-        <input type="text" id="tgChatIdInput" placeholder="e.g. 123456789">
-      </div>
-      <div class="fg" style="display:flex;align-items:flex-end;gap:10px">
-        <button class="btn btn-primary" onclick="saveTelegramSettings()">Connect</button>
-        <button class="btn btn-ghost" onclick="testTelegramConnection()">Send test</button>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
-      <span class="api-dot demo" id="tgDot"></span>
-      <span class="api-lbl" id="tgLbl">Not connected</span>
-    </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted)">Alerts sent: new signals · position opened · position closed with P&amp;L</div>
-  </div>
 
 
   <!-- Risk Management -->
@@ -6445,6 +6421,11 @@ sb.auth.onAuthStateChange((event, session) => {
       setTimeout(async () => {
         try { await loadProfile(); } catch(e){ console.warn('[auth] loadProfile:', e); }
         try { await loadTradesFromDb(); } catch(e){ console.warn('[auth] loadTrades:', e); }
+        // Wire footer Telegram icon to admin-configured channel URL
+        try {
+          const { data: sc } = await sb.from('site_config').select('value').eq('key','social_links').single();
+          if(sc?.value){ const l=JSON.parse(sc.value); if(l.telegram){ const a=document.getElementById('appFooterTgLink'); if(a) a.href=l.telegram; }}
+        } catch(e){}
         const initId = location.hash.slice(1);
         nav(VALID_SECTIONS.has(initId) ? initId : 'dashboard', null);
         maybeShowOnboarding();
@@ -8002,7 +7983,6 @@ function initSettings(){
   if(alChk) alChk.checked=autoLog;
   if(alConf){ alConf.value=autoLogConf; alConf.disabled=false; }
   loadAutoPaperSettings();
-  loadTelegramSettings();
   loadRiskSettings();
   loadTvWebhookSettings();
   loadLeaderboardSettings();
