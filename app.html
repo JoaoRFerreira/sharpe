@@ -8940,12 +8940,16 @@ var _replay = {
 // == Open replay modal ==
 async function openTradeReplay(positionId) {
   var pos = null;
+  // Try cache first (fast path)
   if (_posCache && _posCache.closed) {
-    for (var i = 0; i < _posCache.closed.length; i++) {
-      if (_posCache.closed[i].id === positionId) { pos = _posCache.closed[i]; break; }
-    }
+    pos = _posCache.closed.find(p => String(p.id) === String(positionId)) || null;
   }
-  if (!pos) { alert("Position not found."); return; }
+  // Fall back to direct Supabase query (covers pagination / cache misses)
+  if (!pos) {
+    const { data } = await sb.from('open_positions').select('*').eq('id', positionId).single();
+    pos = data || null;
+  }
+  if (!pos) { showToast('Position not found', 'tl'); return; }
 
   _replay.pos = pos;
   _replay.candles = [];
