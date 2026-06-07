@@ -1701,9 +1701,19 @@ const sb = supabase.createClient(SUPA_URL, SUPA_KEY, {
   auth: { detectSessionInUrl: true, persistSession: true, storageKey: 'sharpe_auth' }
 });
 
-// If already logged in on page load, go straight to the app (runs once, no loop risk)
+// Sections that live only on index.html — logged-in users should still see these
+const LANDING_ONLY = new Set(['faq','terms','privacy','cookies','risk','pricing-page']);
+
+// If already logged in, go to app — unless the user explicitly navigated to a landing section
 sb.auth.getSession().then(({ data }) => {
-  if (data?.session?.user) window.location.href = 'app.html';
+  if (!data?.session?.user) return;
+  const hash = location.hash.slice(1);
+  if (hash && LANDING_ONLY.has(hash)) {
+    // Stay on index.html and show the requested section
+    if (document.getElementById(hash)) navLanding(hash, null);
+    return;
+  }
+  window.location.href = 'app.html';
 });
 
 // ── NAV ───────────────────────────────────────────────────
