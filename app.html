@@ -20,26 +20,26 @@
 <header class="header">
   <div class="logo">Sharpe<span>.</span></div>
   <nav id="appNav">
-    <!-- Group 1: Core workflow -->
-    <button onclick="nav('dashboard',this)">Dashboard</button>
-    <button onclick="nav('signals',this)">Pattern Alerts <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
-    <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
+    <!-- Group 1: Training workflow (Learn → Practice → Track) -->
+    <button onclick="nav('learning',this)">Learn</button>
+    <button onclick="nav('signals',this)">Practice <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
     <button onclick="nav('journal',this)">Journal</button>
+    <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
     <div class="nav-sep"></div>
-    <!-- Group 2: Analysis -->
+    <!-- Group 2: Progress & analysis -->
+    <button onclick="nav('dashboard',this)">Dashboard</button>
     <button onclick="nav('trackrecord',this)">Performance</button>
-    <button onclick="nav('learning',this)">Learning</button>
+    <button onclick="nav('backtest',this)">Backtest</button>
     <div class="nav-sep"></div>
-    <!-- More dropdown: secondary sections -->
+    <!-- More dropdown: tools -->
     <div class="nav-more">
       <button class="nav-more-btn" id="navMoreBtn" onclick="toggleNavMore()">More <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg></button>
       <div class="nav-more-menu" id="navMoreMenu">
-        <button onclick="nav('backtest',null);closeNavMore()">Backtest</button>
-        <button onclick="nav('leaderboard',null);closeNavMore()">Leaderboard</button>
-        <div class="menu-sep"></div>
         <button onclick="nav('ideas',null);closeNavMore()">Ideas <span id="navIdeasBadge" class="nav-plan-tag" style="display:none">Limited</span></button>
-        <button onclick="nav('simulator',null);closeNavMore()">Simulator</button>
+        <button onclick="nav('simulator',null);closeNavMore()">Risk Simulator</button>
         <button onclick="nav('news',null);closeNavMore()">News</button>
+        <div class="menu-sep"></div>
+        <button onclick="nav('leaderboard',null);closeNavMore()">Leaderboard</button>
       </div>
     </div>
   </nav>
@@ -67,21 +67,31 @@
 
 <!-- DASHBOARD -->
 <section class="section active" id="dashboard">
-  <div class="dash-header">
-    <div>
-      <div class="dash-title">Dashboard</div>
-      <div class="dash-subtitle" id="dashSubtitle">Portfolio overview</div>
+  <!-- Training command bar -->
+  <div class="dash-cmd-bar">
+    <div class="dash-cmd-left">
+      <div class="dash-title">My Dashboard</div>
+      <div class="dash-subtitle" id="dashSubtitle">Your training progress at a glance</div>
     </div>
-    <button class="btn btn-primary" style="font-size:13px" onclick="openModal()">+ New Trade</button>
+    <div class="dash-cmd-actions">
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="nav('learning',null)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>Go to Learning
+      </button>
+      <button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="openModal()">+ Log Trade</button>
+    </div>
   </div>
   <div id="onboardingCard" style="display:none"></div>
-  <div id="statsGrid"></div>
-  <div id="sharpeScoreCard" style="margin-bottom:20px"></div>
-  <div id="aiCoachCard" style="margin-bottom:20px"></div>
 
-  <!-- Live Open Positions -->
+  <!-- KPIs + coaching (training progress) — first thing a learner wants to see -->
+  <div id="statsGrid"></div>
+  <div style="display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="flex:1 1 300px" id="sharpeScoreCard"></div>
+    <div style="flex:2 1 400px" id="aiCoachCard"></div>
+  </div>
+
+  <!-- Open practice positions — paper trading activity -->
   <div class="lpos-section-hdr">
-    <span>Paper Positions (Open)</span>
+    <span>Open Paper Positions</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
     <div style="margin-left:auto;display:flex;gap:4px">
@@ -138,8 +148,14 @@
 
 <!-- JOURNAL -->
 <section class="section" id="journal">
+  <div class="dash-cmd-bar" style="margin-bottom:14px">
+    <div class="dash-cmd-left">
+      <div class="dash-title">Trade Journal</div>
+      <div class="dash-subtitle">Log every practice trade · document your reasoning · build pattern awareness</div>
+    </div>
+  </div>
   <div class="table-controls">
-    <div class="section-title" style="margin:0">Trade Journal</div>
+    <div class="section-title" style="margin:0;display:none">Trade Journal</div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div class="filter-row">
         <select id="fMkt" onchange="renderJournal()"><option value="">All Markets</option></select>
@@ -297,6 +313,19 @@
 <!-- LEARNING + PRACTICE (unified) -->
 <section class="section" id="learning">
 
+  <!-- Learning section header -->
+  <div class="dash-cmd-bar" style="margin-bottom:16px">
+    <div class="dash-cmd-left">
+      <div class="dash-title">Learn</div>
+      <div class="dash-subtitle">80+ patterns · bar-by-bar practice scenarios · build your own reading of the market</div>
+    </div>
+    <div class="dash-cmd-actions">
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="nav('signals',null)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Go to Practice
+      </button>
+    </div>
+  </div>
+
   <!-- Mode toggle -->
   <div class="lc-mode-bar">
     <div class="lc-mode-toggle">
@@ -446,10 +475,22 @@
     <div class="fgb-text"><strong>Pattern Alerts — Trader &amp; Pro</strong><span>Upgrade to access live pattern scanning across all markets for paper trading practice.</span></div>
     <button class="fgb-btn" onclick="document.getElementById('pricingOverlay').classList.add('open')">Upgrade Now</button>
   </div>
-  <div class="section-title">Pattern Alerts — Paper Trading Practice</div>
-  <div style="display:flex;align-items:center;gap:8px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:var(--muted)">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--blue)" stroke-width="1.5"/><path d="M8 7v4M8 5.5v.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <span>Pattern alerts are for <strong style="color:var(--text)">educational paper trading practice only</strong>. They are not financial advice and do not guarantee profitable outcomes. Always do your own analysis before risking real money.</span>
+
+  <!-- Practice section header -->
+  <div class="scanner-header">
+    <div class="scanner-header-left">
+      <div class="scanner-title">
+        <span class="scanner-live-dot" id="scannerDot"></span>
+        Practice — Pattern Alerts
+      </div>
+      <div class="scanner-meta" id="scannerMeta">16 pairs scanned every 4h · EMA50 trend filter active · Paper practice only</div>
+    </div>
+    <div class="scanner-header-right">
+      <span class="scanner-edu-tag">Educational practice · Not financial advice</span>
+      <button id="scanBtn2" style="display:none" class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadSignals()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>Refresh
+      </button>
+    </div>
   </div>
 
   <div class="howto-bar" onclick="toggleHowto('sigHowto',this)">
@@ -556,10 +597,16 @@
 
 <!-- POSITIONS -->
 <section class="section" id="positions">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <div class="section-title" style="margin:0">Paper Positions</div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <span id="posLastUpdated" style="font-size:11px;color:var(--muted)"></span>
+  <div class="scanner-header" style="margin-bottom:16px">
+    <div class="scanner-header-left">
+      <div class="scanner-title">
+        <span class="scanner-live-dot"></span>
+        Paper Practice Positions
+      </div>
+      <div class="scanner-meta" id="posLastUpdated">Prices auto-monitored every 60s · No real money involved</div>
+    </div>
+    <div class="scanner-header-right">
+      <span class="scanner-edu-tag">Zero-risk practice · Simulated money only</span>
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
     </div>
   </div>
@@ -1494,8 +1541,14 @@
 
 <!-- TRACK RECORD -->
 <section class="section" id="trackrecord">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px">
-    <div class="section-title" style="margin:0">Track Record</div>
+  <div class="dash-cmd-bar" style="margin-bottom:18px">
+    <div class="dash-cmd-left">
+      <div class="dash-title">Performance</div>
+      <div class="dash-subtitle">Your paper trading track record · every result logged transparently · paper trades only</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:12px">
+    <div class="section-title" style="margin:0;display:none">Track Record</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <select id="trFilterInst" onchange="loadTrackRecord()" style="font-size:12px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:var(--card)">
         <option value="">All instruments</option>
@@ -1538,7 +1591,13 @@
 
 <!-- BACKTEST -->
 <section class="section" id="backtest">
-  <div class="section-title">Backtesting</div>
+  <div class="dash-cmd-bar" style="margin-bottom:18px">
+    <div class="dash-cmd-left">
+      <div class="dash-title">Backtest</div>
+      <div class="dash-subtitle">Replay the pattern strategy on historical candles · validate a setup before paper trading it live</div>
+    </div>
+  </div>
+  <div class="section-title" style="display:none">Backtesting</div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Replay the pattern strategy on historical candles. Useful for validating a strategy's historical edge before paper trading it live. Requires seeded candle history (Admin → Seed Candles).</div>
   <div class="cfg-card" style="margin-bottom:20px">
     <div class="cfg-card-hdr">Run Backtest</div>
@@ -4778,8 +4837,10 @@ async function loadMtfData(){
 // ── Main scan function ──
 async function loadSignals(){
   const btn=document.getElementById('scanBtn');
+  const btn2=document.getElementById('scanBtn2');
   btn.disabled=true; btn.textContent='Loading…';
-  document.getElementById('sigContainer').innerHTML='<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Loading latest signals…</div>';
+  if(btn2){btn2.disabled=true;}
+  document.getElementById('sigContainer').innerHTML='<div class="sig-spinner"><span class="spin-icon">⟳</span><br>Loading latest alerts…</div>';
   document.getElementById('mktStrip').innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px 0">Loading…</div>';
   const _noSigEl=document.getElementById('noSigStrip'); if(_noSigEl) _noSigEl.innerHTML='';
 
@@ -4791,7 +4852,7 @@ async function loadSignals(){
 
     if(e1||!latest){
       document.getElementById('sigContainer').innerHTML=
-        '<div class="no-sig-msg"><div style="font-size:28px;margin-bottom:12px">📡</div><strong>No signals yet</strong><br>The first scan runs automatically every 4 hours.<br><span style="font-size:11px">Check back shortly or ask an admin to trigger a manual run.</span></div>';
+        '<div class="no-sig-msg"><div style="font-size:28px;margin-bottom:12px">📡</div><strong>No pattern alerts yet</strong><br>The scanner runs automatically every 4 hours.<br><span style="font-size:11px">Check back shortly or ask an admin to trigger the first pattern scan.</span></div>';
       updateSigStatusBar();
       return;
     }
@@ -4844,13 +4905,14 @@ async function loadSignals(){
     updateSigStatusBar(latest.scanned_at);
     loadMtfData(); // non-blocking: fetch other-TF signals for confluence badges
     const sigCount = results.filter(r=>r.signal).length;
-    document.getElementById('sigStatusLbl').textContent=`${filtered.length} instruments · ${sigCount} signal${sigCount!==1?'s':''}`;
+    document.getElementById('sigStatusLbl').textContent=`${filtered.length} instruments · ${sigCount} alert${sigCount!==1?'s':''}`;
 
   } catch(err){
     document.getElementById('sigContainer').innerHTML=
-      `<div class="no-sig-msg" style="color:var(--red)">Failed to load signals: ${err.message}</div>`;
+      `<div class="no-sig-msg" style="color:var(--red)">Failed to load alerts: ${err.message}</div>`;
   } finally {
-    btn.disabled=false; btn.textContent='⟳ Refresh Signals';
+    btn.disabled=false; btn.textContent='⟳ Refresh';
+    if(btn2){btn2.disabled=false;}
   }
 }
 // kept for demo/admin use only
@@ -8814,22 +8876,21 @@ document.addEventListener('keydown', e => {
 <!-- Mobile bottom nav — 5 primary tabs -->
 <nav class="mob-nav" id="mobNav">
   <div class="mob-nav-inner">
-    <button class="mob-nav-btn active" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span>Home</span>
+    <button class="mob-nav-btn" data-section="learning" onclick="nav('learning',null);mobNavSync('learning')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+      <span>Learn</span>
     </button>
     <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Alerts</span>
-    </button>
-    <button class="mob-nav-btn" data-section="positions" onclick="nav('positions',null);mobNavSync('positions')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      <span>Positions</span>
-      <span class="mob-nav-badge" id="mobPosBadge" style="display:none">0</span>
+      <span>Practice</span>
     </button>
     <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Journal</span>
+    </button>
+    <button class="mob-nav-btn active" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
     </button>
     <button class="mob-nav-btn" onclick="openMobDrawer()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
@@ -8844,9 +8905,9 @@ document.addEventListener('keydown', e => {
   <div class="mob-drawer-handle"></div>
   <div class="mob-drawer-title">More</div>
   <div class="mob-drawer-grid">
-    <button class="mob-drawer-btn" data-section="learning" onclick="nav('learning',null);closeMobDrawer();mobNavSync('learning')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-      Learning
+    <button class="mob-drawer-btn" data-section="positions" onclick="nav('positions',null);closeMobDrawer();mobNavSync('positions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Positions
     </button>
     <button class="mob-drawer-btn" data-section="trackrecord" onclick="nav('trackrecord',null);closeMobDrawer();mobNavSync('trackrecord')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -8856,21 +8917,21 @@ document.addEventListener('keydown', e => {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>
       Backtest
     </button>
-    <button class="mob-drawer-btn" data-section="leaderboard" onclick="nav('leaderboard',null);closeMobDrawer();mobNavSync('leaderboard')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Leaderboard
-    </button>
     <button class="mob-drawer-btn" data-section="ideas" onclick="nav('ideas',null);closeMobDrawer();mobNavSync('ideas')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
       Ideas
     </button>
     <button class="mob-drawer-btn" data-section="simulator" onclick="nav('simulator',null);closeMobDrawer();mobNavSync('simulator')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      Simulator
+      Risk Sim
     </button>
     <button class="mob-drawer-btn" data-section="news" onclick="nav('news',null);closeMobDrawer();mobNavSync('news')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/></svg>
       News
+    </button>
+    <button class="mob-drawer-btn" data-section="leaderboard" onclick="nav('leaderboard',null);closeMobDrawer();mobNavSync('leaderboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Leaderboard
     </button>
     <button class="mob-drawer-btn" onclick="nav('settings',null);closeMobDrawer()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/><circle cx="12" cy="12" r="10"/></svg>
