@@ -22,7 +22,7 @@
   <nav id="appNav">
     <!-- Group 1: Core workflow -->
     <button onclick="nav('dashboard',this)">Dashboard</button>
-    <button onclick="nav('signals',this)">Signals <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Essential</span></button>
+    <button onclick="nav('signals',this)">Pattern Alerts <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
     <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
     <button onclick="nav('journal',this)">Journal</button>
     <div class="nav-sep"></div>
@@ -443,16 +443,20 @@
 <section class="section" id="signals">
   <div id="signalsGate" class="feat-gate-banner" style="display:none">
     <div class="fgb-icon" style="font-size:22px;font-weight:700;color:var(--blue)">+</div>
-    <div class="fgb-text"><strong>Auto Signals — Essential &amp; Pro</strong><span>Upgrade to access real-time signal scanning across all markets.</span></div>
+    <div class="fgb-text"><strong>Pattern Alerts — Trader &amp; Pro</strong><span>Upgrade to access live pattern scanning across all markets for paper trading practice.</span></div>
     <button class="fgb-btn" onclick="document.getElementById('pricingOverlay').classList.add('open')">Upgrade Now</button>
   </div>
-  <div class="section-title">Auto Signals — Daily Market Analysis</div>
+  <div class="section-title">Pattern Alerts — Paper Trading Practice</div>
+  <div style="display:flex;align-items:center;gap:8px;background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.15);border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:12px;color:var(--muted)">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--blue)" stroke-width="1.5"/><path d="M8 7v4M8 5.5v.5" stroke="var(--blue)" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>Pattern alerts are for <strong style="color:var(--text)">educational paper trading practice only</strong>. They are not financial advice and do not guarantee profitable outcomes. Always do your own analysis before risking real money.</span>
+  </div>
 
   <div class="howto-bar" onclick="toggleHowto('sigHowto',this)">
     <div class="howto-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
     <div class="howto-bar-text">
-      <span class="howto-bar-title">How to use Auto Signals</span>
-      <span class="howto-bar-sub">Understand timeframes, confidence scores, and how to act on signals</span>
+      <span class="howto-bar-title">How to use Pattern Alerts</span>
+      <span class="howto-bar-sub">Understand timeframes, confidence scores, and how to paper trade alerts for practice</span>
     </div>
     <svg class="howto-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
@@ -862,7 +866,7 @@
     <button class="atab" onclick="switchAdminTab('features',this)">Plan Features</button>
     <button class="atab" onclick="switchAdminTab('notifications',this)">Notifications</button>
     <button class="atab" onclick="switchAdminTab('analytics',this)">Analytics</button>
-    <button class="atab" onclick="switchAdminTab('signals',this)">Signals Config</button>
+    <button class="atab" onclick="switchAdminTab('signals',this)">Pattern Scanner Config</button>
     <button class="atab" onclick="switchAdminTab('trackrecord',this)">Track Record</button>
     <button class="atab" onclick="switchAdminTab('site',this)">Site Settings</button>
   </div>
@@ -987,7 +991,7 @@
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_news" checked><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_news" checked><span class="toggle-sl"></span></label></td>
             </tr>
-            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Signals & Ideas</td></tr>
+            <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Pattern Alerts & Ideas</td></tr>
             <tr>
               <td>Signal Scanner</td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_signals"><span class="toggle-sl"></span></label></td>
@@ -8816,7 +8820,7 @@ document.addEventListener('keydown', e => {
     </button>
     <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Signals</span>
+      <span>Alerts</span>
     </button>
     <button class="mob-nav-btn" data-section="positions" onclick="nav('positions',null);mobNavSync('positions')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
