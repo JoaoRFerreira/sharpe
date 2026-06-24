@@ -344,6 +344,7 @@
   <!-- LEARN view -->
   <div id="lcLearnView">
     <div class="learn-tabs">
+      <button class="ltab" onclick="ltab('strategies',this)">⭐ Strategies</button>
       <button class="ltab active" onclick="ltab('chart',this)">Chart Patterns</button>
       <button class="ltab" onclick="ltab('candle',this)">Candlesticks</button>
       <button class="ltab" onclick="ltab('harmonic',this)">Harmonics & Fibonacci</button>
@@ -355,6 +356,7 @@
       <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
       <button class="ltab" onclick="ltab('trend',this)">Trend Filters</button>
     </div>
+    <div class="learn-content" id="lc-strategies"><div id="lg-strategies"></div></div>
     <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
     <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
     <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
@@ -3456,6 +3458,20 @@ function patternSvg(name){
 }
 
 // ── LEARNING CARDS ─────────────────────────────────────────────
+function scard(name,level,lvlCls,desc,setup,rules,why,mistakes){
+  return `<div class="sc">
+    <div class="sc-head">
+      <div class="sc-name">${name}</div>
+      <span class="sc-badge sc-${lvlCls}">${level}</span>
+    </div>
+    <div class="sc-desc">${desc}</div>
+    ${setup?`<div class="sc-section"><div class="sc-section-title">Setup Conditions</div><ul class="sc-list">${setup.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}
+    ${rules?`<div class="sc-section"><div class="sc-section-title">Entry · Stop · Target</div><ul class="sc-list">${rules.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}
+    ${why?`<div class="sc-section"><div class="sc-section-title">Why It Works</div><div class="sc-why">${why}</div></div>`:''}
+    ${mistakes?`<div class="sc-section"><div class="sc-section-title">Common Mistakes</div><ul class="sc-list sc-warn">${mistakes.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}
+  </div>`;
+}
+
 function card(name,type,tCls,rel,desc,rules){
   const img=patternSvg(name);
   return `<div class="pc">
@@ -3684,6 +3700,132 @@ function buildLearning(){
     card('What Sharpe Does With This','Implementation','t-neut',null,'The EMA50 filter is now enforced at two levels in the scanner for every instrument and timeframe.',
       ['Strategy A (candlestick patterns): hard block. If price is above EMA50, no SHORT fires. If below, no LONG fires.','Strategies B/C/D (Turtle, ICT, S&D): −15 confidence penalty when counter-EMA50. They can still fire at institutional levels, but they need to overcome the penalty to reach your threshold.','Signal cards now show "Price above/below EMA50 — medium-term trend aligned" in the reasons list so you can verify the logic yourself.','If you see a signal missing that you expect: check the Trend Filters section of Learning — the EMA50 gate may have blocked it intentionally.']),
   ].join('');
+
+  // ── PROVEN STRATEGIES ─────────────────────────────────────────
+  const stratLevelHdr = (label, color) =>
+    `<div style="grid-column:1/-1;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-top:6px">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${color}">${label}</span>
+    </div>`;
+
+  document.getElementById('lg-strategies').innerHTML =
+    stratLevelHdr('Level 1 — Foundation: Start Here', 'var(--green)') +
+    scard('Trend Following — EMA Crossover','Beginner','beg',
+      'The #1 beginner strategy recommended by BabyPips and Investopedia. Uses two EMAs to identify trend direction and time entries. Simple, mechanical, and works on any timeframe. "The trend is your friend" is not a cliché — it\'s the most backtested principle in technical analysis.',
+      ['Two EMAs: fast (10–20 period) and slow (50 period) plotted on H1 or H4','Market must be trending — confirm with ADX > 25 (ADX below = choppy, avoid)','Best pairs for trend: EUR/USD, GBP/USD, USD/JPY on H4 and Daily'],
+      ['LONG: fast EMA crosses above slow EMA. Enter at open of next candle.','SHORT: fast EMA crosses below slow EMA.','Stop: below the slow EMA (longs) or above it (shorts)','Target: trail using slow EMA. Exit when opposite crossover occurs. Minimum 1:2 R:R.'],
+      'When a faster average crosses a slower one, short-term momentum has meaningfully outpaced the longer-term trend. This confirms a genuine directional shift, not random noise.',
+      ['Trading crossovers in ranging markets — produces constant whipsaws','Entering on every crossover without checking ADX (trend strength) first','Placing stops too tight — the slow EMA needs room, give at least 1 ATR']
+    ) +
+    scard('Support & Resistance Bounce','Beginner','beg',
+      'The most universally taught price action strategy. Identify historical price levels where large orders previously accumulated, then buy near support and sell near resistance when rejection signals appear.',
+      ['Draw horizontal lines at price levels touched 2+ times (more touches = stronger)','Wait for a rejection candle at the level: hammer, pin bar, or engulfing','Add RSI confluence: below 30 at support (oversold), above 70 at resistance (overbought)','Higher timeframe levels (Daily, H4) carry more weight than lower (H1, M15)'],
+      ['Entry: open of candle after the rejection signal','Stop: 5–10 pips beyond the support/resistance zone','Target: next opposing level. Aim for 1:2 R:R minimum.'],
+      'Large institutions and algo funds place conditional orders at historic price levels. When price returns to these zones, those orders activate — creating the bounce. You\'re trading with institutional order flow, not against it.',
+      ['Entering at the level itself without waiting for rejection (catch a falling knife)','Treating every line on the chart as a level — only clear, obvious levels work','Not adjusting stop to behind the zone (price can wick through before bouncing)']
+    ) +
+    scard('The 1% Risk Rule','Beginner','beg',
+      '74–89% of retail traders lose money (EU regulatory disclosure data). The single biggest differentiator between survivors and blow-ups is this one rule: never risk more than 1–2% of your account on any single trade.',
+      ['Risk Amount = Account Balance × 1%','Position Size = Risk Amount ÷ Stop Loss Distance (in $ per pip/point)','Example: $10,000 account × 1% = $100 max loss. 20-pip stop on EUR/USD = $100 ÷ $2/pip = 50 micro lots','Reduce to 0.5% during news events or high-uncertainty setups'],
+      ['At 1% risk: 10 consecutive losses = 10% drawdown (recoverable)','At 20% risk: 5 consecutive losses = near-wipeout (not recoverable)','Even the best strategies have losing streaks — the 1% rule ensures you survive them'],
+      'Geometric compounding means a -50% drawdown requires a +100% gain just to recover. At 1% per trade, even 50 consecutive losses leaves you with ~60% of your account. Mathematics — not discipline — protects you.',
+      ['Risking 10–20% because the setup "looks really good"','Using leverage to make the 1% risk feel more meaningful in dollar terms','Ignoring the rule during news releases (spreads and slippage can make actual loss larger)']
+    ) +
+    stratLevelHdr('Level 2 — Indicator Strategies', 'var(--blue)') +
+    scard('RSI + Trend Filter','Intermediate','int',
+      'RSI alone achieves ~62% accuracy. Add a single trend filter (EMA50) and accuracy jumps to ~78% — a 16-point improvement from one rule. The RSI tells you WHEN (momentum extreme). The EMA50 tells you IF (trend direction). Both together create a high-probability setup.',
+      ['RSI 14-period on H1 or H4 chart','EMA50 as the trend divider: price above = bullish bias only, price below = bearish bias only','LONG setups: price must be above EMA50. SHORT setups: price must be below EMA50.'],
+      ['LONG entry: RSI drops below 30 (oversold), then crosses back above 30. Price must be above EMA50.','SHORT entry: RSI rises above 70 (overbought), then crosses back below 70. Price must be below EMA50.','Stop: below recent swing low (longs) or above swing high (shorts)','Target: 1:2 R:R minimum. Exit if RSI reaches opposite extreme.'],
+      'RSI identifies temporary momentum overextensions. The EMA50 ensures you\'re reading them in context. RSI < 30 in an uptrend = dip (buy the dip). RSI < 30 in a downtrend = momentum continuation (stay out or short more).',
+      ['Buying RSI < 30 when price is below EMA50 — "oversold" in a downtrend keeps going lower','Treating RSI as a standalone signal without trend context','Setting RSI thresholds at exactly 30/70 — sometimes 25/75 gives cleaner entries in strong trends']
+    ) +
+    scard('MACD Crossover Strategy','Beginner','beg',
+      'One of the most widely taught mechanical strategies. MACD (Moving Average Convergence Divergence) captures the relationship between two EMAs to reveal momentum shifts. The signal line crossover is the trigger. Default settings: 12 EMA / 26 EMA / 9-period signal line.',
+      ['Plot MACD on H4 or Daily chart (lower timeframes = too many false crossovers)','Strongest signals: crossovers that happen below the zero line (bullish) or above it (bearish)','Add volume confirmation: volume should rise when MACD crosses'],
+      ['LONG: MACD line crosses above signal line. Strongest when crossing from below zero.','SHORT: MACD line crosses below signal line. Strongest when crossing from above zero.','Stop: below nearest swing low (longs) or above swing high (shorts)','Target: next key S/R level, or exit on opposite crossover'],
+      'MACD measures whether short-term momentum is outpacing long-term momentum. When the fast EMA diverges from the slow one, price is gaining or losing directional energy. The crossover marks the moment that shift becomes statistically meaningful.',
+      ['Using MACD in sideways markets — crossovers occur constantly with no follow-through','Entering on every crossover without checking the zero-line context','Treating MACD alone as a buy/sell signal without structure context']
+    ) +
+    scard('Bollinger Band Squeeze Breakout','Intermediate','int',
+      'When Bollinger Bands narrow to a multi-week low (squeeze), a major directional move is imminent. Backtested across 6 markets: 26–44% win rate, but positive expectancy because wins are large relative to losses. Best backtest: ETHUSD daily — 44.3% win rate, 1.59 profit factor, 4.1% max drawdown.',
+      ['Bollinger Bands: 20-period SMA, 2 standard deviations','Identify squeeze: bands pinch to visually narrow for multiple candles — bandwidth at multi-week lows','Pro tip: Confirm squeeze using Keltner Channels — when BB fits inside KC = textbook squeeze'],
+      ['LONG breakout: price closes above upper band post-squeeze + RSI > 60 + above-average volume','SHORT breakout: price closes below lower band + RSI < 40 + above-average volume','Stop: at the opposite band (lower band for longs, upper band for shorts)','Target: minimum 1:2 R:R. No fixed target — trail as price extends'],
+      'Volatility is cyclical. Periods of low volatility (compression = bands narrowing) are always followed by periods of high volatility (expansion). The squeeze is the market coiling before an explosive move. The breakout direction reveals institutional intent.',
+      ['Entering during the squeeze itself — wait for the breakout','Trading the squeeze without volume or RSI direction confirmation (many false breakouts)','Using this in strongly trending markets — it\'s a breakout signal, not a trend-follow entry']
+    ) +
+    scard('Bollinger Band Bounce (Mean Reversion)','Intermediate','int',
+      'In ranging markets, price tends to revert toward the middle band (20 SMA) after touching either outer band. This mean-reversion approach works well in sideways conditions but fails when markets trend strongly — knowing the difference is the key skill.',
+      ['Bollinger Bands: 20-period SMA, 2 standard deviations','Confirm market is ranging: bands should be flat or contracting, NOT expanding (expanding = trending, avoid)','Signal candle: wicks below lower band but closes back inside (bullish) or above upper band but closes back inside (bearish)'],
+      ['LONG: signal candle low ≤ lower band AND close > lower band. RSI < 30 adds confirmation.','SHORT: signal candle high ≥ upper band AND close < upper band. RSI > 70 adds confirmation.','Stop: 50 pips beyond signal candle extreme (or 1.5× ATR)','Target TP1: middle band (20 SMA) — close 50% here. TP2: opposite band. Move stop to breakeven at TP1.'],
+      'Under 2 standard deviations, Bollinger Bands statistically contain ~95% of price action. When price stretches to an extreme and snaps back, it reflects temporary overextension of buyers/sellers relative to the recent average.',
+      ['Trading the bounce in a strongly trending market — price can "walk the band" for extended periods','Using this strategy without confirming a ranging environment first (ADX < 20 helps)','Forgetting the two-stage exit — taking the full position to the opposite band is too greedy']
+    ) +
+    stratLevelHdr('Level 3 — Price Action', '#e3b341') +
+    scard('Pin Bar at Key Level','Beginner','beg',
+      'The most reliable single-candle setup in retail trading. A long wick (2× body minimum) forming at a key level proves sharp rejection — large players entered and overwhelmed the other side. At Daily/H4 major levels with confluence, pin bars achieve 55–65% win rates.',
+      ['Long wick: at least 2× the candle body (3× is stronger). Small body near one end.','Must form at a key level: horizontal S/R, rising/falling trendline, EMA50, or Fibonacci level','Aligned with HTF trend direction (D1 bullish trend → only trade bullish pin bars)','Volume spike on the pin bar candle strengthens the signal'],
+      ['Conservative entry (better R:R): limit order at 50% retracement into pin bar range','Aggressive entry: buy stop just above pin bar high (bullish) / sell stop just below low (bearish)','Stop: 5–10 pips beyond the tail extreme (never closer than the wick tip)','Target: next structural level. Minimum 1:2 R:R. High-quality pins justify 1:3–1:5.'],
+      'The long wick proves that price was driven to an extreme and then violently rejected. At a key level, this represents large institutional orders absorbing all opposing pressure and pushing price back. The wick is the evidence; the level is the context.',
+      ['Trading pin bars on M5 or M15 — too noisy, filled with false signals','Trading a pin bar that is not at a key level — the wick needs a reason','Not waiting for candle close before entering — the wick must fully form first']
+    ) +
+    scard('Inside Bar Breakout','Beginner','beg',
+      'A two-candle pattern where the inside bar (second) is fully contained within the prior candle\'s high and low. Market is pausing — consolidating after a directional move. When price breaks out of the inside bar, it signals the next directional leg. ~62% win rate in trending continuation context.',
+      ['Mother bar (first candle): should be a strong directional candle','Inside bar must be entirely within mother bar\'s range — no part of wick can exceed','Best formed on Daily or H4 in the direction of the primary trend'],
+      ['LONG breakout: buy stop 1 pip above mother bar high','SHORT breakout: sell stop 1 pip below mother bar low','Stop: opposite side of mother bar (for short, stop above mother bar high)','Target: 1:2 to 1:3 R:R. Next structural level. Trend continuation — aim for the prior trend\'s next swing.'],
+      'The inside bar represents consolidation — a pause in the trend where neither buyers nor sellers have yet committed. The mother bar defines the range of that indecision. When price breaks out, it reveals which side won and has the momentum to continue.',
+      ['Trading inside bars in choppy, ranging markets — they produce false breakouts constantly','Using the inside bar stop on the wrong side (stop must be beyond the mother bar, not the inside bar)','Taking inside bar trades that are against the Daily/Weekly trend direction']
+    ) +
+    scard('Multi-Timeframe Analysis (Top-Down)','Intermediate','int',
+      'The most impactful single change a developing trader can make. Using three synchronized timeframes eliminates the #1 beginner mistake: fighting the institutional trend. Traders who add MTF alignment to their existing setup consistently report higher win rates with better R:R.',
+      ['3-TF system with 4:1–6:1 ratio between each tier','Swing trading: Weekly → Daily → H4','Day trading: Daily → H4 → H1 (or H4 → H1 → M15)','HTF = trend direction only. Mid-TF = identify setup zone. Low-TF = precise entry and stop placement.'],
+      ['Step 1: Read HTF (e.g., Daily). Determine LONG only or SHORT only based on trend.','Step 2: Drop to mid-TF (e.g., H4). Find the zone where your setup is developing.','Step 3: Drop to LTF (e.g., H1 or M15). Wait for entry trigger (pin bar, engulfing, MACD cross).','Stop: placed on LTF — much tighter than if placed on HTF. Improves R:R significantly.','Target: next major level on mid-TF or HTF.'],
+      'Institutional traders operate on higher timeframes. When their HTF levels activate, they generate the momentum that carries price. By aligning your trades with the HTF institutional bias, you ride their orders instead of fighting them.',
+      ['Trading a LTF signal that contradicts the HTF trend ("just this one counter-trend trade")','Changing HTF bias too frequently — the daily trend does not change every few candles','Using timeframes too close together (e.g., H1 and H2) — no meaningful additional context']
+    ) +
+    stratLevelHdr('Level 4 — Advanced & Session-Based', 'var(--red)') +
+    scard('London Open Breakout','Intermediate','int',
+      'One of the most consistently backtested session-based strategies. Mark the Asian session range (00:00–07:00 GMT), then trade the breakout at London open. Backtested on EUR/USD (165 trades, Apr 2024–Feb 2025): 49% win rate, +7.47% return. Requires minimum 1:2 R:R to be profitable at that win rate.',
+      ['Mark Asian range: absolute HIGH and LOW from 00:00–07:00 GMT','Quality filter: skip if Asian range > 60 pips (EUR/USD) or > 80 pips (GBP/USD) — too much volatility consumed','Skip on high-impact news events in first London hour (check ForexFactory)','Best trading days: Tuesday–Thursday. Monday and Friday produce lower-quality breakouts.'],
+      ['Buy stop: 5 pips above Asian range high. Sell stop: 5 pips below Asian range low.','Cancel the unfilled order the moment one side triggers — this is the most critical rule.','Stop: opposite side of Asian range (with 2-3 pip buffer)','Target TP1: 1× range width. Target TP2: 2× range width. Close by 11:00 London time.'],
+      'The Asian session is low-liquidity and range-bound. London open brings massive institutional order flow — the market\'s largest single session by volume. That flow must find direction, and it starts by breaking the Asian session\'s containment range. You\'re simply catching the first decisive institutional move.',
+      ['Trading an Asian range wider than 60 pips — the move has already happened','Holding past 11:00 AM London time — momentum dissipates as NY pre-session begins','Not cancelling the opposite pending order immediately — risk of double-loss on whipsaw']
+    ) +
+    scard('ICT Order Block','Advanced','adv',
+      'Order blocks (OBs) are the last opposite-direction candle before a strong institutional impulse move. Price returns to these zones to fill remaining institutional orders. Based on Inner Circle Trader (ICT) methodology — the dominant framework used by prop firm traders in 2024–2026.',
+      ['Identify the last bearish candle (red) before a strong bullish impulse with a Break of Structure → Bullish OB','Identify the last bullish candle (green) before a strong bearish impulse → Bearish OB','Valid OB requires: impulse engulfs OB body + wick, a Fair Value Gap exists adjacent, and a lower-TF Market Structure Shift confirms direction','Trade OBs only during ICT Killzones: London (02:00–05:00 ET), NY (07:00–10:00 ET)'],
+      ['Enter at the OB zone on retest, using LTF (5M) confirmation: CHoCH or MSS on the 5M chart after OB touch','Stop: 10–20 pips beyond the OB extreme (outside the block)','Target: next liquidity pool (prior swing high/low), opposing OB, or Fair Value Gap. Min 1:2 R:R.'],
+      'Institutions place large buy or sell orders in tranches. The OB marks where a major tranche was placed but not fully filled. When price returns, the remaining institutional orders absorb counter-pressure and push price away again — creating the bounce.',
+      ['Trading OBs outside ICT killzones — institutional algorithms are less active, signal quality drops significantly','Using OBs without Break of Structure context — without BOS, the OB has no reason to hold','Confusing ordinary candles with valid OBs — the impulse following the OB must be genuinely strong']
+    ) +
+    scard('News Trading — NFP & FOMC','Advanced','adv',
+      'NFP (first Friday, 08:30 ET) and FOMC (8× per year, 14:00 ET) are the highest-impact forex events. EUR/USD typically moves 50–100 pips in the first hour; large surprises produce 150+ pips. Most beginners should observe these events first, not trade them.',
+      ['Check ForexFactory calendar for red-flag events every session','Do NOT hold open positions into NFP or FOMC — close everything before the release','EUR/USD spreads widen from ~0.5 pip to 5–10+ pips at release. Plan for 5–15 pips of slippage.','The first 1–5 minutes after release are extremely dangerous — algo-driven, untradeable by hand'],
+      ['Strategy 1 (Beginner): Wait 15–30 minutes after release for spreads to normalize, then trade the confirmed direction on M5/M15','Strategy 2 (Intermediate): V-shaped reversal — after the initial spike, wait for a 5M reversal candle, enter opposite direction. Risk: 15–40 pips. Target: 1:3 R:R. Profitable at just 33% win rate.','Strategy 3 (Advanced): Pre-release range straddle — place OCO buy/sell stops outside the 30-min pre-release range. Cancel unfilled immediately when one triggers.','Risk MAXIMUM 0.5% of account on news trades (half your normal rule)'],
+      'NFP surprises (actual vs. forecast) drive USD direction. Hawkish FOMC = USD up. Dovish = USD down. BUT: the first move is often a liquidity sweep — price hunts stops above/below obvious levels before reversing to the "real" direction. This is the V-shaped reversal setup.',
+      ['Trading the first 1–5 minutes without a set pending order — manual entries face extreme slippage','Not cancelling the second OCO order when the first fills — risk of double loss on whipsaw','Using normal position size on news events — the wider stops require much smaller sizing']
+    ) +
+    stratLevelHdr('Level 5 — Psychology: Why 86% of Traders Lose', '#f85149') +
+    scard('The 14 Reasons Traders Fail','Critical Reading','adv',
+      '74–89% of retail CFD/forex accounts lose money per mandatory EU regulatory disclosures (ESMA). IG Markets: 76%. Plus500: 80%. eToro: 51% (better due to social trading model). This is regulatory fact, not opinion. Here are the 14 root causes — most experienced traders have made all of them.',
+      [
+        '1. Overleveraging — At 100:1 leverage, a 1% adverse move = 100% of margin gone',
+        '2. No stop-loss — BabyPips: "like cleaning windows on the top floor of the Empire State Building without a harness"',
+        '3. No trading plan — every decision becomes an emotional judgment call',
+        '4. Poor position sizing — risking 10–20% per trade; 5 losses = wipeout',
+        '5. Chasing price (FOMO) — entering after a move is 80% complete, at the worst R:R',
+        '6. Revenge trading — after a loss, doubling size to "get it back" emotionally',
+        '7. Holding losers too long — the Disposition Effect: pain of loss is felt 2× the pleasure of equivalent gain',
+        '8. Cutting winners short — taking 10 pips when target was 40, then watching it hit 40',
+        '9. Strategy-hopping — abandoning strategies after 5–10 losses without a 100-trade sample',
+        '10. Skipping demo trading — learning on live capital costs real money',
+        '11. Ignoring economic calendar — NFP or FOMC wipes the account while you\'re in a position',
+        '12. Bad broker — unregulated brokers, wide spreads, or dealing desks that trade against you',
+        '13. No trading journal — mistakes repeat invisibly without a written record',
+        '14. Overtrading — more trades = more fees, more losses, more emotional decisions'
+      ],
+      null,
+      'Loss aversion (Kahneman & Tversky): the psychological pain of a loss is approximately 2× the pleasure of an equivalent gain. This single bias drives mistakes 2, 7, and 8. The Disposition Effect — proven in academic literature — reduces trader returns by 3–5 percentage points per year. Trading is not primarily a technical problem. It is a psychology problem.',
+      ['Knowing these rules and still breaking them — write your rules and review them before every session','Thinking you are the exception — the 74–89% figure includes thousands of experienced traders','Treating a demo account as "not real" — pattern recognition developed on demo directly translates to live']
+    );
 }
 
 // ── LIVE PRICE ENGINE ─────────────────────────────────────────
