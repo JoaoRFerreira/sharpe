@@ -81,7 +81,7 @@
 
   <!-- Live Open Positions -->
   <div class="lpos-section-hdr">
-    <span>Open Positions</span>
+    <span>Paper Positions (Open)</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
     <div style="margin-left:auto;display:flex;gap:4px">
@@ -464,30 +464,30 @@
     <div class="howto-steps">
       <div class="howto-step">
         <div class="howto-num">1</div>
-        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing setups (1–5 day holds). <strong>4H</strong> for intraday setups resolving within hours to 2 days. <strong>1W</strong> (Pro) for weekly position trades. All signals are pre-filtered by the EMA50 trend gate — counter-trend patterns are blocked before reaching you.</div></div>
+        <div><div class="howto-step-title">Choose a timeframe</div><div class="howto-step-desc">Use <strong>Daily</strong> for swing setups (1–5 day holds). <strong>4H</strong> for intraday setups resolving within hours to 2 days. <strong>1W</strong> (Pro) for weekly position trades. All pattern alerts are pre-filtered by the EMA50 trend gate — counter-trend patterns are blocked before reaching you.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">2</div>
-        <div><div class="howto-step-title">Read the signal card context</div><div class="howto-step-desc">Each card shows confidence %, entry/SL/TP, pattern name, <strong>market regime</strong> (Trending ↑/↓, Ranging, Overbought/Oversold), and the <strong>scanner's historical win rate</strong> for that pattern. Pro users also see multi-timeframe confluence badges when Daily and 4H agree.</div></div>
+        <div><div class="howto-step-title">Read the pattern alert card</div><div class="howto-step-desc">Each card shows confidence %, entry/SL/TP, pattern name, <strong>market regime</strong> (Trending ↑/↓, Ranging, Overbought/Oversold), and the <strong>scanner's historical win rate</strong> for that pattern. Pro users also see multi-timeframe confluence badges when Daily and 4H agree.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">3</div>
-        <div><div class="howto-step-title">Check "Why Not Now" for silent instruments</div><div class="howto-step-desc">Instruments with no signal are listed below the market strip with a reason — "RSI at 54, not yet extreme enough" or "Ranging structure — no trend to trade." Silence is now information, not absence of it.</div></div>
+        <div><div class="howto-step-title">Check "Why Not Now" for silent instruments</div><div class="howto-step-desc">Instruments with no pattern alert are listed below the market strip with a reason — "RSI at 54, not yet extreme enough" or "Ranging structure — no trend to trade." Silence is now information, not absence of it.</div></div>
       </div>
       <div class="howto-step">
         <div class="howto-num">4</div>
-        <div><div class="howto-step-title">Act: Paper Trade, journal, or enable auto-log</div><div class="howto-step-desc">Click <strong>Paper Trade</strong> to queue a position. Use <strong>Auto-log</strong> to save qualifying signals to your journal automatically. Enable <strong>Auto Paper Trading</strong> in Settings to have the system open and close positions server-side — even when your browser is closed.</div></div>
+        <div><div class="howto-step-title">Act: Paper Trade, journal, or enable auto-log</div><div class="howto-step-desc">Click <strong>Paper Trade</strong> to queue a position. Use <strong>Auto-log</strong> to save qualifying alerts to your journal automatically. Enable <strong>Auto Paper Trading</strong> in Settings to have the system open and close positions server-side — even when your browser is closed.</div></div>
       </div>
     </div>
     <div class="howto-opts">
-      <div class="howto-opts-hdr">Signal card reference</div>
+      <div class="howto-opts-hdr">Pattern alert card reference</div>
       <div class="howto-opt-grid">
         <div class="howto-opt"><span class="howto-opt-key">Confidence 65–74%</span><span class="howto-opt-val">Partial alignment. Treat as a watchlist candidate — wait for additional confirmation.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid signal. Most key factors aligned. Standard actionable threshold for most traders.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Confidence 75–84%</span><span class="howto-opt-val">Solid pattern alert. Most key factors aligned. Standard actionable threshold for most traders.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">Confidence 85–93%</span><span class="howto-opt-val">High-conviction setup. All major factors confirm — EMA50, price structure, RSI, volume. Rare — treat as priority.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">⚡ Triple TF Confluence</span><span class="howto-opt-val">The same direction fired on Daily, 4H, and Weekly. Statistically the highest-probability setup the scanner produces. Pro only.</span></div>
         <div class="howto-opt"><span class="howto-opt-key">Pattern win rate</span><span class="howto-opt-val">The scanner's historical win rate for this specific pattern across all closed paper trades. Minimum 3 data points before shown.</span></div>
-        <div class="howto-opt"><span class="howto-opt-key">Market Regime badge</span><span class="howto-opt-val">Trending ↑/↓ = EMA and RSI both confirm direction. Ranging = no clear trend. Overbought/Oversold = RSI at extreme. Context for the signal's environment.</span></div>
+        <div class="howto-opt"><span class="howto-opt-key">Market Regime badge</span><span class="howto-opt-val">Trending ↑/↓ = EMA and RSI both confirm direction. Ranging = no clear trend. Overbought/Oversold = RSI at extreme. Context for the alert's environment.</span></div>
       </div>
     </div>
   </div>
@@ -497,7 +497,7 @@
     <div class="tf-toggle">
       <button class="tf-btn active" id="tfDay" onclick="setTf('1day',this)">Daily</button>
       <button class="tf-btn" id="tf4h" onclick="setTf('4h',this)">4H</button>
-      <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly signals — Pro only">1W</button>
+      <button class="tf-btn" id="tf1w" onclick="setTf('1week',this)" title="Weekly pattern alerts — Pro only">1W</button>
     </div>
     <div class="sig-fresh">
       <span class="api-dot ok" id="sigStatusDot"></span>
@@ -523,7 +523,7 @@
     <button class="mkt-chip active" data-mkt="Index"     onclick="toggleMktChip(this)">Indices</button>
     <button class="mkt-chip active" data-mkt="ETF"       onclick="toggleMktChip(this)">ETFs</button>
   </div>
-  <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Signals</button>
+  <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Alerts</button>
 
   <!-- Economic Calendar -->
   <div id="economicCalendar" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
@@ -546,9 +546,9 @@
     </div>
     <!-- Right: Active Signals -->
     <div class="sig-split-right">
-      <div class="ovw-label">Active Signals</div>
+      <div class="ovw-label">Active Alerts</div>
       <div id="sigContainer">
-        <div class="no-sig-msg">Loading signals…</div>
+        <div class="no-sig-msg">Loading alerts…</div>
       </div>
     </div>
   </div>
@@ -557,7 +557,7 @@
 <!-- POSITIONS -->
 <section class="section" id="positions">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <div class="section-title" style="margin:0">Live Positions</div>
+    <div class="section-title" style="margin:0">Paper Positions</div>
     <div style="display:flex;align-items:center;gap:12px">
       <span id="posLastUpdated" style="font-size:11px;color:var(--muted)"></span>
       <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadPositions()">↻ Refresh</button>
@@ -568,7 +568,7 @@
   <div class="pos-explainer">
     <div class="pos-explainer-title">How Paper Trading works</div>
     <div class="pos-explainer-steps">
-      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any signal — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit. Enable <strong>Auto Paper Trading</strong> in Settings to skip this step entirely.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any pattern alert — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit. Enable <strong>Auto Paper Trading</strong> in Settings to skip this step entirely.</span></div>
       <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>Prices are monitored every <strong>30 seconds</strong> while the app is open, and every <strong>1 minute</strong> server-side when it's closed. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
       <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>Positions close automatically at take profit or stop loss. You can also close manually. A <strong>Correlation warning</strong> appears if two or more open positions are >70% correlated — you may be taking the same trade twice.</span></div>
       <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>Every closed trade feeds your Sharpe Score, win rate, and leaderboard ranking. Hit <strong>Replay ▶</strong> on any closed position to watch it bar-by-bar and review your decision. No real money is ever involved.</span></div>
@@ -667,7 +667,7 @@
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Confidence threshold &amp; auto-log</div>
-        <div class="cfg-row-desc">Sets the minimum confidence to <strong>display</strong> signals. When the toggle is on, signals at or above this value are also <strong>saved to your journal</strong> automatically after each scan.</div>
+        <div class="cfg-row-desc">Sets the minimum confidence to <strong>display</strong> pattern alerts. When the toggle is on, alerts at or above this value are also <strong>saved to your journal</strong> automatically after each scan.</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
         <label class="toggle-sw"><input type="checkbox" id="autoLogChk" onchange="setAutoLog(this.checked)"><span class="toggle-sl"></span></label>
@@ -679,8 +679,8 @@
     </div>
     <div class="cfg-row">
       <div class="cfg-row-info">
-        <div class="cfg-row-label">Auto paper trade on signal</div>
-        <div class="cfg-row-desc">When enabled, the scanner automatically opens a paper trade for every signal at or above the confidence threshold — even when the site is closed. Runs server-side every 4h.</div>
+        <div class="cfg-row-label">Auto paper trade on pattern alert</div>
+        <div class="cfg-row-desc">When enabled, the scanner automatically opens a paper trade for every pattern alert at or above the confidence threshold — even when the site is closed. Runs server-side every 4h.</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
         <label class="toggle-sw"><input type="checkbox" id="autoPaperChk" onchange="saveAutoPaperSettings()"><span class="toggle-sl"></span></label>
@@ -719,7 +719,7 @@
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Correlation guard</div>
-        <div class="cfg-row-desc">Skip signals if a correlated pair is already open (e.g. EUR/USD blocks EUR/JPY and EUR/GBP).</div>
+        <div class="cfg-row-desc">Skip pattern alerts if a correlated pair is already open in the same direction (e.g. Long EUR/USD blocks Long EUR/JPY).</div>
       </div>
       <label class="toggle-sw"><input type="checkbox" id="riskCorrChk" onchange="saveRiskSettings()"><span class="toggle-sl"></span></label>
     </div>
@@ -732,7 +732,7 @@
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Webhook URL</div>
-        <div class="cfg-row-desc">Signals are POSTed as JSON when they fire. Use with Zapier, Make, n8n or your own endpoint. <a href="https://zapier.com" target="_blank" style="color:var(--blue)">Zapier →</a></div>
+        <div class="cfg-row-desc">Pattern alerts are POSTed as JSON when they fire. Use with Zapier, Make, n8n or your own endpoint. <a href="https://zapier.com" target="_blank" style="color:var(--blue)">Zapier →</a></div>
       </div>
       <div style="display:flex;gap:6px;flex:1;max-width:400px">
         <input type="url" id="webhookUrlInput" placeholder="https://hooks.zapier.com/…" style="flex:1">
@@ -742,7 +742,7 @@
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Minimum confidence to fire</div>
-        <div class="cfg-row-desc">Only signals at or above this threshold trigger the webhook and email.</div>
+        <div class="cfg-row-desc">Only pattern alerts at or above this threshold trigger the webhook and email.</div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <input type="number" id="webhookConfInput" value="75" min="40" max="99" style="width:56px">
@@ -752,7 +752,7 @@
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Email alerts via Resend</div>
-        <div class="cfg-row-desc">Get signal emails directly. Requires a free <a href="https://resend.com" target="_blank" style="color:var(--blue)">Resend</a> API key. The key is stored in your browser only.</div>
+        <div class="cfg-row-desc">Get pattern alert emails directly. Requires a free <a href="https://resend.com" target="_blank" style="color:var(--blue)">Resend</a> API key. The key is stored in your browser only.</div>
       </div>
       <label class="toggle-sw"><input type="checkbox" id="emailAlertsChk" onchange="saveAlertSettings()"><span class="toggle-sl"></span></label>
     </div>
@@ -768,7 +768,7 @@
         </div>
         <div class="fg">
           <label>From name</label>
-          <input type="text" id="alertFromName" placeholder="Sharpe Signals" value="Sharpe Signals">
+          <input type="text" id="alertFromName" placeholder="Sharpe Alerts" value="Sharpe Alerts">
         </div>
         <div class="fg">
           <label>From address <span style="font-size:10px;color:var(--muted)">(verified Resend domain)</span></label>
@@ -807,7 +807,7 @@
   <!-- TradingView Webhook -->
   <div class="cfg-card">
     <div class="cfg-card-hdr">TradingView Webhook</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Send alerts from TradingView Pine Script directly into Sharpe. Signals appear on the Signals page and auto-trigger paper trades for eligible users. <a href="https://www.tradingview.com/support/solutions/43000529348/" target="_blank" style="color:var(--blue)">How to set up TradingView alerts →</a></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Send alerts from TradingView Pine Script directly into Sharpe. Pattern alerts appear on the Pattern Alerts page and auto-trigger paper trades for eligible users. <a href="https://www.tradingview.com/support/solutions/43000529348/" target="_blank" style="color:var(--blue)">How to set up TradingView alerts →</a></div>
     <div class="cfg-row">
       <div class="cfg-row-info">
         <div class="cfg-row-label">Webhook URL</div>
@@ -843,7 +843,7 @@
   "tp": 0,
   "timeframe": "4h",
   "confidence": 80,
-  "note": "My Pine Script signal"
+  "note": "My Pine Script alert"
 }</pre>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">Click to copy · Replace YOUR_SECRET and set stop/tp values</div>
       </div>
@@ -993,19 +993,19 @@
             </tr>
             <tr><td colspan="4" style="padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:var(--bg)">Pattern Alerts & Ideas</td></tr>
             <tr>
-              <td>Signal Scanner</td>
+              <td>Pattern Scanner</td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_signals"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_signals" checked><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_signals" checked><span class="toggle-sl"></span></label></td>
             </tr>
             <tr>
-              <td>Weekly TF Signals</td>
+              <td>Weekly Pattern Alerts</td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_weeklyTf"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_weeklyTf"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_weeklyTf" checked><span class="toggle-sl"></span></label></td>
             </tr>
             <tr>
-              <td>Auto-Log Signals</td>
+              <td>Auto-Log Alerts</td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_free_autoLog"><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_ess_autoLog" checked><span class="toggle-sl"></span></label></td>
               <td style="text-align:center"><label class="toggle-sw sm"><input type="checkbox" id="fl_pro_autoLog" checked><span class="toggle-sl"></span></label></td>
@@ -1057,13 +1057,13 @@
     <div class="cfg-card">
       <div class="cfg-card-hdr">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-        Signal Alert Thresholds
+        Pattern Alert Thresholds
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Default thresholds applied when users enable auto-log or webhook notifications. Users can override these in their own settings.</div>
       <div class="cfg-row">
         <div class="cfg-row-info">
           <div class="cfg-row-label">Auto-log confidence threshold</div>
-          <div class="cfg-row-desc">Signals above this confidence % are automatically logged to the journal.</div>
+          <div class="cfg-row-desc">Pattern alerts above this confidence % are automatically logged to the journal.</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <input type="range" id="notifAutoLogConf" min="50" max="95" step="5" value="75" style="width:120px" oninput="document.getElementById('notifAutoLogConfVal').textContent=this.value+'%'">
@@ -1073,7 +1073,7 @@
       <div class="cfg-row">
         <div class="cfg-row-info">
           <div class="cfg-row-label">Webhook notification threshold</div>
-          <div class="cfg-row-desc">Signals above this confidence % trigger webhook / email alerts.</div>
+          <div class="cfg-row-desc">Pattern alerts above this confidence % trigger webhook / email alerts.</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <input type="range" id="notifWebhookConf" min="50" max="95" step="5" value="75" style="width:120px" oninput="document.getElementById('notifWebhookConfVal').textContent=this.value+'%'">
@@ -1126,7 +1126,7 @@
       <div class="cfg-row">
         <div class="cfg-row-info">
           <div class="cfg-row-label">In-app toast notifications</div>
-          <div class="cfg-row-desc">Show a toast when a new signal is detected during an active session.</div>
+          <div class="cfg-row-desc">Show a toast when a new pattern alert is detected during your session.</div>
         </div>
         <label class="toggle-sw"><input type="checkbox" id="notifToastDefault" checked><span class="toggle-sl"></span></label>
       </div>
@@ -1138,7 +1138,7 @@
     </div>
   </div>
 
-  <!-- Signals Config -->
+  <!-- Pattern Scanner Config -->
   <div class="admin-pane" id="apane-signals">
     <!-- Data Sources group label -->
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:0 2px 6px">Data Sources</div>
@@ -1149,7 +1149,7 @@
         Twelve Data API Key
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
-        Required for live forex &amp; commodity price updates and signal scans. Crypto data uses Binance (no key needed). Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> — 800 credits/day on the free tier.
+        Required for live forex &amp; commodity price updates and pattern scans. Crypto data uses Binance (no key needed). Get a free key at <a href="https://twelvedata.com" target="_blank" style="color:var(--blue)">twelvedata.com</a> — 800 credits/day on the free tier.
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input id="adminTdKey" type="password" placeholder="Paste your Twelve Data key…" style="flex:1;min-width:220px;padding:7px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
@@ -1179,7 +1179,7 @@
         Automated Scan Status
       </div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:16px">
-        Scans run automatically via <strong>Supabase Edge Function + pg_cron</strong>: prices refresh every 5 minutes, full signal scan every 4 hours. All connected users receive updates via Realtime — no polling.
+        Scans run automatically via <strong>Supabase Edge Function + pg_cron</strong>: prices refresh every 5 minutes, full pattern scan every 4 hours. All connected users receive updates via Realtime — no polling.
       </div>
       <div id="adminScanStatus" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
         <div class="cfg-card" style="margin:0;padding:12px;text-align:center">
@@ -1212,7 +1212,7 @@
       <ol style="font-size:12px;color:var(--muted);line-height:2;padding-left:18px;margin:0">
         <li>Paste your <strong>Twelve Data API key</strong> above and click Save Key, then hit <strong>↻ Test</strong> to verify the connection</li>
         <li>Click <strong>⬇ Seed Candles</strong> once to pre-load 250 candles of history for all instruments (~7,000 TD credits, one-time)</li>
-        <li>Click <strong>▶ Run Now</strong> to trigger the first signal scan — subsequent scans run automatically every 4 h via pg_cron</li>
+        <li>Click <strong>▶ Run Now</strong> to trigger the first pattern scan — subsequent scans run automatically every 4 h via pg_cron</li>
         <li>All users receive live updates via <strong>Supabase Realtime</strong> — no page refresh needed</li>
       </ol>
     </div>
@@ -1223,7 +1223,7 @@
       <div class="cfg-card-hdr" style="justify-content:space-between">
         <span style="display:flex;align-items:center;gap:8px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Scanner Run Log
+          Pattern Scanner Log
         </span>
         <div style="display:flex;align-items:center;gap:8px">
           <select class="pos-page-sel" onchange="_scanLogLimit=+this.value;loadScanLog()">
@@ -1409,8 +1409,8 @@
           <input type="password" id="pubTgTokenInput" placeholder="123456:ABC…">
         </div>
         <div class="fg">
-          <label>Channel ID <span style="font-size:10px;color:var(--muted)">(e.g. @SharpeSignals or -100…)</span></label>
-          <input type="text" id="pubTgChannelInput" placeholder="@SharpeSignals">
+          <label>Channel ID <span style="font-size:10px;color:var(--muted)">(e.g. @SharpeAlerts or -100…)</span></label>
+          <input type="text" id="pubTgChannelInput" placeholder="@SharpeAlerts">
         </div>
       </div>
       <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
@@ -1509,7 +1509,7 @@
     </div>
   </div>
   <div class="tr-kpi-row" id="trKpiRow">
-    <div class="kpi-card kpi-blue"><div class="kpi-lbl">Total Closed</div><div class="kpi-val" id="trTotal">—</div><div class="kpi-sub">paper + live</div></div>
+    <div class="kpi-card kpi-blue"><div class="kpi-lbl">Total Closed</div><div class="kpi-val" id="trTotal">—</div><div class="kpi-sub">paper trades only</div></div>
     <div class="kpi-card kpi-green"><div class="kpi-lbl">Win Rate</div><div class="kpi-val" id="trWinRate">—</div><div class="kpi-sub">TP1 hit</div></div>
     <div class="kpi-card kpi-blue"><div class="kpi-lbl">Avg R:R Achieved</div><div class="kpi-val" id="trAvgRR">—</div><div class="kpi-sub">actual vs theoretical</div></div>
     <div class="kpi-card kpi-green"><div class="kpi-lbl">Total Pips</div><div class="kpi-val" id="trTotalPips">—</div><div class="kpi-sub">net P&amp;L</div></div>
@@ -1539,7 +1539,7 @@
 <!-- BACKTEST -->
 <section class="section" id="backtest">
   <div class="section-title">Backtesting</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Replay the signal strategy on historical candles already in the database. Requires seeded candle history (250 bars per instrument/timeframe).</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Replay the pattern strategy on historical candles. Useful for validating a strategy's historical edge before paper trading it live. Requires seeded candle history (Admin → Seed Candles).</div>
   <div class="cfg-card" style="margin-bottom:20px">
     <div class="cfg-card-hdr">Run Backtest</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -1577,7 +1577,7 @@
   </div>
   <div id="btResults" style="display:none">
     <div class="tr-kpi-row" style="margin-bottom:16px">
-      <div class="kpi-card kpi-blue"><div class="kpi-lbl">Signals Found</div><div class="kpi-val" id="btTotal">—</div></div>
+      <div class="kpi-card kpi-blue"><div class="kpi-lbl">Patterns Found</div><div class="kpi-val" id="btTotal">—</div></div>
       <div class="kpi-card kpi-green"><div class="kpi-lbl">Win Rate</div><div class="kpi-val" id="btWinRate">—</div></div>
       <div class="kpi-card kpi-blue"><div class="kpi-lbl">Avg R:R</div><div class="kpi-val" id="btAvgRR">—</div></div>
       <div class="kpi-card kpi-green"><div class="kpi-lbl">Total Pips</div><div class="kpi-val" id="btPips">—</div></div>
@@ -1588,7 +1588,7 @@
       <div style="position:relative;height:220px"><canvas id="btEqChart"></canvas></div>
     </div>
     <div class="chart-card">
-      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Signal Log</h3>
+      <h3 style="font-size:13px;font-weight:700;margin-bottom:14px">Pattern Alert Log</h3>
       <div id="btTradeList" style="overflow-x:auto;font-size:12px"></div>
     </div>
   </div>
@@ -1619,18 +1619,18 @@
   <div class="faq-list" style="max-width:800px">
 
     <div class="faq-group-title">Getting Started</div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Sharpe?<span class="faq-chv">+</span></button><div class="faq-a">Sharpe is an automated signal scanner and trading analytics platform for independent traders. It scans 16 Forex and Crypto pairs every 4 hours, filters signals with an EMA50 trend gate, and optionally opens and closes paper trades server-side — even when your browser is closed. It also includes a trade journal with AI-powered grades, a Sharpe Score, backtesting, daily trade ideas, an economic calendar, market news, and an 80+ pattern educational library.</div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is there a free plan?<span class="faq-chv">+</span></button><div class="faq-a">Yes. The Starter plan is free forever with no credit card required. It includes a trade journal (up to 50 trades), the full learning center, Risk of Ruin calculator, portfolio dashboard with Sharpe Score, economic calendar, and demo signals. Paid plans include a 7-day free trial with no card needed.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Sharpe?<span class="faq-chv">+</span></button><div class="faq-a">Sharpe is a trading education and AI behavioral coaching platform. It teaches you to read markets through 80+ pattern lessons, lets you practice pattern recognition with bar-by-bar chart scenarios, and tracks your growth through risk-free paper trading. The AI Trade Coach (Pro) analyzes your actual trade history to identify the habits costing you pips. Sharpe is not a signal service — it builds your own edge. Not financial advice.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Is there a free plan?<span class="faq-chv">+</span></button><div class="faq-a">Yes. Starter is free forever — no credit card required. Includes: trade journal (up to 50 trades), full 80+ pattern learning center, Risk of Ruin calculator, Sharpe Score dashboard, economic calendar, and demo pattern alerts. Paid plans include a 7-day free trial, also no card needed.</div></div>
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What markets does Sharpe cover?<span class="faq-chv">+</span></button><div class="faq-a">16 instruments: 12 Forex pairs (EUR/USD, GBP/USD, USD/JPY, AUD/USD, GBP/JPY, EUR/JPY, USD/CAD, NZD/USD, EUR/GBP, USD/CHF, EUR/CHF, AUD/JPY), Gold (XAU/USD), Silver (XAG/USD), and BTC/USD, ETH/USD. Free = 3 instruments, Trader = 14, Pro = all 16.</div></div>
 
-    <div class="faq-group-title">Signals &amp; Scanner</div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does the signal scanner work?<span class="faq-chv">+</span></button><div class="faq-a">Runs every 4 hours via GitHub Actions using EMA crossovers, RSI, ATR, candlestick patterns, ICT order blocks, and supply/demand zones. An EMA50 trend gate blocks counter-trend signals — if a bearish pattern appears while price is above EMA50, no SHORT signal fires. Each signal includes entry zone, stop loss, two take-profit targets, confidence score, and a reason why it fired.</div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the EMA50 trend gate?<span class="faq-chv">+</span></button><div class="faq-a">A filter that blocks counter-trend signals. LONG signals only fire when price is above the 50-period EMA. SHORT signals only fire when price is below it. Learn more in Learning → Trend Filters.</div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Market Regime badge?<span class="faq-chv">+</span></button><div class="faq-a">Each signal card shows a market regime badge: Trending ↑/↓ (EMA and RSI both confirm direction), Overbought (RSI ≥ 68), Oversold (RSI ≤ 32), or Ranging (no clear bias). Context for the signal's environment.</div></div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Multi-Timeframe Confluence? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">When the same direction fires on more than one timeframe simultaneously (e.g. Daily and 4H both show LONG), the signal card shows a confluence badge. Gold ⚡ Triple TF Confluence = all three timeframes agree — the highest-confidence scenario the scanner produces.</div></div>
+    <div class="faq-group-title">Pattern Alerts &amp; Scanner</div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does the pattern scanner work?<span class="faq-chv">+</span></button><div class="faq-a">Runs every 4 hours via GitHub Actions using EMA crossovers, RSI, ATR, candlestick patterns, ICT order blocks, and supply/demand zones. An EMA50 trend gate blocks counter-trend alerts — if a bearish pattern appears while price is above EMA50, no SHORT alert fires. Each alert includes entry zone, stop loss, take-profit targets, confidence score, and a full explanation of why the pattern fired. Alerts are for educational paper trading practice only.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the EMA50 trend gate?<span class="faq-chv">+</span></button><div class="faq-a">A filter that blocks counter-trend pattern alerts. LONG alerts only fire when price is above the 50-period EMA. SHORT alerts only fire when price is below it. This prevents acting on bearish patterns during uptrends — a common cause of losses. Learn more in Learning → Trend Filters.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Market Regime badge?<span class="faq-chv">+</span></button><div class="faq-a">Each pattern alert card shows a market regime badge: Trending ↑/↓ (EMA and RSI both confirm direction), Overbought (RSI ≥ 68), Oversold (RSI ≤ 32), or Ranging (no clear bias). This gives you context for each alert so you can assess whether conditions support the trade.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Multi-Timeframe Confluence? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">When the same pattern direction fires on more than one timeframe simultaneously (e.g. Daily and 4H both show LONG), the alert card shows a confluence badge. Gold ⚡ Triple TF Confluence means all three timeframes agree — the highest-conviction scenario the scanner produces. Pro only.</div></div>
 
     <div class="faq-group-title">Paper Trading &amp; Positions</div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button><div class="faq-a">Paper trading simulates real trades with no money at risk. Click Paper Trade on any signal to queue a pending entry. A price monitor checks every 30 seconds while the app is open and every 1 minute server-side when closed. When price enters the entry zone, the position opens automatically. When stop loss or take profit is hit, it closes and logs the result.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button><div class="faq-a">Paper trading simulates trades with zero real money at risk — it's how you safely practice the pattern alerts. Click Paper Trade on any pattern alert to queue a pending entry. A price monitor checks every 30 seconds while the app is open and every 1 minute server-side when closed. When price enters the entry zone, the position opens automatically. When stop loss or take profit is hit, it closes and logs the result.</div></div>
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Correlation Risk Monitor? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Warns when two open positions in the same direction are >70% correlated — "EUR/USD and GBP/USD are 84% correlated — you are effectively 2× long USD weakness." Computed from the last 20 daily closes.</div></div>
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Trade Replay? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Every closed position has a Replay ▶ button. Clicking it plays back the candle sequence from entry to close — bar by bar, with entry, stop loss, take profit, and exit price lines overlaid. Speed adjustable from 0.5× to 8×.</div></div>
 
@@ -1663,12 +1663,12 @@
     <p class="legal-date">Last updated: 1 January 2025</p>
     <div class="legal-body">
       <h2>1. Agreement to Terms</h2><p>By accessing or using Sharpe ("the Platform"), you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
-      <h2>2. Description of Service</h2><p>Sharpe is an analytical and educational platform for traders. It provides tools for trade journaling, portfolio analytics, market signals, market news, and educational content. The Platform is provided for informational and educational purposes only and does not constitute financial advice.</p>
+      <h2>2. Description of Service</h2><p>Sharpe is an analytical and educational platform for traders. It provides tools for trade journaling, portfolio analytics, pattern alerts, market news, and educational content. The Platform is provided for informational and educational purposes only and does not constitute financial advice.</p>
       <h2>3. User Accounts</h2><p>You must provide accurate and complete information when creating an account. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account.</p>
       <h2>4. Acceptable Use</h2><p>You agree not to: (a) use the Platform for any unlawful purpose; (b) attempt to gain unauthorised access to any part of the Platform; (c) transmit any harmful or disruptive content; (d) reproduce or resell any part of the Platform without our express written permission; (e) use automated tools to scrape or extract data from the Platform.</p>
       <h2>5. Subscription Plans and Billing</h2><p>Sharpe offers both free and paid subscription tiers. Paid subscriptions are billed monthly or annually as selected. You may cancel your subscription at any time; cancellation takes effect at the end of the current billing period.</p>
       <h2>6. Intellectual Property</h2><p>All content, features, and functionality of the Platform are owned by Sharpe Analytics Ltd and are protected by applicable intellectual property laws.</p>
-      <h2>7. Disclaimer of Warranties</h2><p>The Platform is provided on an "as is" and "as available" basis without any warranties of any kind. Market data and signals are provided for informational purposes only and may not be accurate or complete.</p>
+      <h2>7. Disclaimer of Warranties</h2><p>The Platform is provided on an "as is" and "as available" basis without any warranties of any kind. Market data and pattern alerts are provided for informational purposes only and may not be accurate or complete.</p>
       <h2>8. Limitation of Liability</h2><p>To the maximum extent permitted by law, Sharpe Analytics Ltd shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your use of or inability to use the Platform.</p>
       <h2>9. Governing Law</h2><p>These Terms shall be governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
       <h2>10. Changes to Terms</h2><p>We reserve the right to modify these Terms at any time. Your continued use of the Platform after any changes constitutes your acceptance of the new Terms.</p>
@@ -1866,7 +1866,7 @@
           <li>50 trades in journal</li>
           <li>Full simulator &amp; learning center</li>
           <li>1 trade idea/day</li>
-          <li>Demo signals preview</li>
+          <li>Demo pattern alerts</li>
           <li class="no">Live signal scanner</li>
           <li class="no">Market news</li>
           <li class="no">Binance auto-execution (crypto)</li>
@@ -1880,7 +1880,7 @@
         <ul class="price-feats">
           <li>14 instruments (Forex majors, crosses, Gold, Silver)</li>
           <li>Unlimited trades in journal</li>
-          <li>Live signals — Daily &amp; 4H</li>
+          <li>Pattern alerts — Daily &amp; 4H</li>
           <li>Auto-log to journal</li>
           <li>5 trade ideas/day + news &amp; sentiment</li>
           <li>Performance analytics</li>
@@ -1897,7 +1897,7 @@
         <ul class="price-feats">
           <li>Everything in Trader</li>
           <li>32 instruments — Forex, Crypto, Indices &amp; ETFs</li>
-          <li>Weekly signals (1W)</li>
+          <li>Weekly pattern alerts (1W)</li>
           <li>Binance (crypto) auto-execution</li>
           <li>10 trade ideas/day — all markets</li>
           <li>Priority alerts (85%+ confidence)</li>
@@ -4379,7 +4379,7 @@ function renderSignals(results, isDemo){
   const filtered = allSigs.length - sigs.length;
   if(!sigs.length){
     const msg = allSigs.length
-      ? `All ${allSigs.length} signal(s) found are below your confidence threshold (${autoLogConf}%). Lower the threshold to see them.`
+      ? `All ${allSigs.length} pattern alert(s) are below your confidence threshold (${autoLogConf}%). Lower the threshold to see them.`
       : 'No actionable signals found in current market conditions for the selected timeframe.<br><span style="font-size:11px;color:var(--muted);margin-top:6px;display:block">This is normal — waiting for high-probability setups is itself part of the edge.</span>';
     document.getElementById('sigContainer').innerHTML=`<div class="no-sig-msg">${msg}</div>`;
     return;
@@ -4392,7 +4392,7 @@ function renderSignals(results, isDemo){
 
   const notes = [
     filtered  ? `${filtered} signal(s) hidden below ${autoLogConf}% confidence threshold.` : '',
-    expired.length ? `${expired.length} signal(s) removed — stop loss hit or target already reached.` : '',
+    expired.length ? `${expired.length} alert(s) removed — stop loss hit or target already reached.` : '',
   ].filter(Boolean).map(t=>`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${t}</div>`).join('');
 
   if(!active.length){
@@ -4994,7 +4994,7 @@ function setApiStatus(s){
 }
 function setTf(tf, btn){
   if(tf==='1week'&&!planLimits().weeklyTf){
-    requirePlan('weeklyTf','Weekly signals are available on the Pro plan.');
+    requirePlan('weeklyTf','Weekly pattern alerts are available on the Pro plan.');
     return;
   }
   sigTf=tf;
@@ -5599,7 +5599,7 @@ async function testTelegramConnection(){
   const r=await fetch(`https://api.telegram.org/bot${data.telegram_token}/sendMessage`,{
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({chat_id:data.telegram_chat_id,
-      text:'✅ *Sharpe connected!*\n\nAlerts you will receive:\n• New signals\n• Position opened\n• Position closed with P&L',
+      text:'✅ *Sharpe connected!*\n\nAlerts you will receive:\n• New pattern alerts\n• Position opened\n• Position closed with P&L',
       parse_mode:'Markdown'})
   });
   const d=await r.json();
@@ -7737,7 +7737,7 @@ function updateTvTemplate(secret){
   "tp": 0,
   "timeframe": "4h",
   "confidence": 80,
-  "note": "My Pine Script signal"
+  "note": "My Pine Script alert"
 }`;
 }
 
@@ -8024,7 +8024,7 @@ if ('serviceWorker' in navigator) {
     <div class="footer-top">
       <div class="footer-brand">
         <div class="logo">Sharpe<span>.</span></div>
-        <p>Professional-grade trading analytics and education for serious traders. Track performance, discover signals, and sharpen your edge.</p>
+        <p>Trading education and AI behavioral coaching for independent traders. Learn patterns, practice with zero risk, and build your own edge.</p>
         <div class="footer-social" id="appFooterSocial">
           <a id="appFooterTgLink" href="#" target="_blank" rel="noopener" title="Sharpe on Telegram" style="display:inline-flex;align-items:center;gap:7px;color:#475569;text-decoration:none;font-size:13px;font-weight:500;transition:color .15s" onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#475569'">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
