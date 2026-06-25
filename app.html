@@ -154,6 +154,18 @@
       <div class="dash-subtitle">Log every practice trade · document your reasoning · build pattern awareness</div>
     </div>
   </div>
+  <div class="sec-explain" id="journalExplain">
+    <div class="sec-explain-hdr">
+      <span class="sec-explain-label">Why Keep a Trade Journal?</span>
+      <button class="sec-explain-dismiss" onclick="dismissExplain('journalExplain')">Dismiss</button>
+    </div>
+    <div class="sec-explain-grid">
+      <div class="sei"><div class="sei-label">The #1 Improvement Tool</div><div class="sei-text">Professional traders attribute 30–40% of their performance improvements to systematic journaling. Patterns in your mistakes are invisible without a written record.</div></div>
+      <div class="sei"><div class="sei-label">What to Log</div><div class="sei-text">Entry reason, pattern recognized, planned R:R, emotions during the trade, and the actual outcome. One honest sentence per field is enough.</div></div>
+      <div class="sei"><div class="sei-label">Grading Your Trades <i class="hico" title="A = followed plan perfectly. B = minor deviation but still valid. C = broke a rule but trade worked. D = broke a rule and lost. Grade process, not outcome.">?</i></div><div class="sei-text">Grade A–D based on process, not result. A winning trade with bad process is a D. A losing trade that followed the plan perfectly is an A.</div></div>
+      <div class="sei"><div class="sei-label">Weekly Review</div><div class="sei-text">Once a week, filter by grade. Ask: what do my A-grade trades have in common? What pattern of mistakes am I repeating? That question is worth more than 100 new signals.</div></div>
+    </div>
+  </div>
   <div class="table-controls">
     <div class="section-title" style="margin:0;display:none">Trade Journal</div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -316,8 +328,8 @@
   <!-- Learning section header -->
   <div class="dash-cmd-bar" style="margin-bottom:16px">
     <div class="dash-cmd-left">
-      <div class="dash-title">Learn</div>
-      <div class="dash-subtitle">80+ patterns · bar-by-bar practice scenarios · build your own reading of the market</div>
+      <div class="dash-title">Learning Center</div>
+      <div class="dash-subtitle">11 topics · 80+ pattern cards · proven strategies · from first candle to consistent execution</div>
     </div>
     <div class="dash-cmd-actions">
       <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="nav('signals',null)">
@@ -331,34 +343,74 @@
     <div class="lc-mode-toggle">
       <button class="lc-mode-btn active" id="lcModeLearn" onclick="setLearnMode('learn')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-        Learn
+        Study
       </button>
       <button class="lc-mode-btn" id="lcModePractice" onclick="setLearnMode('practice')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Practice
       </button>
     </div>
-    <div id="lcModeDesc" class="lc-mode-desc">Browse pattern cards and educational content</div>
+    <div id="lcModeDesc" class="lc-mode-desc">Study pattern cards, strategies, and concepts at your own pace</div>
   </div>
 
   <!-- LEARN view -->
   <div id="lcLearnView">
     <div class="learn-hub">
       <aside class="learn-sidebar">
+        <!-- Path filter -->
+        <div class="lpath-bar">
+          <button class="lpath-btn lp-all active" onclick="setLearningPath('all',this)">All</button>
+          <button class="lpath-btn lp-beg" onclick="setLearningPath('beg',this)">Beginner</button>
+          <button class="lpath-btn lp-int" onclick="setLearningPath('int',this)">Intermediate</button>
+          <button class="lpath-btn lp-adv" onclick="setLearningPath('adv',this)">Advanced</button>
+        </div>
+        <!-- Strategies -->
         <div class="lsb-group-label">Strategies</div>
-        <button class="lsb-item active" onclick="ltab('strategies',this)">Proven Strategies</button>
+        <button class="lsb-item active" data-levels="beg,int,adv" data-topic="strategies" onclick="ltab('strategies',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Proven Strategies</span><span class="lsb-dots"><span class="ldot beg"></span><span class="ldot int"></span><span class="ldot adv"></span></span></span>
+        </button>
         <div class="lsb-sep"></div>
-        <div class="lsb-group-label">Pattern Library</div>
-        <button class="lsb-item" onclick="ltab('chart',this)">Chart Patterns</button>
-        <button class="lsb-item" onclick="ltab('candle',this)">Candlesticks</button>
-        <button class="lsb-item" onclick="ltab('harmonic',this)">Harmonics &amp; Fibonacci</button>
-        <button class="lsb-item" onclick="ltab('gap',this)">Gap Theory</button>
-        <button class="lsb-item" onclick="ltab('scalein',this)">Scale-In Technique</button>
-        <button class="lsb-item" onclick="ltab('risk',this)">Risk Management</button>
-        <button class="lsb-item" onclick="ltab('etf',this)">ETF Strategies</button>
-        <button class="lsb-item" onclick="ltab('crypto',this)">Crypto Strategies</button>
-        <button class="lsb-item" onclick="ltab('institutional',this)">Institutional Methods</button>
-        <button class="lsb-item" onclick="ltab('trend',this)">Trend Filters</button>
+        <!-- Pattern library — beginner -->
+        <div class="lsb-group-label">Beginner</div>
+        <button class="lsb-item" data-levels="beg" data-topic="risk" onclick="ltab('risk',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Risk Management</span><span class="lsb-dots"><span class="ldot beg"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="beg,int" data-topic="candle" onclick="ltab('candle',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Candlesticks</span><span class="lsb-dots"><span class="ldot beg"></span><span class="ldot int"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="beg,int" data-topic="chart" onclick="ltab('chart',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Chart Patterns</span><span class="lsb-dots"><span class="ldot beg"></span><span class="ldot int"></span></span></span>
+        </button>
+        <!-- Pattern library — intermediate -->
+        <div class="lsb-group-label">Intermediate</div>
+        <button class="lsb-item" data-levels="int" data-topic="gap" onclick="ltab('gap',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Gap Theory</span><span class="lsb-dots"><span class="ldot int"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="int" data-topic="etf" onclick="ltab('etf',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">ETF Strategies</span><span class="lsb-dots"><span class="ldot int"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="int,adv" data-topic="crypto" onclick="ltab('crypto',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Crypto Strategies</span><span class="lsb-dots"><span class="ldot int"></span><span class="ldot adv"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="int,adv" data-topic="trend" onclick="ltab('trend',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Trend Filters</span><span class="lsb-dots"><span class="ldot int"></span><span class="ldot adv"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="int,adv" data-topic="harmonic" onclick="ltab('harmonic',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Harmonics &amp; Fibonacci</span><span class="lsb-dots"><span class="ldot int"></span><span class="ldot adv"></span></span></span>
+        </button>
+        <!-- Pattern library — advanced -->
+        <div class="lsb-group-label">Advanced</div>
+        <button class="lsb-item" data-levels="adv" data-topic="scalein" onclick="ltab('scalein',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Scale-In Technique</span><span class="lsb-dots"><span class="ldot adv"></span></span></span>
+        </button>
+        <button class="lsb-item" data-levels="adv" data-topic="institutional" onclick="ltab('institutional',this)">
+          <span class="lsb-item-inner"><span class="lsb-item-label">Institutional Methods</span><span class="lsb-dots"><span class="ldot adv"></span></span></span>
+        </button>
+        <!-- Progress -->
+        <div class="lsb-progress">
+          <div class="lsb-progress-label"><span>Topics visited</span><span id="visitedCount">0 / 11</span></div>
+          <div class="lsb-progress-bar"><div class="lsb-progress-fill" id="visitedFill" style="width:0%"></div></div>
+        </div>
       </aside>
       <div class="learn-panel">
         <div class="learn-content active" id="lc-strategies">
@@ -375,16 +427,16 @@
           <div class="strat-content" id="sc-advanced"><div id="lg-s-advanced"></div></div>
           <div class="strat-content" id="sc-psychology"><div id="lg-s-psychology"></div></div>
         </div>
-        <div class="learn-content" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
-        <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
-        <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
-        <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
-        <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
-        <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
-        <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
-        <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
-        <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
-        <div class="learn-content" id="lc-trend"><div class="pattern-grid" id="lg-trend"></div></div>
+        <div class="learn-content" id="lc-chart"><div id="ti-chart"></div><div class="pattern-grid" id="lg-chart"></div></div>
+        <div class="learn-content" id="lc-candle"><div id="ti-candle"></div><div class="pattern-grid" id="lg-candle"></div></div>
+        <div class="learn-content" id="lc-harmonic"><div id="ti-harmonic"></div><div class="pattern-grid" id="lg-harmonic"></div></div>
+        <div class="learn-content" id="lc-gap"><div id="ti-gap"></div><div class="pattern-grid" id="lg-gap"></div></div>
+        <div class="learn-content" id="lc-scalein"><div id="ti-scalein"></div><div class="pattern-grid" id="lg-scalein"></div></div>
+        <div class="learn-content" id="lc-risk"><div id="ti-risk"></div><div class="pattern-grid" id="lg-risk"></div></div>
+        <div class="learn-content" id="lc-etf"><div id="ti-etf"></div><div class="pattern-grid" id="lg-etf"></div></div>
+        <div class="learn-content" id="lc-crypto"><div id="ti-crypto"></div><div class="pattern-grid" id="lg-crypto"></div></div>
+        <div class="learn-content" id="lc-institutional"><div id="ti-institutional"></div><div class="pattern-grid" id="lg-institutional"></div></div>
+        <div class="learn-content" id="lc-trend"><div id="ti-trend"></div><div class="pattern-grid" id="lg-trend"></div></div>
       </div>
     </div>
   </div>
@@ -512,6 +564,19 @@
       <button id="scanBtn2" style="display:none" class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="loadSignals()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>Refresh
       </button>
+    </div>
+  </div>
+
+  <div class="sec-explain" id="alertsExplain">
+    <div class="sec-explain-hdr">
+      <span class="sec-explain-label">How Pattern Alerts Work</span>
+      <button class="sec-explain-dismiss" onclick="dismissExplain('alertsExplain')">Dismiss</button>
+    </div>
+    <div class="sec-explain-grid">
+      <div class="sei"><div class="sei-label">What is a Pattern Alert?</div><div class="sei-text">The scanner checks 16 instruments every 4 hours and fires an alert when a recognized chart pattern forms. Alerts are for educational paper trading — not financial advice.</div></div>
+      <div class="sei"><div class="sei-label">Confidence Score <i class="hico" title="0–100. Higher = more pattern criteria met (correct proportions, volume confirmation, trend alignment). Filter to 85%+ for the cleanest setups.">?</i></div><div class="sei-text">How well the pattern meets its criteria. 0–100. Above 85 = textbook setup. Below 70 = proceed with caution or skip.</div></div>
+      <div class="sei"><div class="sei-label">EMA50 Filter <i class="hico" title="Only shows alerts aligned with the 50-period moving average trend. Removes ~40% of noise by blocking counter-trend signals.">?</i></div><div class="sei-text">Active by default. Blocks alerts that trade against the medium-term trend — the single biggest source of false signals for new traders.</div></div>
+      <div class="sei"><div class="sei-label">Paper Trading</div><div class="sei-text">No real money. When you open a position from an alert, it goes into your Paper Practice Positions with simulated capital. Track results in Performance.</div></div>
     </div>
   </div>
 
@@ -1616,11 +1681,22 @@
   <div class="dash-cmd-bar" style="margin-bottom:18px">
     <div class="dash-cmd-left">
       <div class="dash-title">Backtest</div>
-      <div class="dash-subtitle">Replay the pattern strategy on historical candles · validate a setup before paper trading it live</div>
+      <div class="dash-subtitle">Validate a strategy on historical data before risking simulated capital on live alerts</div>
+    </div>
+  </div>
+  <div class="sec-explain" id="backtestExplain">
+    <div class="sec-explain-hdr">
+      <span class="sec-explain-label">What is Backtesting?</span>
+      <button class="sec-explain-dismiss" onclick="dismissExplain('backtestExplain')">Dismiss</button>
+    </div>
+    <div class="sec-explain-grid">
+      <div class="sei"><div class="sei-label">The Concept</div><div class="sei-text">Run a strategy on historical candle data to see how it would have performed. Proves (or disproves) a strategy's edge before you paper trade it live.</div></div>
+      <div class="sei"><div class="sei-label">Win Rate Is Not Enough <i class="hico" title="A 40% win rate with 1:3 R:R averages +0.8R per trade. An 80% win rate with 1:0.4 R:R averages +0.12R per trade. The first is far superior.">?</i></div><div class="sei-text">A 40% win rate with 1:3 R:R earns more than 70% with 1:0.5 R:R. Always evaluate win rate AND average R:R together.</div></div>
+      <div class="sei"><div class="sei-label">Profit Factor <i class="hico" title="Gross wins ÷ Gross losses. Above 1.0 = profitable. Above 1.5 = strong. Above 2.0 = exceptional. Under 1.0 = losing strategy.">?</i></div><div class="sei-text">Gross wins ÷ gross losses. Above 1.5 is strong. Above 2.0 is exceptional. Any value under 1.0 means the strategy loses money long-term.</div></div>
+      <div class="sei"><div class="sei-label">Max Drawdown <i class="hico" title="Largest peak-to-trough decline during the test period. Under 20% is healthy. Above 30% means the strategy is very hard to follow psychologically even if it's profitable.">?</i></div><div class="sei-text">Largest peak-to-trough drop during the backtest. Under 20% is healthy. Above 30% = most traders emotionally quit before recovery.</div></div>
     </div>
   </div>
   <div class="section-title" style="display:none">Backtesting</div>
-  <div style="font-size:13px;color:var(--muted);margin-bottom:20px;max-width:600px">Replay the pattern strategy on historical candles. Useful for validating a strategy's historical edge before paper trading it live. Requires seeded candle history (Admin → Seed Candles).</div>
   <div class="cfg-card" style="margin-bottom:20px">
     <div class="cfg-card-hdr">Run Backtest</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -2198,6 +2274,53 @@ function ltab(id, btn){
   document.querySelectorAll('.learn-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('lc-'+id).classList.add('active');
+  // Track visits
+  try {
+    const v = JSON.parse(localStorage.getItem('sharpe_visited')||'{}');
+    v[id] = 1;
+    localStorage.setItem('sharpe_visited', JSON.stringify(v));
+    btn.classList.add('lsb-visited');
+    updateVisitedProgress();
+  } catch(e){}
+}
+function updateVisitedProgress(){
+  try {
+    const v = JSON.parse(localStorage.getItem('sharpe_visited')||'{}');
+    const total = 11;
+    const visited = Math.min(Object.keys(v).length, total);
+    const el = document.getElementById('visitedCount');
+    const fill = document.getElementById('visitedFill');
+    if(el) el.textContent = visited + ' / ' + total;
+    if(fill) fill.style.width = Math.round(visited/total*100) + '%';
+  } catch(e){}
+}
+function setLearningPath(path, btn){
+  document.querySelectorAll('.lpath-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.lsb-item[data-levels]').forEach(item=>{
+    const levels = item.dataset.levels.split(',');
+    item.classList.toggle('lpath-hidden', path!=='all' && !levels.includes(path));
+  });
+  // Hide/show group labels that have no visible items
+  document.querySelectorAll('.lsb-group-label').forEach(label=>{
+    let next = label.nextElementSibling;
+    let hasVisible = false;
+    while(next && !next.classList.contains('lsb-group-label') && !next.classList.contains('lsb-progress')){
+      if(next.classList.contains('lsb-item') && !next.classList.contains('lpath-hidden')) hasVisible = true;
+      if(next.classList.contains('lsb-sep')){ next = next.nextElementSibling; break; }
+      next = next.nextElementSibling;
+    }
+    label.style.display = hasVisible ? '' : 'none';
+  });
+}
+function dismissExplain(id){
+  const el = document.getElementById(id);
+  if(el){ el.style.display='none'; try{ localStorage.setItem('sharpe_ex_'+id,'1'); }catch(e){} }
+}
+function initExplainCards(){
+  ['alertsExplain','journalExplain','backtestExplain'].forEach(id=>{
+    try{ if(localStorage.getItem('sharpe_ex_'+id)) { const el=document.getElementById(id); if(el) el.style.display='none'; } }catch(e){}
+  });
 }
 function stab(id, btn){
   document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
@@ -2219,8 +2342,8 @@ function setLearnMode(mode){
   document.getElementById('lcModeLearn').classList.toggle('active', isLearn);
   document.getElementById('lcModePractice').classList.toggle('active', !isLearn);
   document.getElementById('lcModeDesc').textContent = isLearn
-    ? 'Browse pattern cards and educational content'
-    : 'Watch candles replay bar-by-bar and identify the pattern';
+    ? 'Study pattern cards, strategies, and concepts at your own pace'
+    : 'Identify patterns bar-by-bar — candles reveal one at a time. No peeking at the answer.';
   if (!isLearn) initPractice();
 }
 
@@ -3514,6 +3637,53 @@ function card(name,type,tCls,rel,desc,rules){
 }
 
 function buildLearning(){
+  // ── Topic intro cards ──────────────────────────────────────────
+  const ti = (id, title, desc, tags, count) => {
+    const el = document.getElementById('ti-' + id);
+    if(!el) return;
+    const tagHtml = tags.map(t=>`<span class="topic-tag ttag-${t.cls}">${t.lbl}</span>`).join('');
+    el.innerHTML = `<div class="topic-intro"><div class="topic-intro-title">${title}</div><div class="topic-intro-desc">${desc}</div><div class="topic-intro-footer">${tagHtml}<span class="topic-intro-count">${count} pattern cards</span></div></div>`;
+  };
+  ti('chart','Chart Patterns',
+    'Multi-candle formations that repeat across all markets and timeframes. These patterns form from recurring crowd psychology — fear, greed, and indecision creating predictable structural outcomes. Recognized by institutional desks worldwide, they generate high-probability setups when read in trend context.',
+    [{cls:'beg',lbl:'Beginner'},{cls:'int',lbl:'Intermediate'}], 12);
+  ti('candle','Candlestick Patterns',
+    'Single and two-bar reversal signals developed in 1700s Japan for rice trading. Each candle reveals the real-time battle between buyers and sellers: the body shows commitment, the wicks show rejected extremes. Mastering 15 key patterns covers ~90% of setups you will see in live markets.',
+    [{cls:'beg',lbl:'Beginner'}], 15);
+  ti('harmonic','Harmonics & Fibonacci',
+    'Precision reversal zones derived from strict Fibonacci ratios. Gartley, Bat, Butterfly, and Crab patterns define Potential Reversal Zones (PRZs) at exact price levels — before price arrives. Unlike discretionary patterns, these give you a mathematical entry zone and a clearly defined invalidation point.',
+    [{cls:'int',lbl:'Intermediate'},{cls:'adv',lbl:'Advanced'}], 8);
+  ti('gap','Gap Theory',
+    'Not all gaps are equal. A breakaway gap from a consolidation range signals a structural move; a common gap inside a range is noise. Correctly classifying Common, Breakaway, Runaway, and Exhaustion gaps tells you immediately whether to trade the gap or wait for the fill.',
+    [{cls:'int',lbl:'Intermediate'}], 4);
+  ti('scalein','Scale-In Technique',
+    'How professional traders build position size as a trade proves itself right. Entering a full position at once maximizes risk at the moment of greatest uncertainty. Scaling in — adding size only after the trade moves in your direction — reduces average cost and compounds only on winning positions.',
+    [{cls:'adv',lbl:'Advanced'}], 3);
+  ti('risk','Risk Management',
+    'The single most important topic in trading. Technical analysis identifies WHERE to enter. Risk management determines WHETHER you survive long enough to profit. Research consistently shows risk management accounts for 60–70% of long-term success — more than pattern accuracy or strategy selection. This is your foundation.',
+    [{cls:'beg',lbl:'Beginner'},{cls:'ess',lbl:'Essential'}], 5);
+  ti('etf','ETF Strategies',
+    'Exchange-Traded Funds deliver institutional-quality diversification with the simplicity of a stock trade. Factor investing — momentum, value, quality, low-volatility — has decades of academic evidence behind it. ETF strategies are ideal for building long-term wealth alongside active pattern trading.',
+    [{cls:'int',lbl:'Intermediate'}], 6);
+  ti('crypto','Crypto Strategies',
+    'Cryptocurrency markets obey the same chart patterns as traditional markets, but with amplified volatility and unique fundamental drivers (on-chain data, protocol events, sentiment cycles). The same setups work — but require wider stops, smaller position sizes, and heightened awareness of macro catalysts.',
+    [{cls:'int',lbl:'Intermediate'},{cls:'adv',lbl:'Advanced'}], 6);
+  ti('institutional','Institutional Methods',
+    'How banks, hedge funds, and prop firms actually trade. ICT methodology, Smart Money Concepts (SMC), and Supply & Demand zones are the frameworks used by professional capital allocators. These concepts explain WHY patterns form — because institutions execute large orders in specific, repeatable ways.',
+    [{cls:'adv',lbl:'Advanced'}], 4);
+  ti('trend','Trend Filters',
+    'The filter that separates winning traders from losing ones. Most retail traders lose not because their patterns are wrong, but because they trade against the prevailing trend. EMA50 and other trend filters act as gates — only allowing signals that align with the dominant directional bias. Sharpe\'s scanner enforces this automatically.',
+    [{cls:'int',lbl:'Intermediate'},{cls:'adv',lbl:'Advanced'}], 5);
+
+  // ── Restore visited state ──────────────────────────────────────
+  try {
+    const v = JSON.parse(localStorage.getItem('sharpe_visited')||'{}');
+    document.querySelectorAll('.lsb-item[data-topic]').forEach(btn=>{
+      if(v[btn.dataset.topic]) btn.classList.add('lsb-visited');
+    });
+    updateVisitedProgress();
+  } catch(e){}
+
   document.getElementById('lg-chart').innerHTML=[
     card('Head & Shoulders','Reversal','t-rev',89,'Three peaks — left shoulder, higher head, right shoulder. Neckline connects the two troughs. One of the most statistically reliable bearish reversal patterns.',
       ['Enter short on daily close below neckline','Target = head-to-neckline distance projected down from neckline','Stop = just above right shoulder','Volume should be lower on right shoulder than left']),
@@ -8237,6 +8407,7 @@ function initSettings(){
 loadTrades();
 renderDashboard();
 buildLearning();
+initExplainCards();
 buildIdeas();
 initSignals();
 updateAuthUI();
