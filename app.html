@@ -66,7 +66,7 @@
 <div class="main">
 
 <!-- DASHBOARD -->
-<section class="section active" id="dashboard">
+<section class="section" id="dashboard">
   <!-- Training command bar -->
   <div class="dash-cmd-bar">
     <div class="dash-cmd-left">
@@ -311,7 +311,7 @@
 </section>
 
 <!-- LEARNING + PRACTICE (unified) -->
-<section class="section" id="learning">
+<section class="section active" id="learning">
 
   <!-- Learning section header -->
   <div class="dash-cmd-bar" style="margin-bottom:16px">
@@ -343,43 +343,50 @@
 
   <!-- LEARN view -->
   <div id="lcLearnView">
-    <div class="learn-tabs">
-      <button class="ltab" onclick="ltab('strategies',this)">⭐ Strategies</button>
-      <button class="ltab active" onclick="ltab('chart',this)">Chart Patterns</button>
-      <button class="ltab" onclick="ltab('candle',this)">Candlesticks</button>
-      <button class="ltab" onclick="ltab('harmonic',this)">Harmonics & Fibonacci</button>
-      <button class="ltab" onclick="ltab('gap',this)">Gap Theory</button>
-      <button class="ltab" onclick="ltab('scalein',this)">Scale-In Technique</button>
-      <button class="ltab" onclick="ltab('risk',this)">Risk Management</button>
-      <button class="ltab" onclick="ltab('etf',this)">ETF Strategies</button>
-      <button class="ltab" onclick="ltab('crypto',this)">Crypto Strategies</button>
-      <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
-      <button class="ltab" onclick="ltab('trend',this)">Trend Filters</button>
-    </div>
-    <div class="learn-content" id="lc-strategies">
-      <div class="strat-tabs">
-        <button class="stab active" onclick="stab('foundation',this)">Foundation</button>
-        <button class="stab" onclick="stab('indicators',this)">Indicators</button>
-        <button class="stab" onclick="stab('priceaction',this)">Price Action</button>
-        <button class="stab" onclick="stab('advanced',this)">Advanced</button>
-        <button class="stab" onclick="stab('psychology',this)">Psychology</button>
+    <div class="learn-hub">
+      <aside class="learn-sidebar">
+        <div class="lsb-group-label">Strategies</div>
+        <button class="lsb-item active" onclick="ltab('strategies',this)">Proven Strategies</button>
+        <div class="lsb-sep"></div>
+        <div class="lsb-group-label">Pattern Library</div>
+        <button class="lsb-item" onclick="ltab('chart',this)">Chart Patterns</button>
+        <button class="lsb-item" onclick="ltab('candle',this)">Candlesticks</button>
+        <button class="lsb-item" onclick="ltab('harmonic',this)">Harmonics &amp; Fibonacci</button>
+        <button class="lsb-item" onclick="ltab('gap',this)">Gap Theory</button>
+        <button class="lsb-item" onclick="ltab('scalein',this)">Scale-In Technique</button>
+        <button class="lsb-item" onclick="ltab('risk',this)">Risk Management</button>
+        <button class="lsb-item" onclick="ltab('etf',this)">ETF Strategies</button>
+        <button class="lsb-item" onclick="ltab('crypto',this)">Crypto Strategies</button>
+        <button class="lsb-item" onclick="ltab('institutional',this)">Institutional Methods</button>
+        <button class="lsb-item" onclick="ltab('trend',this)">Trend Filters</button>
+      </aside>
+      <div class="learn-panel">
+        <div class="learn-content active" id="lc-strategies">
+          <div class="strat-tabs">
+            <button class="stab active" onclick="stab('foundation',this)">Foundation</button>
+            <button class="stab" onclick="stab('indicators',this)">Indicators</button>
+            <button class="stab" onclick="stab('priceaction',this)">Price Action</button>
+            <button class="stab" onclick="stab('advanced',this)">Advanced</button>
+            <button class="stab" onclick="stab('psychology',this)">Psychology</button>
+          </div>
+          <div class="strat-content active" id="sc-foundation"><div id="lg-s-foundation"></div></div>
+          <div class="strat-content" id="sc-indicators"><div id="lg-s-indicators"></div></div>
+          <div class="strat-content" id="sc-priceaction"><div id="lg-s-priceaction"></div></div>
+          <div class="strat-content" id="sc-advanced"><div id="lg-s-advanced"></div></div>
+          <div class="strat-content" id="sc-psychology"><div id="lg-s-psychology"></div></div>
+        </div>
+        <div class="learn-content" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
+        <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
+        <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
+        <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
+        <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
+        <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
+        <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
+        <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
+        <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
+        <div class="learn-content" id="lc-trend"><div class="pattern-grid" id="lg-trend"></div></div>
       </div>
-      <div class="strat-content active" id="sc-foundation"><div id="lg-s-foundation"></div></div>
-      <div class="strat-content" id="sc-indicators"><div id="lg-s-indicators"></div></div>
-      <div class="strat-content" id="sc-priceaction"><div id="lg-s-priceaction"></div></div>
-      <div class="strat-content" id="sc-advanced"><div id="lg-s-advanced"></div></div>
-      <div class="strat-content" id="sc-psychology"><div id="lg-s-psychology"></div></div>
     </div>
-    <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
-    <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
-    <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
-    <div class="learn-content" id="lc-gap"><div class="pattern-grid" id="lg-gap"></div></div>
-    <div class="learn-content" id="lc-scalein"><div class="pattern-grid" id="lg-scalein"></div></div>
-    <div class="learn-content" id="lc-risk"><div class="pattern-grid" id="lg-risk"></div></div>
-    <div class="learn-content" id="lc-etf"><div class="pattern-grid" id="lg-etf"></div></div>
-    <div class="learn-content" id="lc-crypto"><div class="pattern-grid" id="lg-crypto"></div></div>
-    <div class="learn-content" id="lc-institutional"><div class="pattern-grid" id="lg-institutional"></div></div>
-    <div class="learn-content" id="lc-trend"><div class="pattern-grid" id="lg-trend"></div></div>
   </div>
 
   <!-- PRACTICE view -->
@@ -2187,7 +2194,7 @@ function closeMobDrawer(){
   document.getElementById('mobDrawer')?.classList.remove('open');
 }
 function ltab(id, btn){
-  document.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.lsb-item').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.learn-content').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('lc-'+id).classList.add('active');
@@ -9035,7 +9042,7 @@ document.addEventListener('keydown', e => {
 <!-- Mobile bottom nav — 5 primary tabs -->
 <nav class="mob-nav" id="mobNav">
   <div class="mob-nav-inner">
-    <button class="mob-nav-btn" data-section="learning" onclick="nav('learning',null);mobNavSync('learning')">
+    <button class="mob-nav-btn active" data-section="learning" onclick="nav('learning',null);mobNavSync('learning')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
       <span>Learn</span>
     </button>
@@ -9047,7 +9054,7 @@ document.addEventListener('keydown', e => {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span>Journal</span>
     </button>
-    <button class="mob-nav-btn active" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
+    <button class="mob-nav-btn" data-section="dashboard" onclick="nav('dashboard',null);mobNavSync('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Dashboard</span>
     </button>
