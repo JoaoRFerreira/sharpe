@@ -22,7 +22,7 @@
   <nav id="appNav">
     <!-- Group 1: Training workflow (Learn → Practice → Track) -->
     <button onclick="nav('learning',this)">Learn</button>
-    <button onclick="nav('signals',this)">Practice <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
+    <button onclick="nav('signals',this)">Alerts <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
     <button onclick="nav('journal',this)">Journal</button>
     <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
     <div class="nav-sep"></div>
@@ -321,7 +321,7 @@
     </div>
     <div class="dash-cmd-actions">
       <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="nav('signals',null)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Go to Practice
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:5px;vertical-align:-1px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Pattern Alerts
       </button>
     </div>
   </div>
@@ -503,7 +503,7 @@
     <div class="scanner-header-left">
       <div class="scanner-title">
         <span class="scanner-live-dot" id="scannerDot"></span>
-        Practice — Pattern Alerts
+        Pattern Alerts
       </div>
       <div class="scanner-meta" id="scannerMeta">16 pairs scanned every 4h · EMA50 trend filter active · Paper practice only</div>
     </div>
@@ -9048,7 +9048,7 @@ document.addEventListener('keydown', e => {
     </button>
     <button class="mob-nav-btn" data-section="signals" onclick="nav('signals',null);mobNavSync('signals')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span>Practice</span>
+      <span>Alerts</span>
     </button>
     <button class="mob-nav-btn" data-section="journal" onclick="nav('journal',null);mobNavSync('journal')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
