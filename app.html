@@ -390,6 +390,11 @@
           <button class="lpath-btn lp-int" onclick="setLearningPath('int',this)">Intermediate</button>
           <button class="lpath-btn lp-adv" onclick="setLearningPath('adv',this)">Advanced</button>
         </div>
+        <div style="display:flex;gap:10px;padding:6px 2px 10px;font-size:10px;color:var(--muted)">
+          <span style="display:flex;align-items:center;gap:4px"><span class="ldot beg" style="width:7px;height:7px;border-radius:50%;background:#3fb950;display:inline-block"></span>Beginner</span>
+          <span style="display:flex;align-items:center;gap:4px"><span class="ldot int" style="width:7px;height:7px;border-radius:50%;background:#e3b341;display:inline-block"></span>Intermediate</span>
+          <span style="display:flex;align-items:center;gap:4px"><span class="ldot adv" style="width:7px;height:7px;border-radius:50%;background:#f85149;display:inline-block"></span>Advanced</span>
+        </div>
         <!-- Strategies -->
         <div class="lsb-group-label">Strategies</div>
         <button class="lsb-item active" data-levels="beg,int,adv" data-topic="strategies" onclick="ltab('strategies',this)">
@@ -3671,6 +3676,136 @@ function scard(name,level,lvlCls,desc,setup,rules,why,mistakes){
     ${why?`<div class="sc-section"><div class="sc-section-title">Why It Works</div><div class="sc-why">${why}</div></div>`:''}
     ${mistakes?`<div class="sc-section"><div class="sc-section-title">Common Mistakes</div><ul class="sc-list sc-warn">${mistakes.map(r=>`<li>${r}</li>`).join('')}</ul></div>`:''}
   </div>`;
+}
+
+// ── FAVORITES ─────────────────────────────────────────────────
+function getFavorites(){
+  try{ return JSON.parse(localStorage.getItem('sharpe_favs')||'{}'); }catch(e){ return {}; }
+}
+function updateFavBadge(){
+  const cnt=Object.keys(getFavorites()).length;
+  const badge=document.getElementById('favCountBadge');
+  if(badge) badge.textContent = cnt>0 ? cnt : '';
+}
+
+// ── DAILY STREAK ───────────────────────────────────────────────
+function initDailyStreak(){
+  try{
+    const today=new Date().toDateString();
+    const yesterday=new Date(Date.now()-86400000).toDateString();
+    const last=localStorage.getItem('sharpe_streak_last');
+    let streak=parseInt(localStorage.getItem('sharpe_streak_days')||'0',10);
+    let best=parseInt(localStorage.getItem('sharpe_streak_best')||'0',10);
+    if(last===today){
+      // already counted today
+    } else if(last===yesterday){
+      streak++;
+      if(streak>best){ best=streak; localStorage.setItem('sharpe_streak_best',best); }
+      localStorage.setItem('sharpe_streak_days',streak);
+      localStorage.setItem('sharpe_streak_last',today);
+    } else {
+      streak=1;
+      localStorage.setItem('sharpe_streak_days',1);
+      localStorage.setItem('sharpe_streak_last',today);
+      if(best===0){ best=1; localStorage.setItem('sharpe_streak_best',1); }
+    }
+    const numEl=document.getElementById('streakNum');
+    const bestEl=document.getElementById('streakBest');
+    if(numEl) numEl.textContent=streak;
+    if(bestEl) bestEl.textContent=best>streak?`Best: ${best} days`:'';
+    const flame=document.querySelector('#streakWidget .streak-flame');
+    if(flame) flame.textContent=streak>=7?'🔥':streak>=3?'🔥':streak>=1?'💧':'💤';
+  }catch(e){}
+}
+
+// ── WEEKLY GOALS ───────────────────────────────────────────────
+function renderGoals(){
+  const el=document.getElementById('goalsBody');
+  if(!el) return;
+  const now=new Date();
+  const weekStart=new Date(now);
+  weekStart.setDate(now.getDate()-now.getDay());
+  weekStart.setHours(0,0,0,0);
+  const journalThisWeek=(typeof trades!=='undefined'?trades:[]).filter(t=>new Date(t.date)>=weekStart).length;
+  const pracLog=JSON.parse(localStorage.getItem('sharpe_prac_log')||'[]');
+  const pracSessions=pracLog.filter(d=>new Date(d)>=weekStart).length;
+  const allTrades=typeof trades!=='undefined'?trades:[];
+  const winRatePct=allTrades.length>0?Math.round(allTrades.filter(t=>t.status==='WIN').length/allTrades.length*100):0;
+  const goals=[
+    {lbl:'Journal trades this week',val:journalThisWeek,target:5},
+    {lbl:'Practice sessions this week',val:pracSessions,target:3},
+    {lbl:'Overall win rate',val:winRatePct,target:50,noTarget:true,unit:'%'},
+  ];
+  el.innerHTML=goals.map(g=>{
+    const pct=g.noTarget?Math.min(g.val,100):Math.min(Math.round(g.val/g.target*100),100);
+    const done=!g.noTarget&&g.val>=g.target;
+    const lbl=g.noTarget?`${g.val}${g.unit||''}`:`${g.val} / ${g.target}`;
+    return `<div class="goal-item"><div class="goal-row"><span class="goal-lbl">${g.lbl}</span><span class="goal-pct${done?' done':''}">${done?'✓ ':''}${lbl}</span></div><div class="goal-bar"><div class="goal-fill${done?' done':''}" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+}
+
+// ── GLOSSARY ───────────────────────────────────────────────────
+function buildGlossary(){
+  const terms=[
+    {t:'ATR',cat:'indicator',d:'Average True Range — measures volatility by averaging the true price range (including gaps) over N periods. Default: 14. Used for stop-loss placement and position sizing.'},
+    {t:'Backtesting',cat:'risk',d:'Testing a strategy on historical data to evaluate its performance before risking real capital. Results should include at least 50–100 trades to be statistically significant.'},
+    {t:'Bearish',cat:'price',d:'A market condition or view where prices are expected to decline. A bearish candle closes lower than it opens.'},
+    {t:'Bid/Ask Spread',cat:'trading',d:'The difference between the highest price a buyer will pay (bid) and the lowest a seller will accept (ask). Tighter spreads = lower transaction costs.'},
+    {t:'Bollinger Bands',cat:'indicator',d:'A volatility indicator using a 20-period SMA with upper/lower bands at ±2 standard deviations. Price touching the outer bands signals potential reversals or breakouts.'},
+    {t:'Breakout',cat:'pattern',d:'Price moving beyond a defined support or resistance level. A valid breakout typically shows above-average volume and closes beyond the level on the daily timeframe.'},
+    {t:'Bullish',cat:'price',d:'A market condition or view where prices are expected to rise. A bullish candle closes higher than it opens.'},
+    {t:'Confluence',cat:'trading',d:'Two or more independent signals aligning at the same price level — e.g., a Fibonacci level coinciding with a key support and an RSI oversold reading. More confluence = higher probability.'},
+    {t:'Consolidation',cat:'pattern',d:'A period of sideways price action between significant directional moves. Often appears as a rectangle or triangle pattern before a breakout continues the prior trend.'},
+    {t:'Drawdown',cat:'risk',d:'The peak-to-trough decline in an account or strategy. Max drawdown measures the worst decline from any historical peak. A 20% drawdown requires a 25% gain just to break even.'},
+    {t:'EMA',cat:'indicator',d:'Exponential Moving Average — weights recent prices more heavily than older prices. The EMA50 on the daily chart is widely used as a trend filter; price above = uptrend bias.'},
+    {t:'Expectancy',cat:'risk',d:'The average amount expected to win or lose per trade: (Win rate × Avg win) − (Loss rate × Avg loss). Positive expectancy is the mathematical foundation of a profitable edge.'},
+    {t:'Fair Value Gap',cat:'trading',d:'A three-candle imbalance where the wicks of the first and third candles do not overlap. Represents a zone of unmet orders that price often returns to fill.'},
+    {t:'False Breakout',cat:'pattern',d:'A breakout that quickly reverses, trapping traders who entered in the wrong direction. Common near round numbers and major levels with low-conviction volume.'},
+    {t:'Fibonacci Retracement',cat:'indicator',d:'Key retracement levels at 23.6%, 38.2%, 50%, 61.8%, and 78.6% used to find support and resistance within a trend. The 61.8% level ("golden ratio") is the most significant.'},
+    {t:'Gap',cat:'price',d:'A price range where no trades occurred, visible as empty space on a chart. Types: Common (noise), Breakaway (trend start), Runaway (mid-trend), Exhaustion (trend end).'},
+    {t:'Higher High / Lower Low',cat:'pattern',d:'Uptrend definition: each successive swing high and low is above the previous. Downtrend: each successive swing high and low is below the previous.'},
+    {t:'Institutional Order Flow',cat:'trading',d:'Large buy or sell orders from banks, hedge funds, and central banks that significantly move markets. ICT methods attempt to identify these via order blocks and liquidity concepts.'},
+    {t:'Liquidity',cat:'trading',d:'How easily an asset can be bought or sold without meaningfully affecting its price. High-liquidity assets (EUR/USD, SPY) have tight spreads; low-liquidity assets have wide spreads.'},
+    {t:'MACD',cat:'indicator',d:'Moving Average Convergence Divergence — shows momentum via the difference between a 12-period and 26-period EMA, smoothed with a 9-period signal line.'},
+    {t:'Market Regime',cat:'pattern',d:'The current character of a market: trending, ranging, or volatile. Strategies work better when matched to the regime.'},
+    {t:'Market Structure Break',cat:'pattern',d:'When price takes out a swing high (uptrend) or swing low (downtrend), breaking the existing pattern. Often the first signal of a potential trend reversal.'},
+    {t:'Momentum',cat:'indicator',d:'The speed and strength of a price move. Strong momentum suggests a healthy trend; weakening momentum can precede a reversal. Measured by RSI, MACD, Rate of Change.'},
+    {t:'MTF Analysis',cat:'trading',d:'Multiple Time Frame analysis — examining the same instrument on two or more timeframes. Higher timeframe gives trend direction; lower timeframe gives entry timing.'},
+    {t:'OHLC',cat:'price',d:'Open, High, Low, Close — the four data points that define a candle. The open is the first trade, close is the last, high is the maximum reached, low is the minimum.'},
+    {t:'Order Block',cat:'trading',d:'The last up- or down-candle before a significant impulsive move. ICT theory holds that institutional orders remain here; price often returns before continuing.'},
+    {t:'Pips',cat:'trading',d:'Price Interest Points — the standard unit of price movement in forex. For EUR/USD, 1 pip = 0.0001. For JPY pairs, 1 pip = 0.01.'},
+    {t:'Position Sizing',cat:'risk',d:'Calculating the number of units to buy or sell based on your risk per trade and stop distance. Formula: Risk Amount ÷ (Stop Distance × Pip Value).'},
+    {t:'PRZ',cat:'pattern',d:'Potential Reversal Zone — a price cluster in harmonic pattern analysis where multiple Fibonacci ratios converge. The entry zone for harmonic trades with a clear invalidation point.'},
+    {t:'Profit Factor',cat:'risk',d:'Gross profit divided by gross loss. A Profit Factor above 1.5 is generally solid; above 2.0 is excellent. Below 1.0 means the strategy loses money in aggregate.'},
+    {t:'Pullback',cat:'pattern',d:'A temporary counter-trend move within an established trend. In an uptrend, a pullback to key support (Fibonacci, EMA, prior resistance) offers a high-probability entry.'},
+    {t:'R:R Ratio',cat:'risk',d:'Risk-to-Reward Ratio — potential profit divided by potential loss. A 1:2 R:R means risking 50 pips to make 100. A 40% win rate is profitable at 1:2+ R:R.'},
+    {t:'Resistance',cat:'price',d:'A price level where selling pressure historically overwhelms buying pressure, causing rallies to stall or reverse. Prior resistance can become support once broken.'},
+    {t:'RSI',cat:'indicator',d:'Relative Strength Index — a 0–100 oscillator measuring price change speed. Above 70 = overbought; below 30 = oversold. Divergence signals are the most reliable.'},
+    {t:'Sharpe Ratio',cat:'risk',d:'Risk-adjusted return: (Average return − Risk-free rate) ÷ Standard deviation. Higher is better. Above 1.0 is acceptable; above 2.0 is strong.'},
+    {t:'Slippage',cat:'trading',d:'The difference between the expected and actual execution price. Common during news or in low-liquidity markets. Factor 1–2 pips per trade into backtests.'},
+    {t:'SMA',cat:'indicator',d:'Simple Moving Average — the arithmetic mean of closing prices over N periods. The SMA200 is widely watched as a long-term trend indicator; price above it = uptrend.'},
+    {t:'Stop Loss',cat:'trading',d:'The price level where a trade auto-closes to limit losses. Always set before entry. Place beyond recent swing structure to avoid normal volatility stopping you out.'},
+    {t:'Support',cat:'price',d:'A price level where buying pressure historically overwhelms selling pressure, causing declines to stall or reverse. More touches = stronger level.'},
+    {t:'Swing High / Swing Low',cat:'price',d:'A local price peak (swing high) or trough (swing low) on a chart. Connecting these defines market structure and identifies trend direction.'},
+    {t:'Take Profit',cat:'trading',d:'The target price where a trade auto-closes for a gain. Should be at least 1.5–2× the distance to the stop loss to maintain a positive R:R.'},
+    {t:'Trend',cat:'pattern',d:'A sustained directional move in price: uptrend (higher highs and higher lows), downtrend (lower highs and lower lows), or sideways (roughly equal highs and lows).'},
+    {t:'VWAP',cat:'indicator',d:'Volume Weighted Average Price — the average price weighted by volume, reset each session. Widely used by institutions; price above VWAP = intraday bullish bias.'},
+    {t:'Win Rate',cat:'risk',d:'The percentage of trades that result in a profit: Winning trades ÷ Total trades × 100. Win rate alone is meaningless without knowing the average win-to-loss ratio.'},
+    {t:'Wick',cat:'price',d:'The thin vertical line above or below a candle body showing the high or low reached. Long upper wicks signal selling pressure; long lower wicks signal buying pressure.'},
+  ];
+  terms.sort((a,b)=>a.t.localeCompare(b.t));
+  const grid=document.getElementById('glossaryGrid');
+  if(!grid) return;
+  grid.innerHTML=terms.map(term=>`<div class="gloss-card" data-term="${term.t.toLowerCase()} ${term.d.toLowerCase()}"><div class="gloss-card-head"><span class="gloss-term">${term.t}</span><span class="gloss-cat cat-${term.cat}">${term.cat}</span></div><div class="gloss-def">${term.d}</div></div>`).join('');
+  const tiEl=document.getElementById('ti-glossary');
+  if(tiEl) tiEl.innerHTML=`<div class="topic-intro"><div class="topic-intro-title">Trading Glossary</div><div class="topic-intro-desc">44 essential terms — from basic price concepts to professional risk management vocabulary. Filter by typing in the search below.</div><div class="topic-intro-footer"><span class="topic-tag ttag-beg">Beginner</span><span class="topic-tag ttag-int">Intermediate</span><span class="topic-tag ttag-adv">Advanced</span><span class="topic-intro-count">44 terms</span></div></div>`;
+}
+function filterGlossary(query){
+  const q=query.toLowerCase().trim();
+  document.querySelectorAll('.gloss-card').forEach(el=>{
+    if(!q){ el.classList.remove('gloss-hidden'); return; }
+    el.classList.toggle('gloss-hidden', !el.dataset.term.includes(q));
+  });
 }
 
 function card(name,type,tCls,rel,desc,rules){
@@ -9760,22 +9895,13 @@ function _replayTfMs(tf) {
   return m[tf] || 86400000;
 }
 
-// ── PATTERN FAVORITES / BOOKMARKS ──────────────────────────────
-function getFavorites(){
-  try{ return JSON.parse(localStorage.getItem('sharpe_favs')||'{}'); }catch(e){ return {}; }
-}
+// ── FAVORITES (interaction handlers) ───────────────────────────
 function toggleFav(name, btn){
   const favs=getFavorites();
   if(favs[name]){ delete favs[name]; btn.classList.remove('on'); btn.title='Save pattern'; }
   else { favs[name]=1; btn.classList.add('on'); btn.title='Remove from saved'; }
   localStorage.setItem('sharpe_favs', JSON.stringify(favs));
   updateFavBadge();
-}
-function updateFavBadge(){
-  const favs=getFavorites();
-  const cnt=Object.keys(favs).length;
-  const badge=document.getElementById('favCountBadge');
-  if(badge) badge.textContent = cnt>0 ? cnt : '';
 }
 function renderFavorites(){
   const favs=getFavorites();
@@ -9846,148 +9972,6 @@ function searchLearn(query){
 function clearLearnSearch(){
   const inp=document.getElementById('lcSearchInput');
   if(inp){ inp.value=''; searchLearn(''); }
-}
-
-// ── GLOSSARY ───────────────────────────────────────────────────
-function buildGlossary(){
-  const terms=[
-    {t:'ATR',cat:'indicator',d:'Average True Range — measures volatility by averaging the true price range (including gaps) over N periods. Default: 14. Used for stop-loss placement and position sizing.'},
-    {t:'Backtesting',cat:'risk',d:'Testing a strategy on historical data to evaluate its performance before risking real capital. Results should include at least 50–100 trades to be statistically significant.'},
-    {t:'Bearish',cat:'price',d:'A market condition or view where prices are expected to decline. A bearish candle closes lower than it opens.'},
-    {t:'Bid/Ask Spread',cat:'trading',d:'The difference between the highest price a buyer will pay (bid) and the lowest a seller will accept (ask). Tighter spreads = lower transaction costs.'},
-    {t:'Bollinger Bands',cat:'indicator',d:'A volatility indicator using a 20-period SMA with upper/lower bands at ±2 standard deviations. Price touching the outer bands signals potential reversals or breakouts.'},
-    {t:'Breakout',cat:'pattern',d:'Price moving beyond a defined support or resistance level. A valid breakout typically shows above-average volume and closes beyond the level on the daily timeframe.'},
-    {t:'Bullish',cat:'price',d:'A market condition or view where prices are expected to rise. A bullish candle closes higher than it opens.'},
-    {t:'Confluence',cat:'trading',d:'Two or more independent signals aligning at the same price level — e.g., a Fibonacci level coinciding with a key support and an RSI oversold reading. More confluence = higher probability.'},
-    {t:'Consolidation',cat:'pattern',d:'A period of sideways price action between significant directional moves. Often appears as a rectangle or triangle pattern before a breakout continues the prior trend.'},
-    {t:'Drawdown',cat:'risk',d:'The peak-to-trough decline in an account or strategy. Max drawdown measures the worst decline from any historical peak. A 20% drawdown requires a 25% gain just to break even.'},
-    {t:'EMA',cat:'indicator',d:'Exponential Moving Average — weights recent prices more heavily than older prices. The EMA50 on the daily chart is widely used as a trend filter; price above = uptrend bias.'},
-    {t:'Expectancy',cat:'risk',d:'The average amount expected to win or lose per trade: (Win rate × Avg win) − (Loss rate × Avg loss). Positive expectancy is the mathematical foundation of a profitable edge.'},
-    {t:'Fair Value Gap (FVG)',cat:'trading',d:'A three-candle imbalance where the wicks of the first and third candles do not overlap. Represents a zone of unmet orders that price often returns to fill.'},
-    {t:'False Breakout',cat:'pattern',d:'A breakout that quickly reverses, trapping traders who entered in the wrong direction. Common near round numbers and major levels with low-conviction volume.'},
-    {t:'Fibonacci Retracement',cat:'indicator',d:'Key retracement levels at 23.6%, 38.2%, 50%, 61.8%, and 78.6% used to find support and resistance within a trend. The 61.8% level ("the golden ratio") is the most significant.'},
-    {t:'Gap',cat:'price',d:'A price range where no trades occurred, visible as empty space on a chart. Types: Common (noise), Breakaway (trend start), Runaway (mid-trend), Exhaustion (trend end).'},
-    {t:'Higher High / Higher Low',cat:'pattern',d:'The definition of an uptrend: each successive swing high is above the previous high, and each swing low is above the previous low. Opposite structure = downtrend.'},
-    {t:'Institutional Order Flow',cat:'trading',d:'Large buy or sell orders from banks, hedge funds, and central banks that significantly move markets. ICT methods attempt to identify these orders through order blocks and liquidity concepts.'},
-    {t:'Liquidity',cat:'trading',d:'How easily an asset can be bought or sold without meaningfully affecting its price. High-liquidity assets (EUR/USD, SPY) have tight spreads; low-liquidity assets have wide spreads and slippage risk.'},
-    {t:'MACD',cat:'indicator',d:'Moving Average Convergence Divergence — shows momentum via the difference between a 12-period and 26-period EMA, smoothed with a 9-period signal line. Crossovers and divergences are key signals.'},
-    {t:'Market Regime',cat:'pattern',d:'The current character of a market: trending, ranging, or volatile. Strategies work better when matched to regime — trend-following in trends, mean reversion in ranges.'},
-    {t:'Market Structure Break',cat:'pattern',d:'When price takes out a swing high (in an uptrend) or swing low (in a downtrend), breaking the existing trend pattern. Often the first signal of a potential trend reversal.'},
-    {t:'Momentum',cat:'indicator',d:'The speed and strength of a price move. Strong momentum suggests a trend is healthy; weakening momentum can precede a reversal. Measured by RSI, MACD, and Rate of Change.'},
-    {t:'MTF Analysis',cat:'trading',d:'Multiple Time Frame analysis — examining the same instrument on two or more timeframes. Common practice: use a higher timeframe for trend direction, lower timeframe for entry timing.'},
-    {t:'OHLC',cat:'price',d:'Open, High, Low, Close — the four data points that define a candle or bar. The open is the first trade, close is the last, high is the maximum price reached, and low is the minimum.'},
-    {t:'Order Block',cat:'trading',d:'The last up- or down-candle before a significant impulsive move. ICT theory holds that institutional orders remain here; price often returns to these zones before continuing the move.'},
-    {t:'Pips',cat:'trading',d:'Price Interest Points — the standard unit of price movement in forex. For EUR/USD, 1 pip = 0.0001. For JPY pairs, 1 pip = 0.01. Essential for calculating risk, reward, and spread.'},
-    {t:'Position Sizing',cat:'risk',d:'Calculating the number of units to buy or sell based on your risk per trade and the distance to your stop loss. Formula: Risk Amount ÷ (Stop Distance × Pip Value).'},
-    {t:'PRZ',cat:'pattern',d:'Potential Reversal Zone — a price cluster in harmonic pattern analysis where multiple Fibonacci ratios converge. The PRZ is the entry zone for harmonic trades, with a clear invalidation point.'},
-    {t:'Profit Factor',cat:'risk',d:'Gross profit divided by gross loss. A Profit Factor above 1.5 is generally considered solid; above 2.0 is excellent. A PF below 1.0 means the strategy loses money in aggregate.'},
-    {t:'Pullback',cat:'pattern',d:'A temporary counter-trend move within an established trend. In an uptrend, a pullback to a key support level (Fibonacci, EMA, prior resistance-turned-support) offers a high-probability entry.'},
-    {t:'R:R Ratio',cat:'risk',d:'Risk-to-Reward Ratio — the ratio of potential profit to potential loss. A 1:2 R:R means risking 50 pips to make 100. Even a 40% win rate is profitable at 1:2+ R:R.'},
-    {t:'Resistance',cat:'price',d:'A price level where selling pressure historically overwhelms buying pressure, causing rallies to stall or reverse. Prior resistance can become support once broken.'},
-    {t:'RSI',cat:'indicator',d:'Relative Strength Index — a 0–100 oscillator measuring the speed of price changes. Readings above 70 suggest overbought conditions; below 30 suggest oversold. Divergence signals are most reliable.'},
-    {t:'Sharpe Ratio',cat:'risk',d:'Risk-adjusted return: (Average return − Risk-free rate) ÷ Standard deviation of returns. Higher is better. A ratio above 1.0 is acceptable; above 2.0 is strong.'},
-    {t:'Slippage',cat:'trading',d:'The difference between the expected execution price and the actual fill price. Common during news events or in low-liquidity markets. Factor into backtests by subtracting 1–2 pips per trade.'},
-    {t:'SMA',cat:'indicator',d:'Simple Moving Average — the arithmetic mean of closing prices over N periods. The SMA200 is widely watched as a long-term trend indicator; price above it = long-term uptrend.'},
-    {t:'Support',cat:'price',d:'A price level where buying pressure historically overwhelms selling pressure, causing declines to stall or reverse. The more times a level has been tested, the more significant it becomes.'},
-    {t:'Swing High / Swing Low',cat:'price',d:'A local price peak (swing high) or trough (swing low) on a chart. Connecting swing highs and lows defines market structure and identifies trend direction.'},
-    {t:'Take Profit (TP)',cat:'trading',d:'The price target at which a trade is automatically closed for a gain. Should be at least 1.5–2× the distance to the stop loss to maintain a positive R:R ratio.'},
-    {t:'Stop Loss (SL)',cat:'trading',d:'The price level at which a trade is automatically closed to limit losses. Always set before entry, not after. Placement beyond recent swing structure prevents normal volatility from closing the trade prematurely.'},
-    {t:'Trend',cat:'pattern',d:'A sustained directional move in price: uptrend (higher highs and higher lows), downtrend (lower highs and lower lows), or sideways (roughly equal highs and lows). The dominant timeframe trend determines your bias.'},
-    {t:'VWAP',cat:'indicator',d:'Volume Weighted Average Price — the average price weighted by volume, reset each session. Widely used by institutions as a benchmark; price above VWAP = intraday bullish bias.'},
-    {t:'Win Rate',cat:'risk',d:'The percentage of trades that result in a profit: Winning trades ÷ Total trades × 100. Win rate alone is meaningless without knowing the average win-to-loss ratio.'},
-    {t:'Wick',cat:'price',d:'The thin vertical line above or below a candle body showing the high or low reached during the period. Long upper wicks signal selling pressure; long lower wicks signal buying pressure.'},
-  ];
-
-  // Sort alphabetically
-  terms.sort((a,b)=>a.t.localeCompare(b.t));
-
-  const grid=document.getElementById('glossaryGrid');
-  if(!grid) return;
-  grid.innerHTML=terms.map(term=>`
-    <div class="gloss-card" data-term="${term.t.toLowerCase()} ${term.d.toLowerCase()}">
-      <div class="gloss-card-head">
-        <span class="gloss-term">${term.t}</span>
-        <span class="gloss-cat cat-${term.cat}">${term.cat}</span>
-      </div>
-      <div class="gloss-def">${term.d}</div>
-    </div>`).join('');
-
-  // Build topic intro for glossary
-  const tiEl=document.getElementById('ti-glossary');
-  if(tiEl) tiEl.innerHTML=`<div class="topic-intro"><div class="topic-intro-title">Trading Glossary</div><div class="topic-intro-desc">45 essential terms — from basic price concepts to professional risk management vocabulary. Search or scroll to look up any term as you study.</div><div class="topic-intro-footer"><span class="topic-tag ttag-beg">Beginner</span><span class="topic-tag ttag-int">Intermediate</span><span class="topic-tag ttag-adv">Advanced</span><span class="topic-intro-count">45 terms</span></div></div>`;
-}
-
-function filterGlossary(query){
-  const q=query.toLowerCase().trim();
-  document.querySelectorAll('.gloss-card').forEach(el=>{
-    if(!q){ el.classList.remove('gloss-hidden'); return; }
-    el.classList.toggle('gloss-hidden', !el.dataset.term.includes(q));
-  });
-}
-
-// ── DAILY STREAK TRACKER ───────────────────────────────────────
-function initDailyStreak(){
-  try{
-    const today=new Date().toDateString();
-    const yesterday=new Date(Date.now()-86400000).toDateString();
-    const last=localStorage.getItem('sharpe_streak_last');
-    let streak=parseInt(localStorage.getItem('sharpe_streak_days')||'0',10);
-    let best=parseInt(localStorage.getItem('sharpe_streak_best')||'0',10);
-    if(last===today){
-      // Already counted today — streak unchanged
-    } else if(last===yesterday){
-      streak++;
-      if(streak>best){ best=streak; localStorage.setItem('sharpe_streak_best',best); }
-      localStorage.setItem('sharpe_streak_days',streak);
-      localStorage.setItem('sharpe_streak_last',today);
-    } else {
-      streak=1;
-      localStorage.setItem('sharpe_streak_days',1);
-      localStorage.setItem('sharpe_streak_last',today);
-      if(best===0){ best=1; localStorage.setItem('sharpe_streak_best',1); }
-    }
-    const numEl=document.getElementById('streakNum');
-    const bestEl=document.getElementById('streakBest');
-    if(numEl) numEl.textContent=streak;
-    if(bestEl) bestEl.textContent=best>streak?`Best: ${best} days`:'';
-    // Flame emoji varies with streak length
-    const flame=document.querySelector('#streakWidget .streak-flame');
-    if(flame) flame.textContent=streak>=30?'🌋':streak>=14?'🔥':streak>=7?'🔥':streak>=3?'🔥':'💧';
-  }catch(e){}
-}
-
-// ── WEEKLY GOALS ───────────────────────────────────────────────
-function renderGoals(){
-  const el=document.getElementById('goalsBody');
-  if(!el) return;
-  // Week start (Sunday)
-  const now=new Date();
-  const weekStart=new Date(now);
-  weekStart.setDate(now.getDate()-now.getDay());
-  weekStart.setHours(0,0,0,0);
-
-  const journalThisWeek=trades.filter(t=>new Date(t.date)>=weekStart).length;
-  const pracSessions=JSON.parse(localStorage.getItem('sharpe_prac_log')||'[]').filter(d=>new Date(d)>=weekStart).length;
-  const winRatePct=trades.length>0?Math.round(trades.filter(t=>t.status==='WIN').length/trades.length*100):0;
-
-  const goals=[
-    {lbl:'Journal trades this week',val:journalThisWeek,target:5},
-    {lbl:'Practice sessions this week',val:pracSessions,target:3},
-    {lbl:'Overall win rate',val:winRatePct,target:50,unit:'%',noTarget:true},
-  ];
-
-  el.innerHTML=goals.map(g=>{
-    const pct=g.noTarget?g.val:Math.min(Math.round(g.val/g.target*100),100);
-    const done=!g.noTarget&&g.val>=g.target;
-    const label=g.noTarget?`${g.val}${g.unit||''}`:`${g.val} / ${g.target}`;
-    return `<div class="goal-item">
-      <div class="goal-row">
-        <span class="goal-lbl">${g.lbl}</span>
-        <span class="goal-pct${done?' done':''}">${done?'✓ ':''} ${label}</span>
-      </div>
-      <div class="goal-bar"><div class="goal-fill${done?' done':''}" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('');
 }
 
 // ── ONBOARDING TOUR ────────────────────────────────────────────
