@@ -538,6 +538,10 @@ textarea{resize:vertical;min-height:56px}
 .pos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .pos-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative}
 .pos-card.pos-pending{opacity:.85;border-style:dashed}
+.exp-ok{color:var(--muted)}
+.exp-warn{color:#e3b341;font-weight:600}
+.exp-alert{color:#f0803c;font-weight:700}
+.exp-urgent{color:var(--red);font-weight:700;animation:blink 1.2s step-start infinite}
 .pos-card.pos-closed{opacity:.65}
 .pos-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:8px}
 .pos-levels{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}

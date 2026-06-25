@@ -5523,7 +5523,18 @@ async function loadPositions(){
     sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(_closedPageSize),
     sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
   ]);
-  const open = openRes.data||[], closed = closedRes.data||[], pending = pendRes.data||[];
+  const open = openRes.data||[], closed = closedRes.data||[];
+  const allPending = pendRes.data||[];
+
+  // Auto-expire stale pending orders immediately (don't wait for monitor)
+  const now = new Date();
+  const stale = allPending.filter(e => new Date(e.expires_at) < now);
+  const pending = allPending.filter(e => new Date(e.expires_at) >= now);
+  if(stale.length){
+    await Promise.all(stale.map(e => sb.from('pending_entries').update({status:'expired'}).eq('id',e.id)));
+    if(stale.length > 0) showToast(`${stale.length} expired pending order${stale.length>1?'s':''} auto-cancelled`, 'ti');
+  }
+
   _posCache = {open, closed, pending};
 
   // First: seed livePrices from Supabase (fast, cached every 15 min)
@@ -5673,31 +5684,40 @@ function renderPositions(open, closed, pending){
   const fmtDate = d => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
   const fmtDt   = d => new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
   const fmtP    = (v, dec) => v != null ? parseFloat(v).toFixed(dec||5) : '—';
+  const timeLeft = exp => {
+    const ms = new Date(exp) - new Date();
+    if(ms <= 0) return {label:'Cancelled', cls:'exp-urgent'};
+    const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000);
+    if(h >= 24){ const d=Math.floor(h/24); return {label:`${d}d ${h%24}h left`, cls:'exp-ok'}; }
+    if(h >= 6)  return {label:`${h}h ${m}m left`, cls:'exp-warn'};
+    if(h >= 1)  return {label:`${h}h ${m}m left`, cls:'exp-alert'};
+    return {label:`${m}m left — auto-cancels soon`, cls:'exp-urgent'};
+  };
 
   // ── Pending ──────────────────────────────────────────────────────
   const pendEl = document.getElementById('pendingPositions');
   if(!pending.length){
-    pendEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">No pending orders. Click <strong>Paper Trade</strong> on any signal to queue one.</div>';
+    pendEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">No pending orders. Click <strong>Paper Trade</strong> on any alert to queue one.</div>';
   } else if(vm==='grid'){
-    pendEl.innerHTML=`<div class="pos-grid">${pending.map(e=>`
+    pendEl.innerHTML=`<div class="pos-grid">${pending.map(e=>{ const tl=timeLeft(e.expires_at); return `
       <div class="pos-card pos-pending">
         <div class="pos-card-top">
           <div><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
           <div style="font-size:11px;color:var(--muted);text-align:right">Waiting entry<br>${fmtP(e.entry_price,e.inst_dec)}</div>
         </div>
-        <div class="pos-levels"><span>SL <strong>${fmtP(e.stop_loss,e.inst_dec)}</strong></span><span>TP <strong>${fmtP(e.tp1,e.inst_dec)}</strong></span><span>Exp. ${fmtDate(e.expires_at)}</span></div>
+        <div class="pos-levels"><span>SL <strong>${fmtP(e.stop_loss,e.inst_dec)}</strong></span><span>TP <strong>${fmtP(e.tp1,e.inst_dec)}</strong></span><span class="${tl.cls}">⏱ ${tl.label}</span></div>
         <div class="pos-card-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
-      </div>`).join('')}</div>`;
+      </div>`;}).join('')}</div>`;
   } else {
-    pendEl.innerHTML=`<div class="pos-list">${pending.map(e=>`
+    pendEl.innerHTML=`<div class="pos-list">${pending.map(e=>{ const tl=timeLeft(e.expires_at); return `
       <div class="pos-row pos-row-pending">
         <div class="pos-row-sym"><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
         <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${fmtP(e.entry_price,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Stop Loss</span><span class="pos-row-val" style="color:var(--red)">${fmtP(e.stop_loss,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Take Profit</span><span class="pos-row-val" style="color:var(--green)">${fmtP(e.tp1,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Expires</span><span class="pos-row-val" style="color:var(--muted)">${fmtDate(e.expires_at)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Stop</span><span class="pos-row-val" style="color:var(--red)">${fmtP(e.stop_loss,e.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Target</span><span class="pos-row-val" style="color:var(--green)">${fmtP(e.tp1,e.inst_dec)}</span></div>
+        <div class="pos-row-cell"><span class="pos-row-lbl">Expires</span><span class="pos-row-val ${tl.cls}">⏱ ${tl.label}</span></div>
         <div class="pos-row-cell pos-row-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
-      </div>`).join('')}</div>`;
+      </div>`;}).join('')}</div>`;
   }
 
   // ── Open ─────────────────────────────────────────────────────────
@@ -5904,7 +5924,8 @@ async function createPendingEntry(sig, tf, mode='paper', silent=false){
       .eq('user_id',sbUser.id).eq('symbol',sig.symbol).eq('status','open').maybeSingle();
     if(open){ if(!silent) showToast(`${sig.symbol} is already open in Positions`, 'ti'); return; }
   }
-  const tfExpiry = { '1day':3, '4h':0.5, '1week':7 };
+  // Expiry windows: signal is stale if price hasn't reached entry within these windows
+  const tfExpiry = { '1day':2, '4h':0.5, '1week':5 };
   const days = tfExpiry[tf] ?? 1;
   const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
   const {error} = await sb.from('pending_entries').insert({
