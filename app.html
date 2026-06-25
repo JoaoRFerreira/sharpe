@@ -356,7 +356,20 @@
       <button class="ltab" onclick="ltab('institutional',this)">Institutional Methods</button>
       <button class="ltab" onclick="ltab('trend',this)">Trend Filters</button>
     </div>
-    <div class="learn-content" id="lc-strategies"><div id="lg-strategies"></div></div>
+    <div class="learn-content" id="lc-strategies">
+      <div class="strat-tabs">
+        <button class="stab active" onclick="stab('foundation',this)">Foundation</button>
+        <button class="stab" onclick="stab('indicators',this)">Indicators</button>
+        <button class="stab" onclick="stab('priceaction',this)">Price Action</button>
+        <button class="stab" onclick="stab('advanced',this)">Advanced</button>
+        <button class="stab" onclick="stab('psychology',this)">Psychology</button>
+      </div>
+      <div class="strat-content active" id="sc-foundation"><div id="lg-s-foundation"></div></div>
+      <div class="strat-content" id="sc-indicators"><div id="lg-s-indicators"></div></div>
+      <div class="strat-content" id="sc-priceaction"><div id="lg-s-priceaction"></div></div>
+      <div class="strat-content" id="sc-advanced"><div id="lg-s-advanced"></div></div>
+      <div class="strat-content" id="sc-psychology"><div id="lg-s-psychology"></div></div>
+    </div>
     <div class="learn-content active" id="lc-chart"><div class="pattern-grid" id="lg-chart"></div></div>
     <div class="learn-content" id="lc-candle"><div class="pattern-grid" id="lg-candle"></div></div>
     <div class="learn-content" id="lc-harmonic"><div class="pattern-grid" id="lg-harmonic"></div></div>
@@ -2179,6 +2192,12 @@ function ltab(id, btn){
   btn.classList.add('active');
   document.getElementById('lc-'+id).classList.add('active');
 }
+function stab(id, btn){
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.strat-content').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('sc-'+id).classList.add('active');
+}
 
 let _learnMode = 'learn';
 function setLearnMode(mode){
@@ -3702,13 +3721,7 @@ function buildLearning(){
   ].join('');
 
   // ── PROVEN STRATEGIES ─────────────────────────────────────────
-  const stratLevelHdr = (label, color) =>
-    `<div style="grid-column:1/-1;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-top:6px">
-      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${color}">${label}</span>
-    </div>`;
-
-  document.getElementById('lg-strategies').innerHTML =
-    stratLevelHdr('Level 1 — Foundation: Start Here', 'var(--green)') +
+  document.getElementById('lg-s-foundation').innerHTML =
     scard('Trend Following — EMA Crossover','Beginner','beg',
       'The #1 beginner strategy recommended by BabyPips and Investopedia. Uses two EMAs to identify trend direction and time entries. Simple, mechanical, and works on any timeframe. "The trend is your friend" is not a cliché — it\'s the most backtested principle in technical analysis.',
       ['Two EMAs: fast (10–20 period) and slow (50 period) plotted on H1 or H4','Market must be trending — confirm with ADX > 25 (ADX below = choppy, avoid)','Best pairs for trend: EUR/USD, GBP/USD, USD/JPY on H4 and Daily'],
@@ -3729,8 +3742,9 @@ function buildLearning(){
       ['At 1% risk: 10 consecutive losses = 10% drawdown (recoverable)','At 20% risk: 5 consecutive losses = near-wipeout (not recoverable)','Even the best strategies have losing streaks — the 1% rule ensures you survive them'],
       'Geometric compounding means a -50% drawdown requires a +100% gain just to recover. At 1% per trade, even 50 consecutive losses leaves you with ~60% of your account. Mathematics — not discipline — protects you.',
       ['Risking 10–20% because the setup "looks really good"','Using leverage to make the 1% risk feel more meaningful in dollar terms','Ignoring the rule during news releases (spreads and slippage can make actual loss larger)']
-    ) +
-    stratLevelHdr('Level 2 — Indicator Strategies', 'var(--blue)') +
+    );
+
+  document.getElementById('lg-s-indicators').innerHTML =
     scard('RSI + Trend Filter','Intermediate','int',
       'RSI alone achieves ~62% accuracy. Add a single trend filter (EMA50) and accuracy jumps to ~78% — a 16-point improvement from one rule. The RSI tells you WHEN (momentum extreme). The EMA50 tells you IF (trend direction). Both together create a high-probability setup.',
       ['RSI 14-period on H1 or H4 chart','EMA50 as the trend divider: price above = bullish bias only, price below = bearish bias only','LONG setups: price must be above EMA50. SHORT setups: price must be below EMA50.'],
@@ -3758,8 +3772,9 @@ function buildLearning(){
       ['LONG: signal candle low ≤ lower band AND close > lower band. RSI < 30 adds confirmation.','SHORT: signal candle high ≥ upper band AND close < upper band. RSI > 70 adds confirmation.','Stop: 50 pips beyond signal candle extreme (or 1.5× ATR)','Target TP1: middle band (20 SMA) — close 50% here. TP2: opposite band. Move stop to breakeven at TP1.'],
       'Under 2 standard deviations, Bollinger Bands statistically contain ~95% of price action. When price stretches to an extreme and snaps back, it reflects temporary overextension of buyers/sellers relative to the recent average.',
       ['Trading the bounce in a strongly trending market — price can "walk the band" for extended periods','Using this strategy without confirming a ranging environment first (ADX < 20 helps)','Forgetting the two-stage exit — taking the full position to the opposite band is too greedy']
-    ) +
-    stratLevelHdr('Level 3 — Price Action', '#e3b341') +
+    );
+
+  document.getElementById('lg-s-priceaction').innerHTML =
     scard('Pin Bar at Key Level','Beginner','beg',
       'The most reliable single-candle setup in retail trading. A long wick (2× body minimum) forming at a key level proves sharp rejection — large players entered and overwhelmed the other side. At Daily/H4 major levels with confluence, pin bars achieve 55–65% win rates.',
       ['Long wick: at least 2× the candle body (3× is stronger). Small body near one end.','Must form at a key level: horizontal S/R, rising/falling trendline, EMA50, or Fibonacci level','Aligned with HTF trend direction (D1 bullish trend → only trade bullish pin bars)','Volume spike on the pin bar candle strengthens the signal'],
@@ -3780,8 +3795,9 @@ function buildLearning(){
       ['Step 1: Read HTF (e.g., Daily). Determine LONG only or SHORT only based on trend.','Step 2: Drop to mid-TF (e.g., H4). Find the zone where your setup is developing.','Step 3: Drop to LTF (e.g., H1 or M15). Wait for entry trigger (pin bar, engulfing, MACD cross).','Stop: placed on LTF — much tighter than if placed on HTF. Improves R:R significantly.','Target: next major level on mid-TF or HTF.'],
       'Institutional traders operate on higher timeframes. When their HTF levels activate, they generate the momentum that carries price. By aligning your trades with the HTF institutional bias, you ride their orders instead of fighting them.',
       ['Trading a LTF signal that contradicts the HTF trend ("just this one counter-trend trade")','Changing HTF bias too frequently — the daily trend does not change every few candles','Using timeframes too close together (e.g., H1 and H2) — no meaningful additional context']
-    ) +
-    stratLevelHdr('Level 4 — Advanced & Session-Based', 'var(--red)') +
+    );
+
+  document.getElementById('lg-s-advanced').innerHTML =
     scard('London Open Breakout','Intermediate','int',
       'One of the most consistently backtested session-based strategies. Mark the Asian session range (00:00–07:00 GMT), then trade the breakout at London open. Backtested on EUR/USD (165 trades, Apr 2024–Feb 2025): 49% win rate, +7.47% return. Requires minimum 1:2 R:R to be profitable at that win rate.',
       ['Mark Asian range: absolute HIGH and LOW from 00:00–07:00 GMT','Quality filter: skip if Asian range > 60 pips (EUR/USD) or > 80 pips (GBP/USD) — too much volatility consumed','Skip on high-impact news events in first London hour (check ForexFactory)','Best trading days: Tuesday–Thursday. Monday and Friday produce lower-quality breakouts.'],
@@ -3802,8 +3818,9 @@ function buildLearning(){
       ['Strategy 1 (Beginner): Wait 15–30 minutes after release for spreads to normalize, then trade the confirmed direction on M5/M15','Strategy 2 (Intermediate): V-shaped reversal — after the initial spike, wait for a 5M reversal candle, enter opposite direction. Risk: 15–40 pips. Target: 1:3 R:R. Profitable at just 33% win rate.','Strategy 3 (Advanced): Pre-release range straddle — place OCO buy/sell stops outside the 30-min pre-release range. Cancel unfilled immediately when one triggers.','Risk MAXIMUM 0.5% of account on news trades (half your normal rule)'],
       'NFP surprises (actual vs. forecast) drive USD direction. Hawkish FOMC = USD up. Dovish = USD down. BUT: the first move is often a liquidity sweep — price hunts stops above/below obvious levels before reversing to the "real" direction. This is the V-shaped reversal setup.',
       ['Trading the first 1–5 minutes without a set pending order — manual entries face extreme slippage','Not cancelling the second OCO order when the first fills — risk of double loss on whipsaw','Using normal position size on news events — the wider stops require much smaller sizing']
-    ) +
-    stratLevelHdr('Level 5 — Psychology: Why 86% of Traders Lose', '#f85149') +
+    );
+
+  document.getElementById('lg-s-psychology').innerHTML =
     scard('The 14 Reasons Traders Fail','Critical Reading','adv',
       '74–89% of retail CFD/forex accounts lose money per mandatory EU regulatory disclosures (ESMA). IG Markets: 76%. Plus500: 80%. eToro: 51% (better due to social trading model). This is regulatory fact, not opinion. Here are the 14 root causes — most experienced traders have made all of them.',
       [
