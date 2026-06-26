@@ -711,10 +711,9 @@
   </div>
   <button id="scanBtn" style="display:none" onclick="loadSignals()">⟳ Refresh Alerts</button>
 
-  <!-- Economic Calendar -->
-  <div id="economicCalendar" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:8px">Economic Calendar · High Impact</div>
-    <div id="economicCalendarBody" style="font-size:12px;color:var(--muted)">Loading…</div>
+  <!-- Economic Calendar (TradingView widget) -->
+  <div id="economicCalendar" style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px">
+    <div id="economicCalendarBody"></div>
   </div>
 
   <!-- TradingView live ticker -->
@@ -5011,44 +5010,33 @@ function renderSignals(results, isDemo){
 }
 
 // ── Economic Calendar ──────────────────────────────────────────
-const _CURR_FLAGS={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CHF:'🇨🇭',AUD:'🇦🇺',CAD:'🇨🇦'};
-async function loadEconomicCalendar(){
-  const body=document.getElementById('economicCalendarBody'); if(!body) return;
-  if(!sigApiKey){
-    body.innerHTML='<span style="color:var(--muted)">Connect a Twelve Data key in Settings to see upcoming economic events.</span>';
-    return;
-  }
-  try{
-    const now=new Date(), day=now.getDay();
-    const mon=new Date(now); mon.setDate(now.getDate()-((day+6)%7));
-    const sun=new Date(mon); sun.setDate(mon.getDate()+6);
-    const fmt=d=>d.toISOString().slice(0,10);
-    const url=`https://api.twelvedata.com/economic_calendar?importance=high&start_date=${fmt(mon)}&end_date=${fmt(sun)}&apikey=${sigApiKey}`;
-    const data=await fetch(url).then(r=>r.json());
-    const raw=Array.isArray(data)?data:Array.isArray(data?.result)?data.result:[];
-    const today=now.toISOString().slice(0,10);
-    const upcoming=raw
-      .filter(ev=>_CURR_FLAGS[ev.currency])
-      .filter(ev=>new Date(`${ev.date}T${(ev.time||'00:00:00').slice(0,8)}Z`).getTime()>=Date.now()-60000)
-      .sort((a,b)=>new Date(`${a.date}T${(a.time||'00:00').slice(0,5)}Z`)-new Date(`${b.date}T${(b.time||'00:00').slice(0,5)}Z`))
-      .slice(0,5);
-    if(!upcoming.length){body.innerHTML='<span>No high-impact events upcoming this week.</span>';return;}
-    body.innerHTML=upcoming.map(ev=>{
-      const isToday=ev.date===today;
-      const dt=new Date(`${ev.date}T${(ev.time||'00:00:00').slice(0,8)}Z`);
-      const label=dt.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'})+' '+dt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
-      const dot=ev.impact?.toLowerCase()==='high'?'<span style="color:var(--red)">●</span>':'<span style="color:#f59e0b">●</span>';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)${isToday?';background:rgba(220,38,38,.04);border-radius:4px':''}">
-        <span>${_CURR_FLAGS[ev.currency]}</span>
-        <span style="color:var(--muted);width:28px;flex-shrink:0">${ev.currency}</span>
-        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${(ev.event||'').slice(0,35)}${isToday?'&nbsp;<span style="background:var(--red);color:#fff;font-size:9px;padding:1px 4px;border-radius:3px">TODAY</span>':''}</span>
-        <span style="color:var(--muted);white-space:nowrap">${label}</span>
-        <span>${dot}</span>
-      </div>`;
-    }).join('');
-  }catch(e){
-    body.innerHTML='<span style="color:var(--muted)">Calendar unavailable.</span>';
-  }
+// ── Economic Calendar (TradingView widget) ─────────────────────
+let _ecalLoaded = false;
+function loadEconomicCalendar(){
+  const body = document.getElementById('economicCalendarBody');
+  if(!body || _ecalLoaded) return;
+  _ecalLoaded = true;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const wrap = document.createElement('div');
+  wrap.className = 'tradingview-widget-container';
+  const inner = document.createElement('div');
+  inner.className = 'tradingview-widget-container__widget';
+  const scr = document.createElement('script');
+  scr.type = 'text/javascript';
+  scr.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
+  scr.async = true;
+  scr.textContent = JSON.stringify({
+    colorTheme: isDark ? 'dark' : 'light',
+    isTransparent: true,
+    width: '100%',
+    height: '300',
+    locale: 'en',
+    importanceFilter: '0,1',
+    countryFilter: 'us,eu,gb,jp,cn,ca,au,ch',
+  });
+  wrap.appendChild(inner);
+  wrap.appendChild(scr);
+  body.appendChild(wrap);
 }
 
 // ── Market Regime Detector ─────────────────────────────────────
