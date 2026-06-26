@@ -24,7 +24,7 @@
     <button onclick="nav('learning',this)">Learn</button>
     <button onclick="nav('signals',this)">Alerts <span id="navSignalsBadge" class="nav-plan-tag" style="display:none">Trader+</span></button>
     <button onclick="nav('journal',this)">Journal</button>
-    <button onclick="nav('positions',this)">Positions <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
+    <button onclick="nav('positions',this)">Paper Trades <span id="navPosBadge" style="display:none;font-size:10px;font-weight:700;background:var(--green);color:#fff;border-radius:10px;padding:1px 6px;margin-left:4px">0</span></button>
     <div class="nav-sep"></div>
     <!-- Group 2: Progress & analysis -->
     <button onclick="nav('dashboard',this)">Dashboard</button>
@@ -108,7 +108,7 @@
 
   <!-- Open practice positions — paper trading activity -->
   <div class="lpos-section-hdr">
-    <span>Open Paper Positions</span>
+    <span>Open Paper Trades</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
     <div style="margin-left:auto;display:flex;gap:4px">
@@ -634,7 +634,7 @@
       <div class="sei"><div class="sei-label">What is a Pattern Alert?</div><div class="sei-text">The scanner checks 16 instruments every 4 hours and fires an alert when a recognized chart pattern forms. Alerts are for educational paper trading — not financial advice.</div></div>
       <div class="sei"><div class="sei-label">Confidence Score <i class="hico" title="0–100. Higher = more pattern criteria met (correct proportions, volume confirmation, trend alignment). Filter to 85%+ for the cleanest setups.">?</i></div><div class="sei-text">How well the pattern meets its criteria. 0–100. Above 85 = textbook setup. Below 70 = proceed with caution or skip.</div></div>
       <div class="sei"><div class="sei-label">EMA50 Filter <i class="hico" title="Only shows alerts aligned with the 50-period moving average trend. Removes ~40% of noise by blocking counter-trend signals.">?</i></div><div class="sei-text">Active by default. Blocks alerts that trade against the medium-term trend — the single biggest source of false signals for new traders.</div></div>
-      <div class="sei"><div class="sei-label">Paper Trading</div><div class="sei-text">No real money. When you open a position from an alert, it goes into your Paper Practice Positions with simulated capital. Track results in Performance.</div></div>
+      <div class="sei"><div class="sei-label">Paper Trading</div><div class="sei-text">No real money. Click Paper Trade on any alert to open a position immediately at the signal price. Track results in Paper Trades and Performance.</div></div>
     </div>
   </div>
 
@@ -662,7 +662,7 @@
       </div>
       <div class="howto-step">
         <div class="howto-num">4</div>
-        <div><div class="howto-step-title">Act: Paper Trade, journal, or enable auto-log</div><div class="howto-step-desc">Click <strong>Paper Trade</strong> to queue a position. Use <strong>Auto-log</strong> to save qualifying alerts to your journal automatically. Enable <strong>Auto Paper Trading</strong> in Settings to have the system open and close positions server-side — even when your browser is closed.</div></div>
+        <div><div class="howto-step-title">Act: Paper Trade, journal, or enable auto-log</div><div class="howto-step-desc">Click <strong>Paper Trade</strong> to open a position immediately at the signal price. Use <strong>Auto-log</strong> to save qualifying alerts to your journal automatically. Enable <strong>Auto Paper Trading</strong> in Settings to have the system open trades automatically when signals fire.</div></div>
       </div>
     </div>
     <div class="howto-opts">
@@ -746,7 +746,7 @@
     <div class="scanner-header-left">
       <div class="scanner-title">
         <span class="scanner-live-dot"></span>
-        Paper Practice Positions
+        Paper Trades
       </div>
       <div class="scanner-meta" id="posLastUpdated">Prices auto-monitored every 60s · No real money involved</div>
     </div>
@@ -760,10 +760,10 @@
   <div class="pos-explainer">
     <div class="pos-explainer-title">How Paper Trading works</div>
     <div class="pos-explainer-steps">
-      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any pattern alert — the order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit. Enable <strong>Auto Paper Trading</strong> in Settings to skip this step entirely.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>Prices are monitored every <strong>30 seconds</strong> while the app is open, and every <strong>1 minute</strong> server-side when it's closed. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>Positions close automatically at take profit or stop loss. You can also close manually. A <strong>Correlation warning</strong> appears if two or more open positions are >70% correlated — you may be taking the same trade twice.</span></div>
-      <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>Every closed trade feeds your Sharpe Score, win rate, and leaderboard ranking. Hit <strong>Replay ▶</strong> on any closed position to watch it bar-by-bar and review your decision. No real money is ever involved.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">1</span><span>Click <strong>Paper Trade</strong> on any pattern alert — the trade opens immediately at the signal's entry price with the predefined stop loss and take profit. No real money is ever involved.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">2</span><span>Prices are monitored every <strong>30 seconds</strong> while the app is open. Positions close automatically when stop loss or take profit is hit. You can also close any trade manually at any time.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">3</span><span>A <strong>Correlation warning</strong> appears if two or more open positions are >70% correlated — you may be effectively taking the same trade twice.</span></div>
+      <div class="pos-explainer-step"><span class="pos-explainer-num">4</span><span>Every closed trade feeds your Sharpe Score, win rate, and leaderboard ranking. Hit <strong>Replay ▶</strong> on any closed position to watch it bar-by-bar and review your decision.</span></div>
     </div>
   </div>
 
@@ -771,19 +771,16 @@
   <div id="correlationWarning" style="margin-bottom:16px"></div>
 
   <!-- Summary bar -->
-  <div id="posSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
+  <div id="posSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px"></div>
 
   <!-- Section header with view toggle -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">Pending Orders</div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">Open Paper Trades</div>
     <div class="pos-view-toggle">
       <button class="pvt-btn active" id="pvtList" title="List view" onclick="setPosView('list')">☰</button>
       <button class="pvt-btn" id="pvtGrid" title="Grid view" onclick="setPosView('grid')">⊞</button>
     </div>
   </div>
-  <div id="pendingPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
-
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-top:24px;margin-bottom:10px">Open Positions</div>
   <div id="openPositions"><div style="color:var(--muted);font-size:13px">Loading…</div></div>
 
   <!-- Closed positions -->
@@ -1845,7 +1842,7 @@
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Multi-Timeframe Confluence? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">When the same pattern direction fires on more than one timeframe simultaneously (e.g. Daily and 4H both show LONG), the alert card shows a confluence badge. Gold ⚡ Triple TF Confluence means all three timeframes agree — the highest-conviction scenario the scanner produces. Pro only.</div></div>
 
     <div class="faq-group-title">Paper Trading &amp; Positions</div>
-    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button><div class="faq-a">Paper trading simulates trades with zero real money at risk — it's how you safely practice the pattern alerts. Click Paper Trade on any pattern alert to queue a pending entry. A price monitor checks every 30 seconds while the app is open and every 1 minute server-side when closed. When price enters the entry zone, the position opens automatically. When stop loss or take profit is hit, it closes and logs the result.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">How does paper trading work?<span class="faq-chv">+</span></button><div class="faq-a">Paper trading simulates trades with zero real money at risk — it's how you safely practice the pattern alerts. Click Paper Trade on any pattern alert to open a position immediately at the signal's entry price. Prices are monitored every 30 seconds while the app is open. When stop loss or take profit is hit, the position closes automatically and logs to your results.</div></div>
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is the Correlation Risk Monitor? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Warns when two open positions in the same direction are >70% correlated — "EUR/USD and GBP/USD are 84% correlated — you are effectively 2× long USD weakness." Computed from the last 20 daily closes.</div></div>
     <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">What is Trade Replay? (Pro)<span class="faq-chv">+</span></button><div class="faq-a">Every closed position has a Replay ▶ button. Clicking it plays back the candle sequence from entry to close — bar by bar, with entry, stop loss, take profit, and exit price lines overlaid. Speed adjustable from 0.5× to 8×.</div></div>
 
@@ -5141,7 +5138,7 @@ function sigCard(s, isDemo, status='valid'){
     </div>
     ${reasonsHtml}
     <div class="sig-actions">
-      ${!isDemo?`<button class="btn btn-primary" onclick='createPendingEntry(${JSON.stringify(s)},sigTf,"paper")'>Paper Trade</button>`:''}
+      ${!isDemo?`<button class="btn btn-primary" onclick='createOpenTrade(${JSON.stringify(s)},sigTf,"paper")'>Paper Trade</button>`:''}
       <button class="btn btn-ghost" onclick='addSigToJournal(${JSON.stringify(s)})'>+ Journal</button>
       <button class="btn btn-ghost" onclick='sendToSim(${JSON.stringify(s)})'>Simulator</button>
     </div>
@@ -5507,9 +5504,9 @@ async function processAutoActions(results, isDemo=false){
       fireWebhook(sig);
       sendEmailAlert(sig);
     }
-    // Paper trading: silently create pending entry when auto-log is on + market allowed
+    // Paper trading: silently open trade when auto-log is on + market allowed
     if(!isDemo && paperTrading && autoLog && sig.conf>=autoLogConf && !alreadyLogged && mktAllowed){
-      await createPendingEntry(sig, sigTf, 'paper', true);
+      await createOpenTrade(sig, sigTf, 'paper', true);
     }
   }
 }
@@ -5656,12 +5653,11 @@ function initPositions(){
   // Realtime: re-render when positions change
   sb.channel('positions-watch')
     .on('postgres_changes',{event:'*',schema:'public',table:'open_positions'},()=>loadPositions())
-    .on('postgres_changes',{event:'*',schema:'public',table:'pending_entries'},()=>loadPositions())
     .subscribe();
 }
 
 // ── Position price auto-refresh ───────────────────────────────────
-let _posCache = {open:[], closed:[], pending:[]};
+let _posCache = {open:[], closed:[]};
 let _posRefreshInterval = null;
 
 // Fetch prices directly from external APIs for the given symbols
@@ -5698,7 +5694,7 @@ async function pollPaperPrices(symbols){
 async function _refreshPosDisplay(){
   const symbols=[...new Set(_posCache.open.map(p=>p.symbol))];
   await pollPaperPrices(symbols);
-  renderPositions(_posCache.open, _posCache.closed, _posCache.pending);
+  renderPositions(_posCache.open, _posCache.closed);
   // Update last-refreshed label
   const lbl=document.getElementById('posLastUpdated');
   if(lbl) lbl.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -5715,24 +5711,13 @@ function stopPosAutoRefresh(){
 let _closedPageSize = 25;
 
 async function loadPositions(){
-  const [openRes, closedRes, pendRes] = await Promise.all([
+  const [openRes, closedRes] = await Promise.all([
     sb.from('open_positions').select('*').eq('status','open').order('opened_at',{ascending:false}),
     sb.from('open_positions').select('*').eq('status','closed').order('closed_at',{ascending:false}).limit(_closedPageSize),
-    sb.from('pending_entries').select('*').eq('status','pending').order('created_at',{ascending:false}),
   ]);
   const open = openRes.data||[], closed = closedRes.data||[];
-  const allPending = pendRes.data||[];
 
-  // Auto-expire stale pending orders immediately (don't wait for monitor)
-  const now = new Date();
-  const stale = allPending.filter(e => new Date(e.expires_at) < now);
-  const pending = allPending.filter(e => new Date(e.expires_at) >= now);
-  if(stale.length){
-    await Promise.all(stale.map(e => sb.from('pending_entries').update({status:'expired'}).eq('id',e.id)));
-    if(stale.length > 0) showToast(`${stale.length} expired pending order${stale.length>1?'s':''} auto-cancelled`, 'ti');
-  }
-
-  _posCache = {open, closed, pending};
+  _posCache = {open, closed};
 
   // First: seed livePrices from Supabase (fast, cached every 15 min)
   const symbols = [...new Set(open.map(p=>p.symbol))];
@@ -5744,7 +5729,7 @@ async function loadPositions(){
   // Then: fetch fresh prices directly from external APIs
   await pollPaperPrices(symbols);
 
-  renderPositions(open, closed, pending);
+  renderPositions(open, closed);
   const lbl=document.getElementById('posLastUpdated');
   if(lbl) lbl.textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
@@ -5851,7 +5836,7 @@ function renderCorrelationWarning(correls) {
 
 // ── End Correlation Risk Monitor ─────────────────────────────────────────────
 
-function renderPositions(open, closed, pending){
+function renderPositions(open, closed){
   // Update nav badge
   const badge = document.getElementById('navPosBadge');
   if(badge){ const n=open.length; badge.textContent=n; badge.style.display=n?'inline':'none'; }
@@ -5867,8 +5852,7 @@ function renderPositions(open, closed, pending){
   const totalPips=closed.reduce((s,p)=>(s+(p.pnl_pips||0)),0);
   const wr=closed.length?Math.round(wins/closed.length*100):0;
   document.getElementById('posSummary').innerHTML=[
-    {lbl:'Open',val:open.length,sub:'positions',color:'var(--blue)'},
-    {lbl:'Pending',val:pending.length,sub:'waiting entry',color:'var(--muted)'},
+    {lbl:'Open',val:open.length,sub:'paper trades',color:'var(--blue)'},
     {lbl:'Win Rate',val:closed.length?wr+'%':'—',sub:`${wins}W / ${losses}L`,color:wr>=50?'var(--green)':'var(--red)'},
     {lbl:'Total P&L',val:(totalPips>=0?'+':'')+totalPips.toFixed(1)+' pips',sub:`${closed.length} closed trades`,color:totalPips>=0?'var(--green)':'var(--red)'},
   ].map(s=>`<div class="cfg-card" style="margin:0;padding:14px 18px">
@@ -5881,41 +5865,6 @@ function renderPositions(open, closed, pending){
   const fmtDate = d => new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
   const fmtDt   = d => new Date(d).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
   const fmtP    = (v, dec) => v != null ? parseFloat(v).toFixed(dec||5) : '—';
-  const timeLeft = exp => {
-    const ms = new Date(exp) - new Date();
-    if(ms <= 0) return {label:'Cancelled', cls:'exp-urgent'};
-    const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000);
-    if(h >= 24){ const d=Math.floor(h/24); return {label:`${d}d ${h%24}h left`, cls:'exp-ok'}; }
-    if(h >= 6)  return {label:`${h}h ${m}m left`, cls:'exp-warn'};
-    if(h >= 1)  return {label:`${h}h ${m}m left`, cls:'exp-alert'};
-    return {label:`${m}m left — auto-cancels soon`, cls:'exp-urgent'};
-  };
-
-  // ── Pending ──────────────────────────────────────────────────────
-  const pendEl = document.getElementById('pendingPositions');
-  if(!pending.length){
-    pendEl.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px 0">No pending orders. Click <strong>Paper Trade</strong> on any alert to queue one.</div>';
-  } else if(vm==='grid'){
-    pendEl.innerHTML=`<div class="pos-grid">${pending.map(e=>{ const tl=timeLeft(e.expires_at); return `
-      <div class="pos-card pos-pending">
-        <div class="pos-card-top">
-          <div><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
-          <div style="font-size:11px;color:var(--muted);text-align:right">Waiting entry<br>${fmtP(e.entry_price,e.inst_dec)}</div>
-        </div>
-        <div class="pos-levels"><span>SL <strong>${fmtP(e.stop_loss,e.inst_dec)}</strong></span><span>TP <strong>${fmtP(e.tp1,e.inst_dec)}</strong></span><span class="${tl.cls}">⏱ ${tl.label}</span></div>
-        <div class="pos-card-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
-      </div>`;}).join('')}</div>`;
-  } else {
-    pendEl.innerHTML=`<div class="pos-list">${pending.map(e=>{ const tl=timeLeft(e.expires_at); return `
-      <div class="pos-row pos-row-pending">
-        <div class="pos-row-sym"><span class="pos-sym">${e.symbol}</span><span class="pos-mode paper">PAPER</span><span class="badge ${e.direction==='LONG'?'badge-long':'badge-short'}">${e.direction}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Entry</span><span class="pos-row-val">${fmtP(e.entry_price,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Stop</span><span class="pos-row-val" style="color:var(--red)">${fmtP(e.stop_loss,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Target</span><span class="pos-row-val" style="color:var(--green)">${fmtP(e.tp1,e.inst_dec)}</span></div>
-        <div class="pos-row-cell"><span class="pos-row-lbl">Expires</span><span class="pos-row-val ${tl.cls}">⏱ ${tl.label}</span></div>
-        <div class="pos-row-cell pos-row-actions"><button class="btn btn-ghost pos-act-btn pos-act-cancel" onclick="cancelPending('${e.id}')">Cancel</button></div>
-      </div>`;}).join('')}</div>`;
-  }
 
   // ── Open ─────────────────────────────────────────────────────────
   const openEl = document.getElementById('openPositions');
@@ -6017,48 +5966,13 @@ function stopPaperMonitor(){
 async function _runPaperMonitor(){
   if(!sbUser?.id) return;
 
-  // ── Fill livePrices from Supabase if not yet populated ───────
-  const {data: pending} = await sb.from('pending_entries')
-    .select('*').eq('user_id', sbUser.id).eq('status','pending');
+  // ── Seed livePrices from Supabase ───────────────────────────
   const {data: openCheck} = await sb.from('open_positions')
     .select('symbol').eq('user_id', sbUser.id).eq('status','open');
-  const needSymbols = [...new Set([
-    ...(pending||[]).map(e=>e.symbol),
-    ...(openCheck||[]).map(p=>p.symbol),
-  ])];
+  const needSymbols = [...new Set((openCheck||[]).map(p=>p.symbol))];
   if(needSymbols.length){
     const {data:prices} = await sb.from('live_prices').select('symbol,price').in('symbol',needSymbols);
     if(prices) prices.forEach(r=>{ livePrices[r.symbol]=parseFloat(r.price); });
-  }
-
-  const now = new Date();
-  for(const e of pending||[]){
-    const lp = livePrices[e.symbol];
-
-    // Expire stale entries
-    if(new Date(e.expires_at) < now){
-      await sb.from('pending_entries').update({status:'expired'}).eq('id',e.id);
-      continue;
-    }
-
-    if(!lp) continue;
-
-    // Same fill zone logic as price-monitor edge function
-    const atr    = (e.atr_pips||0) / (e.inst_mult||1);
-    const isLong = e.direction === 'LONG';
-    const inZone = isLong ? lp <= e.entry_price + atr*0.25 : lp >= e.entry_price - atr*0.25;
-    if(!inZone) continue;
-
-    const {error} = await sb.from('open_positions').insert({
-      user_id:e.user_id, entry_id:e.id, symbol:e.symbol, timeframe:e.timeframe,
-      direction:e.direction, entry_price:lp, stop_loss:e.stop_loss, tp1:e.tp1, tp2:e.tp2,
-      confidence:e.confidence, pattern:e.pattern, inst_mult:e.inst_mult, inst_dec:e.inst_dec,
-      inst_unit:e.inst_unit, inst_type:e.inst_type, mode:e.mode,
-    });
-    if(!error){
-      await sb.from('pending_entries').update({status:'filled'}).eq('id',e.id);
-      showToast(`${e.symbol} ${e.direction} — entry triggered at ${lp.toFixed(e.inst_dec||5)}`, 'tw');
-    }
   }
 
   // ── Close open positions on SL / TP ──────────────────────────
@@ -6090,10 +6004,10 @@ async function _runPaperMonitor(){
     anyChanged = true;
   }
 
-  if(anyChanged || (pending||[]).some(e=>livePrices[e.symbol])) loadPositions();
+  if(anyChanged) loadPositions();
 }
 
-// ── Create pending entry when signal fires ───────────────────────
+// ── Create open paper trade when user clicks Paper Trade ────────
 let paperTrading = localStorage.getItem('paper_trading') !== 'false';
 
 let autoLogMarkets = new Set((localStorage.getItem('auto_log_markets')||'Forex,Crypto,Commodity,Index,ETF').split(',').filter(Boolean));
@@ -6111,37 +6025,25 @@ function initMktChips(){
   });
 }
 
-async function createPendingEntry(sig, tf, mode='paper', silent=false){
+async function createOpenTrade(sig, tf, mode='paper', silent=false){
   tf = tf || sigTf;
   if(sbUser?.id){
-    const {data:dup} = await sb.from('pending_entries').select('id')
-      .eq('user_id',sbUser.id).eq('symbol',sig.symbol).eq('status','pending').maybeSingle();
-    if(dup){ if(!silent) showToast(`${sig.symbol} already has a pending paper trade — check Positions`, 'ti'); return; }
-    const {data:open} = await sb.from('open_positions').select('id')
+    const {data:existing} = await sb.from('open_positions').select('id')
       .eq('user_id',sbUser.id).eq('symbol',sig.symbol).eq('status','open').maybeSingle();
-    if(open){ if(!silent) showToast(`${sig.symbol} is already open in Positions`, 'ti'); return; }
+    if(existing){ if(!silent) showToast(`${sig.symbol} already has an open paper trade — check Paper Trades`, 'ti'); return; }
   }
-  // Expiry windows: signal is stale if price hasn't reached entry within these windows
-  const tfExpiry = { '1day':2, '4h':0.5, '1week':5 };
-  const days = tfExpiry[tf] ?? 1;
-  const expiresAt = new Date(Date.now() + days*24*60*60*1000).toISOString();
-  const {error} = await sb.from('pending_entries').insert({
+  const fillPrice = livePrices[sig.symbol] || sig.entry;
+  const dec = sig.dec || 5;
+  const {error} = await sb.from('open_positions').insert({
     user_id: sbUser?.id ?? null,
     symbol:sig.symbol, timeframe:tf, direction:sig.dir,
-    entry_price:sig.entry, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
+    entry_price:fillPrice, stop_loss:sig.stop, tp1:sig.t1, tp2:sig.t2,
     confidence:sig.conf, pattern:sig.pat, atr_pips:sig.atrPips,
-    inst_mult:sig.mult, inst_dec:sig.dec, inst_unit:sig.unit, inst_type:sig.type,
-    mode, expires_at:expiresAt,
+    inst_mult:sig.mult, inst_dec:dec, inst_unit:sig.unit, inst_type:sig.type,
+    mode, status:'open', opened_at: new Date().toISOString(),
   });
-  if(error){ if(!silent) showToast(`Error queuing trade: ${error.message}`, 'tl'); return; }
-  if(!silent){ showToast(`Paper trade queued — ${sig.symbol} ${sig.dir} waiting entry at ${sig.entry}`, 'tw'); nav('positions'); }
-}
-
-async function cancelPending(id){
-  if(!confirm('Cancel this pending paper trade?')) return;
-  await sb.from('pending_entries').delete().eq('id',id);
-  showToast('Pending trade cancelled', 'ti');
-  loadPositions();
+  if(error){ if(!silent) showToast(`Error opening trade: ${error.message}`, 'tl'); return; }
+  if(!silent){ showToast(`Paper trade opened — ${sig.symbol} ${sig.dir} at ${parseFloat(fillPrice).toFixed(dec)}`, 'tw'); nav('positions'); }
 }
 
 async function closePositionManual(id, symbol, direction){
@@ -8658,7 +8560,7 @@ if ('serviceWorker' in navigator) {
         <ul>
           <li><a href="#" onclick="nav('dashboard',null);return false">Dashboard</a></li>
           <li><a href="#" onclick="nav('signals',null);return false">Signals</a></li>
-          <li><a href="#" onclick="nav('positions',null);return false">Positions</a></li>
+          <li><a href="#" onclick="nav('positions',null);return false">Paper Trades</a></li>
           <li><a href="#" onclick="nav('journal',null);return false">Trade Journal</a></li>
           <li><a href="#" onclick="nav('learning',null);return false">Learning Center</a></li>
         </ul>
@@ -8716,9 +8618,9 @@ if ('serviceWorker' in navigator) {
       <span class="pt-popup-title">How Paper Trading works</span>
       <button class="pt-popup-close" onclick="closePaperPopup()">×</button>
     </div>
-    <div class="pt-popup-step"><span class="pt-popup-num">1</span><span>Click <strong>Paper Trade</strong> on any signal. The order is queued as <em>Pending</em> at the signal's entry price, with the predefined stop loss and take profit — no real money involved.</span></div>
-    <div class="pt-popup-step"><span class="pt-popup-num">2</span><span>When the app is open, prices are checked every <strong>30 seconds</strong> in real time. When you close the app, the server-side monitor checks every <strong>1 minute</strong>. When the market reaches the entry zone, the order moves to <em>Open</em> automatically.</span></div>
-    <div class="pt-popup-step"><span class="pt-popup-num">3</span><span>The position closes automatically when price hits the take profit or stop loss. You can also close it manually at any time from the Positions page.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">1</span><span>Click <strong>Paper Trade</strong> on any signal. The position opens immediately at the signal's entry price with the predefined stop loss and take profit — no real money involved.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">2</span><span>Prices are monitored every <strong>30 seconds</strong> while the app is open. Positions close automatically when take profit or stop loss is hit.</span></div>
+    <div class="pt-popup-step"><span class="pt-popup-num">3</span><span>You can also close any position manually at any time from the Paper Trades page at the current live price.</span></div>
     <div class="pt-popup-step"><span class="pt-popup-num">4</span><span>All closed results feed your win rate, net pips, and leaderboard ranking. Use paper trading to validate a strategy before committing real capital.</span></div>
   </div>
 </div>
@@ -9469,7 +9371,7 @@ document.addEventListener('keydown', e => {
   <div class="mob-drawer-grid">
     <button class="mob-drawer-btn" data-section="positions" onclick="nav('positions',null);closeMobDrawer();mobNavSync('positions')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      Positions
+      Paper Trades
     </button>
     <button class="mob-drawer-btn" data-section="trackrecord" onclick="nav('trackrecord',null);closeMobDrawer();mobNavSync('trackrecord')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -9986,7 +9888,7 @@ const TOUR_STEPS=[
   {sel:'#appNav button[onclick*="learning"]', title:'Learning Center', text:'Start here. 80+ pattern cards, 15 proven strategies, and bar-by-bar practice quizzes — organized from beginner to advanced.'},
   {sel:'#appNav button[onclick*="signals"]',  title:'Pattern Alerts',  text:'The scanner checks 16 instruments every 4 hours and fires when a chart pattern forms. Paper trade any alert with one click.'},
   {sel:'#appNav button[onclick*="journal"]',  title:'Trade Journal',   text:'Log every paper trade with entry reasoning and tags. Reviewing your journal weekly is how you find and fix recurring mistakes.'},
-  {sel:'#appNav button[onclick*="positions"]',title:'Paper Positions', text:'Track open and closed paper trades. Pending orders auto-expire so your list stays clean and realistic.'},
+  {sel:'#appNav button[onclick*="positions"]',title:'Paper Trades', text:'Track open and closed paper trades. Positions open immediately when you click Paper Trade on any signal — no pending state, no duplicates.'},
   {sel:'#appNav button[onclick*="dashboard"]',title:'Your Dashboard',  text:'Win rate, P&L, equity curve, daily streak, and weekly goals — all in one view. Check this weekly to measure your progress.'},
 ];
 let _tourIdx=0;
