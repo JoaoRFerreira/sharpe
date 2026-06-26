@@ -192,16 +192,11 @@ Deno.serve(async (req) => {
   // ── Compute stats ────────────────────────────────────────────
   const s = computeStats(positions as Position[])
 
-  // ── Fetch Anthropic key ──────────────────────────────────────
-  const { data: cfgRows } = await sb
-    .from('site_config')
-    .select('key, value')
-    .eq('key', 'anthropic_api_key')
-
-  const anthropicKey = cfgRows?.[0]?.value
+  // ── Fetch Anthropic key from environment secret ──────────────
+  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!anthropicKey) {
-    console.error('No Anthropic API key in site_config')
-    return json({ error: 'AI coaching unavailable — API key not configured' }, 500)
+    console.error('ANTHROPIC_API_KEY secret not set')
+    return json({ error: 'AI coaching unavailable — API key not configured' }, 503)
   }
 
   // ── Build prompt ─────────────────────────────────────────────

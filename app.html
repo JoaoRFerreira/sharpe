@@ -2655,9 +2655,16 @@ async function fetchAiCoach(){
     const data = await res.json();
 
     if(data.error){
-      showToast(data.error, 'tl');
-      if(btn){ btn.disabled = false; btn.textContent = 'Get AI Analysis'; }
       if(spinner) spinner.style.display = 'none';
+      if(btn){ btn.disabled = false; btn.textContent = 'Get AI Analysis'; }
+      // Show inline notice for config/data errors; toast for unexpected ones
+      const isSetupError = res.status === 503 || data.error.includes('not configured') || data.error.includes('least 10');
+      if(isSetupError && result){
+        result.innerHTML = `<div style="font-size:13px;color:var(--muted);line-height:1.6;padding:10px 0">${data.error}</div>`;
+        result.style.display = 'block';
+      } else {
+        showToast(data.error, 'tl');
+      }
       return;
     }
 
