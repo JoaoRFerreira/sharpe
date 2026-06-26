@@ -3816,11 +3816,14 @@ function card(name,type,tCls,rel,desc,rules){
   const img=patternSvg(name);
   const favs=getFavorites();
   const isFav=!!favs[name];
+  const safeName=name.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
   return `<div class="pc" data-pattern="${name}">
-    <button class="pc-fav${isFav?' on':''}" onclick="toggleFav('${name.replace(/'/g,'\\\'').replace(/"/g,'&quot;')}',this)" title="${isFav?'Remove from saved':'Save pattern'}">★</button>
     <div class="pc-head">
       <div class="pc-name">${name}</div>
-      <span class="ptype ${tCls}">${type}</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="ptype ${tCls}">${type}</span>
+        <button class="pc-fav${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" title="${isFav?'Remove from saved':'Save to bookmarks'}">★</button>
+      </div>
     </div>
     ${img}
     ${rel?`<div class="rel-bar"><div class="rel-fill" style="width:${rel}%"></div></div>
