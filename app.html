@@ -106,9 +106,9 @@
     <div style="flex:2 1 400px" id="aiCoachCard"></div>
   </div>
 
-  <!-- Open practice positions — paper trading activity -->
+  <!-- Open practice positions — journal open trades with live P&L -->
   <div class="lpos-section-hdr">
-    <span>Open Paper Trades</span>
+    <span>Active Journal Positions</span>
     <span class="live-dot" id="priceDot" style="display:none"></span>
     <span class="live-lbl" id="priceLbl"></span>
     <div style="margin-left:auto;display:flex;gap:4px">
@@ -2260,7 +2260,7 @@ function nav(id, btn){
   // Always re-render live/data-driven sections; init static sections once
   if(id==='dashboard') renderDashboard();
   else if(id==='journal') renderJournal();
-  else if(id==='signals') loadEconomicCalendar();
+  else if(id==='signals'){ loadEconomicCalendar(); localStorage.setItem('sharpe_signals_viewed','1'); }
   else if(id==='news') initNews();
   else if(id==='admin') loadAdminPanel();
   else if(!_sectionInited.has(id)){
@@ -2690,6 +2690,7 @@ function showDashboardSkeleton(){
 
 function renderDashboard(){
   renderGoals();
+  maybeShowOnboarding();
   if(trades.length===0){
     document.getElementById('statsGrid').innerHTML=`
       <div class="empty-state">
@@ -3715,7 +3716,7 @@ function initDailyStreak(){
     if(numEl) numEl.textContent=streak;
     if(bestEl) bestEl.textContent=best>streak?`Best: ${best} days`:'';
     const flame=document.querySelector('#streakWidget .streak-flame');
-    if(flame) flame.textContent=streak>=7?'🔥':streak>=3?'🔥':streak>=1?'💧':'💤';
+    if(flame) flame.textContent=streak>=14?'🔥🔥':streak>=7?'🔥':streak>=3?'⚡':streak>=1?'💧':'💤';
   }catch(e){}
 }
 
@@ -3731,7 +3732,8 @@ function renderGoals(){
   const pracLog=JSON.parse(localStorage.getItem('sharpe_prac_log')||'[]');
   const pracSessions=pracLog.filter(d=>new Date(d)>=weekStart).length;
   const allTrades=typeof trades!=='undefined'?trades:[];
-  const winRatePct=allTrades.length>0?Math.round(allTrades.filter(t=>t.status==='WIN').length/allTrades.length*100):0;
+  const closedTrades=allTrades.filter(t=>t.status!=='open');
+  const winRatePct=closedTrades.length>0?Math.round(closedTrades.filter(t=>t.status==='win').length/closedTrades.length*100):0;
   const goals=[
     {lbl:'Journal trades this week',val:journalThisWeek,target:5},
     {lbl:'Practice sessions this week',val:pracSessions,target:3},
@@ -4368,7 +4370,7 @@ function renderLivePositions(){
     if(dot) dot.style.display='none';
     if(lbl) lbl.textContent='';
     grid.className='';
-    grid.innerHTML='<div class="no-open-msg">No open positions. Use the Signals tab or + Add Trade to open one.</div>';
+    grid.innerHTML='<div class="no-open-msg">No open journal positions. Use the Simulator or + Add Trade to log an open trade.</div>';
     return;
   }
   if(dot) dot.style.display='inline-block';
