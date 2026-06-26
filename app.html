@@ -391,10 +391,15 @@
           <button class="lpath-btn lp-adv" onclick="setLearningPath('adv',this)">Advanced</button>
         </div>
         <div style="display:flex;gap:10px;padding:6px 2px 10px;font-size:10px;color:var(--muted)">
-          <span style="display:flex;align-items:center;gap:4px"><span class="ldot beg" style="width:7px;height:7px;border-radius:50%;background:#3fb950;display:inline-block"></span>Beginner</span>
-          <span style="display:flex;align-items:center;gap:4px"><span class="ldot int" style="width:7px;height:7px;border-radius:50%;background:#e3b341;display:inline-block"></span>Intermediate</span>
-          <span style="display:flex;align-items:center;gap:4px"><span class="ldot adv" style="width:7px;height:7px;border-radius:50%;background:#f85149;display:inline-block"></span>Advanced</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#3fb950;display:inline-block"></span>Beginner</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#e3b341;display:inline-block"></span>Intermediate</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#f85149;display:inline-block"></span>Advanced</span>
         </div>
+        <!-- Bookmarks at top -->
+        <button class="lsb-item" data-levels="beg,int,adv" data-topic="favorites" onclick="ltab('favorites',this);renderFavorites()" style="margin-bottom:6px;border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)">
+          <span class="lsb-item-inner"><span class="lsb-item-label" style="color:#b45309">★ Saved Patterns</span><span id="favCountBadge" style="font-size:10px;background:#e3b341;color:#fff;border-radius:8px;padding:0 5px;line-height:16px;display:none"></span></span>
+        </button>
+        <div class="lsb-sep"></div>
         <!-- Strategies -->
         <div class="lsb-group-label">Strategies</div>
         <button class="lsb-item active" data-levels="beg,int,adv" data-topic="strategies" onclick="ltab('strategies',this)">
@@ -442,9 +447,6 @@
         <div class="lsb-group-label">Reference</div>
         <button class="lsb-item" data-levels="beg,int,adv" data-topic="glossary" onclick="ltab('glossary',this)">
           <span class="lsb-item-inner"><span class="lsb-item-label">Trading Glossary</span><span class="lsb-dots"><span class="ldot beg"></span><span class="ldot int"></span><span class="ldot adv"></span></span></span>
-        </button>
-        <button class="lsb-item" data-levels="beg,int,adv" data-topic="favorites" onclick="ltab('favorites',this);renderFavorites()">
-          <span class="lsb-item-inner"><span class="lsb-item-label">★ Saved Patterns</span><span id="favCountBadge" style="font-size:10px;color:var(--muted)"></span></span>
         </button>
         <!-- Progress -->
         <div class="lsb-progress">
@@ -3685,7 +3687,9 @@ function getFavorites(){
 function updateFavBadge(){
   const cnt=Object.keys(getFavorites()).length;
   const badge=document.getElementById('favCountBadge');
-  if(badge) badge.textContent = cnt>0 ? cnt : '';
+  if(!badge) return;
+  badge.textContent = cnt;
+  badge.style.display = cnt>0 ? 'inline-block' : 'none';
 }
 
 // ── DAILY STREAK ───────────────────────────────────────────────
@@ -9935,11 +9939,11 @@ function searchLearn(query){
   if(clearBtn) clearBtn.style.display=q?'block':'none';
   if(!q){
     if(resultsEl) resultsEl.style.display='none';
-    if(hubEl) hubEl.style.display='';
+    if(hubEl) hubEl.style.display='flex';
     return;
   }
   if(hubEl) hubEl.style.display='none';
-  if(resultsEl) resultsEl.style.display='';
+  if(resultsEl) resultsEl.style.display='block';
   // Search pattern cards
   const patternHits=[];
   document.querySelectorAll('.pc[data-pattern]').forEach(el=>{
